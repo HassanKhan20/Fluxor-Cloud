@@ -9,7 +9,7 @@ const Navbar: React.FC = () => {
 
     const navLinks = [
         { name: 'Home', path: '/' },
-        { name: 'Features', path: '/#features' },
+        { name: 'Features', path: '/features' },
         { name: 'Pricing', path: '/pricing' },
         { name: 'About', path: '/about' },
     ];
@@ -37,8 +37,8 @@ const Navbar: React.FC = () => {
                                 key={link.name}
                                 to={link.path}
                                 className={`text-sm font-medium transition-colors duration-200 ${isActive(link.path)
-                                        ? 'text-[#005CFF]'
-                                        : 'text-gray-600 hover:text-gray-900'
+                                    ? 'text-[#005CFF]'
+                                    : 'text-gray-600 hover:text-gray-900'
                                     }`}
                             >
                                 {link.name}
@@ -82,8 +82,8 @@ const Navbar: React.FC = () => {
                             to={link.path}
                             onClick={() => setIsOpen(false)}
                             className={`block py-2 text-lg font-medium ${isActive(link.path)
-                                    ? 'text-[#005CFF]'
-                                    : 'text-gray-600'
+                                ? 'text-[#005CFF]'
+                                : 'text-gray-600'
                                 }`}
                         >
                             {link.name}

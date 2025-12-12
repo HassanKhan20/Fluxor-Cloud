@@ -6,6 +6,9 @@ import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Sales from './pages/Sales';
 import Invoices from './pages/Invoices';
+import Pricing from './pages/Pricing';
+import Features from './pages/Features';
+import About from './pages/About';
 
 function App() {
   return (
@@ -15,6 +18,9 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/features" element={<Features />} />
+        <Route path="/about" element={<About />} />
 
         {/* Protected Pages */}
         <Route path="/dashboard" element={<Dashboard />} />
