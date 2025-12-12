@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Enums are not supported in SQLite, using Strings
+
+// Models
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String // Hashed
+  role      String   @default("STAFF") // OWNER, MANAGER, STAFF
+  
+  stores    StoreMembership[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Store {
+  id              String   @id @default(uuid())
+  name            String
+  address         String?
+  timezone        String   @default("UTC")
+  defaultCurrency String   @default("USD")
+  
+  members         StoreMembership[]
+  products        Product[]
+  sales           Sale[]
+  invoices        Invoice[]
+  insights        Insight[]
+  chatMessages    ChatMessage[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model StoreMembership {
+  id        String   @id @default(uuid())
+  storeId   String
+  userId    String
+  role      String   @default("STAFF") // OWNER, MANAGER, STAFF
+  
+  store     Store    @relation(fields: [storeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([storeId, userId])
+}
+
+model Product {
+  id           String   @id @default(uuid())
+  storeId      String
+  name         String
+  sku          String?
+  barcode      String?
+  category     String?
+  brand        String?
+  unitSize     String?
+  costPrice    Float    @default(0)
+  sellingPrice Float    @default(0)
+  isActive     Boolean  @default(true)
+  
+  store        Store    @relation(fields: [storeId], references: [id])
+  
+  inventorySnapshots InventorySnapshot[]
+  saleItems    SaleItem[]
+  invoiceItems InvoiceItem[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model InventorySnapshot {
+  id             String   @id @default(uuid())
+  storeId        String
+  productId      String
+  quantityOnHand Int
+  snapshotDate   DateTime @default(now())
+  
+  product        Product  @relation(fields: [productId], references: [id])
+}
+
+model Sale {
+  id          String   @id @default(uuid())
+  storeId     String
+  dateTime    DateTime @default(now())
+  source      String   @default("MANUAL_ENTRY")
+  totalAmount Float
+  rawReference String?
+  
+  store       Store    @relation(fields: [storeId], references: [id])
+  items       SaleItem[]
+}
+
+model SaleItem {
+  id        String   @id @default(uuid())
+  saleId    String
+  productId String
+  quantity  Int
+  unitPrice Float
+  lineTotal Float
+  
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Invoice {
+  id              String   @id @default(uuid())
+  storeId         String
+  supplierName    String?
+  invoiceDate     DateTime?
+  totalAmount     Float?
+  status          String   @default("UPLOADED") // UPLOADED, PROCESSING, PARSED, ERROR
+  fileUrl         String?
+  parsedSummary   String?
+  
+  store           Store    @relation(fields: [storeId], references: [id])
+  items           InvoiceItem[]
+  
+  createdAt       DateTime @default(now())
+}
+
+model InvoiceItem {
+  id                     String   @id @default(uuid())
+  invoiceId              String
+  productId              String?
+  rawDescription         String
+  quantity               Int
+  unitCost               Float
+  lineTotal              Float
+  matchedProductConfidence Float    @default(0)
+  
+  invoice                Invoice  @relation(fields: [invoiceId], references: [id])
+  product                Product? @relation(fields: [productId], references: [id])
+}
+
+model Insight {
+  id          String      @id @default(uuid())
+  storeId     String
+  type        String      // LOW_STOCK_ALERT, etc.
+  payload     String
+  
+  store       Store       @relation(fields: [storeId], references: [id])
+  
+  generatedAt DateTime    @default(now())
+}
+
+model ChatMessage {
+  id              String   @id @default(uuid())
+  storeId         String
+  userId          String?
+  role            String
+  content         String
+  contextMetadata String?
+  
+  store           Store    @relation(fields: [storeId], references: [id])
+  
+  createdAt       DateTime @default(now())
+}
