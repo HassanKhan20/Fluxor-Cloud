@@ -62,15 +62,15 @@ const Pricing: React.FC = () => {
 
             {/* Hero */}
             <section className="pt-32 pb-16 bg-gradient-to-b from-gray-50 to-white">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full text-[#005CFF] text-sm font-medium mb-6">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full text-blue-600 text-sm font-medium mb-6">
                         <Zap size={16} />
                         <span>Simple, transparent pricing</span>
                     </div>
                     <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
                         Plans that grow with your store
                     </h1>
-                    <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                    <p className="text-xl text-gray-600 max-w-2xl mx-auto" style={{ lineHeight: '1.7' }}>
                         Start free and upgrade as you grow. No hidden fees. Cancel anytime.
                     </p>
                 </div>
@@ -84,12 +84,12 @@ const Pricing: React.FC = () => {
                             <div
                                 key={plan.name}
                                 className={`relative rounded-2xl p-8 ${plan.popular
-                                        ? 'bg-[#005CFF] text-white shadow-xl scale-105'
+                                        ? 'bg-blue-600 text-white shadow-xl scale-105'
                                         : 'bg-white border-2 border-gray-100 hover:border-gray-200'
                                     } transition-all duration-300`}
                             >
                                 {plan.popular && (
-                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#FECF33] text-gray-900 text-sm font-semibold rounded-full">
+                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-yellow-400 text-gray-900 text-sm font-semibold rounded-full">
                                         Most Popular
                                     </div>
                                 )}
@@ -98,7 +98,7 @@ const Pricing: React.FC = () => {
                                     <h3 className={`text-xl font-bold mb-2 ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
                                         {plan.name}
                                     </h3>
-                                    <p className={`text-sm ${plan.popular ? 'text-blue-100' : 'text-gray-500'}`}>
+                                    <p className={`text-sm ${plan.popular ? 'text-blue-100' : 'text-gray-500'}`} style={{ lineHeight: '1.6' }}>
                                         {plan.description}
                                     </p>
                                 </div>
@@ -128,7 +128,7 @@ const Pricing: React.FC = () => {
                                     <Button
                                         variant={plan.popular ? 'dark' : 'primary'}
                                         size="lg"
-                                        className={`w-full ${plan.popular ? 'bg-white text-[#005CFF] hover:bg-gray-100' : ''}`}
+                                        className={`w-full ${plan.popular ? 'bg-white text-blue-600 hover:bg-gray-100' : ''}`}
                                         rightIcon={<ArrowRight size={18} />}
                                     >
                                         {plan.cta}
@@ -167,7 +167,7 @@ const Pricing: React.FC = () => {
                         ].map((faq, i) => (
                             <div key={i} className="bg-white rounded-xl p-6 border border-gray-100">
                                 <h3 className="font-semibold text-gray-900 mb-2">{faq.q}</h3>
-                                <p className="text-gray-600">{faq.a}</p>
+                                <p className="text-gray-600" style={{ lineHeight: '1.7' }}>{faq.a}</p>
                             </div>
                         ))}
                     </div>

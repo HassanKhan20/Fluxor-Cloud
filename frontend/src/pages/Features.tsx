@@ -57,13 +57,12 @@ const Features: React.FC = () => {
 
             {/* Hero */}
             <section className="pt-32 pb-16 bg-gradient-to-b from-gray-50 to-white">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-                        Powerful features for <span className="text-[#005CFF]">smarter stores</span>
+                        Powerful features for <span className="text-blue-600">smarter stores</span>
                     </h1>
-                    <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-                        Everything you need to run your convenience store more efficiently.
-                        No technical expertise required.
+                    <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8" style={{ lineHeight: '1.7' }}>
+                        Everything you need to run your convenience store more efficiently. No technical expertise required.
                     </p>
                     <Link to="/signup">
                         <Button variant="primary" size="lg" rightIcon={<ArrowRight size={20} />}>
@@ -80,23 +79,22 @@ const Features: React.FC = () => {
                         {mainFeatures.map((feature, index) => (
                             <div
                                 key={feature.title}
-                                className={`grid lg:grid-cols-2 gap-12 items-center ${index % 2 === 1 ? 'lg:flex-row-reverse' : ''
-                                    }`}
+                                className={`grid lg:grid-cols-2 gap-12 items-center ${index % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}
                             >
                                 <div className={index % 2 === 1 ? 'lg:order-2' : ''}>
-                                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#005CFF] mb-6">
+                                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
                                         {feature.icon}
                                     </div>
                                     <h2 className="text-3xl font-bold text-gray-900 mb-4">
                                         {feature.title}
                                     </h2>
-                                    <p className="text-lg text-gray-600 mb-6">
+                                    <p className="text-lg text-gray-600 mb-6" style={{ lineHeight: '1.7' }}>
                                         {feature.description}
                                     </p>
                                     <ul className="space-y-3">
                                         {feature.benefits.map((benefit) => (
                                             <li key={benefit} className="flex items-center gap-3">
-                                                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                                                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                                                     <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                     </svg>
@@ -106,8 +104,7 @@ const Features: React.FC = () => {
                                         ))}
                                     </ul>
                                 </div>
-                                <div className={`bg-gradient-to-br from-gray-100 to-gray-50 rounded-2xl h-80 flex items-center justify-center ${index % 2 === 1 ? 'lg:order-1' : ''
-                                    }`}>
+                                <div className={`bg-gradient-to-br from-gray-100 to-gray-50 rounded-2xl h-80 flex items-center justify-center ${index % 2 === 1 ? 'lg:order-1' : ''}`}>
                                     <div className="text-gray-400 text-center">
                                         <div className="text-6xl mb-2">{feature.icon}</div>
                                         <p className="text-sm">Feature Preview</p>
@@ -128,11 +125,11 @@ const Features: React.FC = () => {
                     <div className="grid md:grid-cols-3 gap-8">
                         {additionalFeatures.map((feature) => (
                             <div key={feature.title} className="bg-white rounded-xl p-6 text-center border border-gray-100">
-                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-[#005CFF] mx-auto mb-4">
+                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mx-auto mb-4">
                                     {feature.icon}
                                 </div>
                                 <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                                <p className="text-sm text-gray-600">{feature.desc}</p>
+                                <p className="text-sm text-gray-600" style={{ lineHeight: '1.6' }}>{feature.desc}</p>
                             </div>
                         ))}
                     </div>
@@ -140,16 +137,16 @@ const Features: React.FC = () => {
             </section>
 
             {/* CTA */}
-            <section className="py-20 bg-[#005CFF]">
+            <section className="py-20 bg-blue-600">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
                         Ready to try these features?
                     </h2>
-                    <p className="text-lg text-blue-100 mb-8">
+                    <p className="text-lg text-blue-100 mb-8" style={{ lineHeight: '1.7' }}>
                         Start your free trial today. No credit card required.
                     </p>
                     <Link to="/signup">
-                        <Button variant="dark" size="lg" className="bg-white text-[#005CFF] hover:bg-gray-100">
+                        <Button variant="dark" size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
                             Get Started Free
                         </Button>
                     </Link>
