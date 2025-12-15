@@ -67,6 +67,8 @@ model Product {
   costPrice    Float    @default(0)
   sellingPrice Float    @default(0)
   isActive     Boolean  @default(true)
+  initialStock Int?     // Null = inventory not yet set by user
+  isUnmatched  Boolean  @default(false) // Auto-created from import, needs review
   
   store        Store    @relation(fields: [storeId], references: [id])
   

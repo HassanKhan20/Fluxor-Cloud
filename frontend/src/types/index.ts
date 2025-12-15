@@ -6,6 +6,8 @@ export interface Product {
     costPrice: number;
     category: string;
     isActive: boolean;
+    initialStock?: number | null;
+    isUnmatched?: boolean;
     inventorySnapshots: { quantityOnHand: number }[];
 }
 
@@ -31,6 +33,14 @@ export interface DashboardStats {
     salesCount: number;
     lowStockCount: number;
     chartData: { date: string; amount: number }[];
+    // Accurate comparison fields (null when no data)
+    revenueChange?: number | null;
+    salesCountChange?: number | null;
+    yesterdayRevenue?: number;
+    hasInventorySetupNeeded?: boolean;
+    unmatchedCount?: number;
+    avgTransaction?: number;
+    productsWithoutStock?: number;
 }
 
 export interface User {
@@ -39,3 +49,4 @@ export interface User {
     email: string;
     role: string;
 }
+

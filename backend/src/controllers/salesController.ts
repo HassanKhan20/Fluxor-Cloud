@@ -80,15 +80,17 @@ async function processSalesData(storeId: string, rows: SaleRow[]) {
             });
 
             if (!product) {
-                // Auto-create product from CSV data
+                // Auto-create product from CSV data - mark as unmatched for review
                 product = await prisma.product.create({
                     data: {
                         storeId,
-                        name: item.productName || 'Unknown Product',
-                        barcode: item.barcode || 'NO-BARCODE',
+                        name: item.productName || 'Unmatched Item',
+                        barcode: item.barcode || `UNMATCHED-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                         sellingPrice: price,
                         costPrice: price * 0.7, // Estimate cost
                         category: 'Uncategorized',
+                        isUnmatched: true, // Flag for review
+                        initialStock: null, // Not set - needs user input
                         inventorySnapshots: { create: { storeId, quantityOnHand: 0 } }
                     }
                 });
@@ -104,7 +106,6 @@ async function processSalesData(storeId: string, rows: SaleRow[]) {
             data: {
                 storeId,
                 totalAmount,
-                // paymentMethod is not in schema, assuming source is enough or 'MANUAL_ENTRY' for now
                 source: 'CSV_IMPORT',
                 dateTime: isNaN(date.getTime()) ? new Date() : date,
                 items: {
@@ -118,21 +119,25 @@ async function processSalesData(storeId: string, rows: SaleRow[]) {
             }
         });
 
-        // 3. Update Inventory (simplified: decrease stock)
+        // 3. Update Inventory - ONLY if initialStock is set, NEVER go negative
         for (const vi of validItems) {
-            // This logic is simplified; real inventory needs snapshot tracking
-            // We just decrement the latest snapshot for MVP
-            const latestSnapshot = await prisma.inventorySnapshot.findFirst({
-                where: { productId: vi.product.id },
-                orderBy: { snapshotDate: 'desc' }
-            });
-
-            if (latestSnapshot) {
-                await prisma.inventorySnapshot.update({
-                    where: { id: latestSnapshot.id },
-                    data: { quantityOnHand: { decrement: vi.qty } }
+            // Only decrement if the product has initialStock set (user has confirmed starting inventory)
+            if (vi.product.initialStock !== null) {
+                const latestSnapshot = await prisma.inventorySnapshot.findFirst({
+                    where: { productId: vi.product.id },
+                    orderBy: { snapshotDate: 'desc' }
                 });
+
+                if (latestSnapshot) {
+                    // Calculate new quantity, ensuring it never goes below 0
+                    const newQuantity = Math.max(0, latestSnapshot.quantityOnHand - vi.qty);
+                    await prisma.inventorySnapshot.update({
+                        where: { id: latestSnapshot.id },
+                        data: { quantityOnHand: newQuantity }
+                    });
+                }
             }
+            // If initialStock is null, we don't track inventory for this product yet
         }
     }
 }

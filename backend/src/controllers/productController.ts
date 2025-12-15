@@ -98,3 +98,117 @@ export const deleteProduct = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error deleting product' });
     }
 };
+
+// Get unmatched products that need review
+export const getUnmatchedProducts = async (req: Request, res: Response) => {
+    try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
+        const unmatchedProducts = await prisma.product.findMany({
+            where: { storeId, isUnmatched: true },
+            orderBy: { name: 'asc' },
+            include: {
+                inventorySnapshots: {
+                    orderBy: { snapshotDate: 'desc' },
+                    take: 1
+                }
+            }
+        });
+        res.json(unmatchedProducts);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching unmatched products' });
+    }
+};
+
+// Set initial stock for a product
+export const setInitialStock = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { initialStock } = req.body;
+
+        if (initialStock === undefined || initialStock < 0) {
+            return res.status(400).json({ message: 'Initial stock must be a non-negative number' });
+        }
+
+        // Update the product's initial stock
+        const product = await prisma.product.update({
+            where: { id },
+            data: { initialStock: parseInt(initialStock) }
+        });
+
+        // Also update the latest inventory snapshot to match
+        await prisma.inventorySnapshot.updateMany({
+            where: { productId: id },
+            data: { quantityOnHand: parseInt(initialStock) }
+        });
+
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ message: 'Error setting initial stock' });
+    }
+};
+
+// Bulk set initial stock for multiple products
+export const bulkSetInitialStock = async (req: Request, res: Response) => {
+    try {
+        const { products } = req.body; // Array of { id, initialStock }
+
+        if (!Array.isArray(products)) {
+            return res.status(400).json({ message: 'Products must be an array' });
+        }
+
+        for (const p of products) {
+            if (p.initialStock !== undefined && p.initialStock >= 0) {
+                await prisma.product.update({
+                    where: { id: p.id },
+                    data: { initialStock: parseInt(p.initialStock) }
+                });
+                await prisma.inventorySnapshot.updateMany({
+                    where: { productId: p.id },
+                    data: { quantityOnHand: parseInt(p.initialStock) }
+                });
+            }
+        }
+
+        res.json({ message: 'Initial stock updated successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error setting bulk initial stock' });
+    }
+};
+
+// Match an unmatched product to an existing product or mark as resolved
+export const matchProduct = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { targetProductId, action } = req.body; // action: 'merge' | 'keep'
+
+        if (action === 'keep') {
+            // Just mark as no longer unmatched
+            await prisma.product.update({
+                where: { id },
+                data: { isUnmatched: false }
+            });
+            return res.json({ message: 'Product marked as reviewed' });
+        }
+
+        if (action === 'merge' && targetProductId) {
+            // Transfer all sale items to target product, then delete unmatched
+            await prisma.saleItem.updateMany({
+                where: { productId: id },
+                data: { productId: targetProductId }
+            });
+            await prisma.invoiceItem.updateMany({
+                where: { productId: id },
+                data: { productId: targetProductId }
+            });
+            await prisma.inventorySnapshot.deleteMany({ where: { productId: id } });
+            await prisma.product.delete({ where: { id } });
+            return res.json({ message: 'Product merged successfully' });
+        }
+
+        res.status(400).json({ message: 'Invalid action' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error matching product' });
+    }
+};
