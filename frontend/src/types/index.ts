@@ -1,3 +1,19 @@
+export interface AISuggestion<T> {
+    value: T;
+    confidence: number; // 0-100
+    reason: string;
+}
+
+export interface ProductAISuggestions {
+    suggestedName?: AISuggestion<string>;
+    suggestedCategory?: AISuggestion<string>;
+    suggestedMinStock?: AISuggestion<number>;
+    suggestedPrice?: AISuggestion<number>;
+    daysUntilStockout?: number | null;
+    revenueAtRisk?: number;
+    salesVelocity?: number; // units per day
+}
+
 export interface Product {
     id: string;
     name: string;
@@ -9,6 +25,8 @@ export interface Product {
     initialStock?: number | null;
     isUnmatched?: boolean;
     inventorySnapshots: { quantityOnHand: number }[];
+    // AI-generated suggestions (client-side for MVP)
+    aiSuggestions?: ProductAISuggestions;
 }
 
 export interface Invoice {

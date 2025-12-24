@@ -84,8 +84,8 @@ const Pricing: React.FC = () => {
                             <div
                                 key={plan.name}
                                 className={`relative rounded-2xl p-8 ${plan.popular
-                                        ? 'bg-blue-600 text-white shadow-xl scale-105'
-                                        : 'bg-white border-2 border-gray-100 hover:border-gray-200'
+                                    ? 'bg-blue-600 text-white shadow-xl scale-105'
+                                    : 'bg-white border-2 border-gray-100 hover:border-gray-200'
                                     } transition-all duration-300`}
                             >
                                 {plan.popular && (
@@ -126,9 +126,9 @@ const Pricing: React.FC = () => {
 
                                 <Link to="/signup">
                                     <Button
-                                        variant={plan.popular ? 'dark' : 'primary'}
+                                        variant={plan.popular ? 'primary' : 'primary'}
                                         size="lg"
-                                        className={`w-full ${plan.popular ? 'bg-white text-blue-600 hover:bg-gray-100' : ''}`}
+                                        className={`w-full ${plan.popular ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-lg' : ''}`}
                                         rightIcon={<ArrowRight size={18} />}
                                     >
                                         {plan.cta}

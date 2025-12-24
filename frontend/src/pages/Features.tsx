@@ -8,40 +8,52 @@ import Button from '../components/Button';
 const Features: React.FC = () => {
     const mainFeatures = [
         {
+            id: 'inventory',
             icon: <Package size={32} />,
             title: 'Smart Inventory Management',
             description: 'Track every product in real-time. Get automatic alerts when stock is running low. Never lose a sale because of out-of-stock items.',
             benefits: ['Real-time stock tracking', 'Low-stock alerts', 'Automatic reorder suggestions', 'Barcode scanning support'],
+            image: '/feature_inventory.png',
         },
         {
+            id: 'analytics',
             icon: <BarChart3 size={32} />,
             title: 'Sales Analytics & Insights',
             description: 'Understand your business like never before. Beautiful charts show you what sells, when it sells, and how to sell more.',
             benefits: ['Daily/weekly/monthly reports', 'Top-selling products', 'Revenue trends', 'Profit margin analysis'],
+            image: '/feature_analytics.png',
         },
         {
+            id: 'ai-assistant',
             icon: <Bot size={32} />,
             title: 'AI-Powered Assistant',
             description: 'Ask questions in plain English. "What was my best selling item last week?" Get instant, accurate answers.',
             benefits: ['Natural language queries', 'Instant insights', 'Actionable recommendations', '24/7 availability'],
+            image: '/feature_ai.png',
         },
         {
+            id: 'forecasting',
             icon: <TrendingUp size={32} />,
             title: 'Demand Forecasting',
             description: 'Let AI predict what you need to order and when. Reduce waste, optimize stock, and maximize profits.',
             benefits: ['AI-powered predictions', 'Seasonal trends', 'Waste reduction', 'Optimal stock levels'],
+            image: '/feature_forecast.png',
         },
         {
+            id: 'invoice-ocr',
             icon: <FileText size={32} />,
             title: 'Invoice OCR',
             description: 'Snap a photo of any supplier invoice. We automatically extract product names, quantities, and prices.',
             benefits: ['Photo to data in seconds', 'Automatic product matching', 'Cost tracking', 'Supplier management'],
+            image: '/feature_invoice.png',
         },
         {
+            id: 'data-import',
             icon: <Zap size={32} />,
             title: 'One-Click Data Import',
             description: 'Already using a POS system? Import your existing sales data in one click. We support all major systems.',
             benefits: ['CSV/Excel import', 'POS integrations', 'Historical data import', 'Zero data entry'],
+            image: '/feature_import.png',
         },
     ];
 
@@ -78,12 +90,15 @@ const Features: React.FC = () => {
                     <div className="space-y-24">
                         {mainFeatures.map((feature, index) => (
                             <div
+                                id={feature.id}
                                 key={feature.title}
-                                className={`grid lg:grid-cols-2 gap-12 items-center ${index % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}
+                                className={`grid lg:grid-cols-2 gap-12 items-center scroll-mt-24 ${index % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}
                             >
                                 <div className={index % 2 === 1 ? 'lg:order-2' : ''}>
-                                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
-                                        {feature.icon}
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                                            {feature.icon}
+                                        </div>
                                     </div>
                                     <h2 className="text-3xl font-bold text-gray-900 mb-4">
                                         {feature.title}
@@ -104,20 +119,21 @@ const Features: React.FC = () => {
                                         ))}
                                     </ul>
                                 </div>
-                                <div className={`bg-gradient-to-br from-gray-100 to-gray-50 rounded-2xl h-80 flex items-center justify-center ${index % 2 === 1 ? 'lg:order-1' : ''}`}>
-                                    <div className="text-gray-400 text-center">
-                                        <div className="text-6xl mb-2">{feature.icon}</div>
-                                        <p className="text-sm">Feature Preview</p>
-                                    </div>
+                                <div className={`bg-gradient-to-br from-gray-100 to-gray-50 rounded-2xl h-80 flex items-center justify-center overflow-hidden ${index % 2 === 1 ? 'lg:order-1' : ''}`}>
+                                    <img
+                                        src={feature.image}
+                                        alt={feature.title}
+                                        className="w-full h-full object-cover rounded-2xl"
+                                    />
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Additional Features */}
-            <section className="py-16 bg-gray-50">
+            < section className="py-16 bg-gray-50" >
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
                         And so much more...
@@ -134,10 +150,10 @@ const Features: React.FC = () => {
                         ))}
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* CTA */}
-            <section className="py-20 bg-blue-600">
+            < section className="py-20 bg-blue-600" >
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
                         Ready to try these features?
@@ -151,10 +167,10 @@ const Features: React.FC = () => {
                         </Button>
                     </Link>
                 </div>
-            </section>
+            </section >
 
             <Footer />
-        </div>
+        </div >
     );
 };
 

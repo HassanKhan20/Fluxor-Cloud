@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
 import FeatureCard from '../components/FeatureCard';
+import AuroraBackground from '../components/AuroraBackground';
 
 const Landing: React.FC = () => {
     const features = [
@@ -12,31 +13,37 @@ const Landing: React.FC = () => {
             icon: <Package size={28} />,
             title: 'Smart Inventory',
             description: 'Real-time stock tracking with automatic low-stock alerts. Never run out of your best sellers again.',
+            href: '/features',
         },
         {
             icon: <BarChart3 size={28} />,
             title: 'Sales Insights',
             description: 'Understand your sales patterns with beautiful charts and actionable analytics.',
+            href: '/features',
         },
         {
             icon: <Bot size={28} />,
             title: 'AI Assistant',
             description: 'Ask questions in plain English. Get instant answers about your store performance.',
+            href: '/features',
         },
         {
             icon: <TrendingUp size={28} />,
             title: 'Demand Forecasting',
             description: 'Predict what to order and when. AI-powered recommendations to optimize your inventory.',
+            href: '/features',
         },
         {
             icon: <FileText size={28} />,
             title: 'Invoice OCR',
             description: 'Snap a photo of supplier invoices. We extract the data automatically.',
+            href: '/features',
         },
         {
             icon: <Zap size={28} />,
             title: 'One-Click Import',
             description: 'Import your POS data in seconds. We support all major point-of-sale systems.',
+            href: '/features',
         },
     ];
 
@@ -46,117 +53,100 @@ const Landing: React.FC = () => {
 
             {/* Hero Section */}
             <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
-                {/* Background Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-blue-50/30 to-white -z-10" />
+                {/* Aurora Animation Background */}
+                <div className="absolute inset-0" style={{ zIndex: 0 }}>
+                    <AuroraBackground />
+                </div>
 
-                {/* Decorative Blobs */}
-                <div className="absolute top-20 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -z-10" />
-                <div className="absolute bottom-0 left-0 w-80 h-80 bg-yellow-400/10 rounded-full blur-3xl -z-10" />
+                {/* Diagonal shine/reflection in the middle */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        zIndex: 0,
+                        background: 'linear-gradient(135deg, transparent 35%, rgba(255,255,255,0.15) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.15) 55%, transparent 65%)'
+                    }}
+                />
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-                        {/* Left Content */}
-                        <div className="text-center lg:text-left">
-                            {/* Badge */}
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full text-blue-600 text-sm font-medium mb-6">
-                                <Zap size={16} />
-                                <span>AI-Powered Store Management</span>
-                            </div>
+                {/* Bottom fade to white */}
+                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" style={{ zIndex: 1 }} />
 
-                            {/* Heading */}
-                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6" style={{ lineHeight: '1.1' }}>
-                                AI-Powered Operations for <span className="text-blue-600">Small Stores</span>
-                            </h1>
-
-                            {/* Description - PROPER PARAGRAPH */}
-                            <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0" style={{ lineHeight: '1.7' }}>
-                                Fluxor Cloud gives shop owners real insights, forecasting, and an AI assistant — all in one beautiful dashboard. No spreadsheets. No guesswork.
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative" style={{ zIndex: 2 }}>
+                    {/* Centered Single Column Layout */}
+                    <div className="max-w-3xl mx-auto text-center">
+                        {/* FLUXOR Title */}
+                        <div className="mb-8">
+                            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                                FLUXOR
+                            </h2>
+                            <p className="text-xl sm:text-2xl font-medium tracking-widest text-blue-900 mt-2" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                                CLOUD
                             </p>
-
-                            {/* CTA Buttons */}
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                                <Link to="/signup">
-                                    <Button variant="primary" size="lg" rightIcon={<ArrowRight size={20} />}>
-                                        Get Started Free
-                                    </Button>
-                                </Link>
-                                <Link to="/features">
-                                    <Button variant="secondary" size="lg">
-                                        Learn More
-                                    </Button>
-                                </Link>
-                            </div>
-
-                            {/* Trust Badges */}
-                            <div className="mt-12 pt-8 border-t border-gray-100">
-                                <p className="text-sm text-gray-500 mb-4">Trusted by convenience stores worldwide</p>
-                                <div className="flex items-center gap-6 justify-center lg:justify-start">
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex -space-x-2">
-                                            {[1, 2, 3, 4].map((i) => (
-                                                <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 border-2 border-white" />
-                                            ))}
-                                        </div>
-                                        <span className="text-sm font-medium text-gray-600">500+ stores</span>
-                                    </div>
-                                    <div className="h-6 w-px bg-gray-200" />
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-yellow-400">★★★★★</span>
-                                        <span className="text-sm font-medium text-gray-600">4.9/5</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
-                        {/* Right Content - Dashboard Preview */}
-                        <div className="relative">
-                            {/* Main Dashboard Card */}
-                            <div className="bg-white rounded-2xl shadow-2xl p-6 border border-gray-100">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div>
-                                        <p className="text-sm text-gray-500">Total Revenue</p>
-                                        <p className="text-3xl font-bold text-gray-900">$24,892</p>
-                                    </div>
-                                    <div className="text-green-600 text-sm font-medium bg-green-50 px-3 py-1 rounded-full">
-                                        +12.5%
-                                    </div>
-                                </div>
+                        {/* Badge */}
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm font-medium mb-8 border border-white/20">
+                            <Zap size={16} />
+                            <span>AI-Powered Store Management</span>
+                        </div>
 
-                                {/* Chart Placeholder */}
-                                <div className="h-48 bg-gradient-to-t from-blue-50 to-transparent rounded-xl flex items-end justify-around p-4">
-                                    {[40, 65, 45, 80, 55, 90, 70].map((height, i) => (
-                                        <div
-                                            key={i}
-                                            className="w-8 bg-blue-600 rounded-t-lg transition-all duration-500 hover:bg-blue-700"
-                                            style={{ height: `${height}%` }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
+                        {/* Heading */}
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6" style={{ lineHeight: '1.2' }}>
+                            Smart Operations for <span className="text-blue-900">Small Stores</span>
+                        </h1>
 
-                            {/* Floating Card - Top Right */}
-                            <div className="absolute -top-4 -right-4 bg-white rounded-xl shadow-lg p-4 border border-gray-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                        <TrendingUp className="w-5 h-5 text-green-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">Sales Today</p>
-                                        <p className="font-bold text-gray-900">$1,847</p>
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Description */}
+                        <p className="text-base sm:text-lg text-gray-600 mb-10 max-w-2xl mx-auto font-normal tracking-wide" style={{ lineHeight: '1.8', fontFamily: 'Outfit, Poppins, sans-serif' }}>
+                            Real insights, smart forecasting, and an AI assistant all in one beautiful dashboard. No spreadsheets. No guesswork.
+                        </p>
 
-                            {/* Floating Card - Bottom Left */}
-                            <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-4 border border-gray-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                                        <Package className="w-5 h-5 text-orange-600" />
+                        {/* CTA Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                            <Link to="/signup">
+                                <Button variant="primary" size="lg" rightIcon={<ArrowRight size={20} />}>
+                                    Get Started Free
+                                </Button>
+                            </Link>
+                            <Link to="/features">
+                                <Button variant="secondary" size="lg" className="border-white/30 text-white hover:bg-white/10">
+                                    Learn More
+                                </Button>
+                            </Link>
+                        </div>
+
+                        {/* Trust Badges */}
+                        <div className="pt-8 border-t border-white/20">
+                            <p className="text-sm text-gray-400 mb-4">Trusted by convenience stores worldwide</p>
+                            <div className="flex items-center gap-6 justify-center">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex -space-x-2">
+                                        {/* Professional store logos with gradients */}
+                                        <div className="w-8 h-8 rounded-full border-2 border-white/30 overflow-hidden">
+                                            <div className="w-full h-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
+                                                <span className="text-white text-[8px] font-black tracking-tight">MART</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full border-2 border-white/30 overflow-hidden">
+                                            <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-green-700 flex items-center justify-center">
+                                                <span className="text-white text-[7px] font-black tracking-tight">QS</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full border-2 border-white/30 overflow-hidden">
+                                            <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center">
+                                                <span className="text-[10px]">☀️</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full border-2 border-white/30 overflow-hidden">
+                                            <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-800 flex items-center justify-center">
+                                                <span className="text-white text-[7px] font-black tracking-tight">LG</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">Low Stock</p>
-                                        <p className="font-bold text-gray-900">3 items</p>
-                                    </div>
+                                    <span className="text-sm font-medium text-gray-300">500+ stores</span>
+                                </div>
+                                <div className="h-6 w-px bg-white/20" />
+                                <div className="flex items-center gap-1">
+                                    <span className="text-yellow-400">★★★★★</span>
+                                    <span className="text-sm font-medium text-gray-300">4.9/5</span>
                                 </div>
                             </div>
                         </div>
@@ -186,6 +176,7 @@ const Landing: React.FC = () => {
                                 title={feature.title}
                                 description={feature.description}
                                 delay={index * 100}
+                                href={feature.href}
                             />
                         ))}
                     </div>

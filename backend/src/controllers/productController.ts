@@ -91,10 +91,23 @@ export const updateProduct = async (req: Request, res: Response) => {
 export const deleteProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        // Soft delete ideally, but hard delete for MVP if no constraints
+
+        // First, delete related records to avoid foreign key constraints
+        // Delete sale items referencing this product
+        await prisma.saleItem.deleteMany({ where: { productId: id } });
+
+        // Delete invoice items referencing this product
+        await prisma.invoiceItem.deleteMany({ where: { productId: id } });
+
+        // Delete inventory snapshots for this product
+        await prisma.inventorySnapshot.deleteMany({ where: { productId: id } });
+
+        // Now delete the product itself
         await prisma.product.delete({ where: { id } });
+
         res.json({ message: 'Product deleted' });
     } catch (error) {
+        console.error('Delete error:', error);
         res.status(500).json({ message: 'Error deleting product' });
     }
 };
@@ -181,15 +194,25 @@ export const bulkSetInitialStock = async (req: Request, res: Response) => {
 export const matchProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { targetProductId, action } = req.body; // action: 'merge' | 'keep'
+        const { targetProductId, action, name, category, sellingPrice, barcode } = req.body;
 
         if (action === 'keep') {
-            // Just mark as no longer unmatched
-            await prisma.product.update({
+            // Mark as reviewed AND persist any confirmed values
+            // This enables "learning" - the product will match on future imports
+            const updates: any = { isUnmatched: false };
+
+            if (name) updates.name = name;
+            if (category) updates.category = category;
+            if (sellingPrice !== undefined) updates.sellingPrice = parseFloat(sellingPrice);
+            if (barcode) updates.barcode = barcode;
+
+            const product = await prisma.product.update({
                 where: { id },
-                data: { isUnmatched: false }
+                data: updates
             });
-            return res.json({ message: 'Product marked as reviewed' });
+
+            console.log(`[CONFIRM] Product confirmed: ${product.name} (barcode: ${product.barcode})`);
+            return res.json({ message: 'Product marked as reviewed', product });
         }
 
         if (action === 'merge' && targetProductId) {
@@ -204,11 +227,13 @@ export const matchProduct = async (req: Request, res: Response) => {
             });
             await prisma.inventorySnapshot.deleteMany({ where: { productId: id } });
             await prisma.product.delete({ where: { id } });
+            console.log(`[MERGE] Product merged into ${targetProductId}`);
             return res.json({ message: 'Product merged successfully' });
         }
 
         res.status(400).json({ message: 'Invalid action' });
     } catch (error) {
+        console.error('[ERROR] matchProduct:', error);
         res.status(500).json({ message: 'Error matching product' });
     }
 };

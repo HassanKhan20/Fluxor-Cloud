@@ -21,6 +21,10 @@ const Login: React.FC = () => {
         try {
             const data = await api.post('/auth/login', { email, password });
             localStorage.setItem('token', data.token);
+            // Store user info for personalized experience
+            if (data.user) {
+                localStorage.setItem('user', JSON.stringify(data.user));
+            }
             if (rememberMe) {
                 localStorage.setItem('rememberMe', 'true');
             }
@@ -92,13 +96,8 @@ const Login: React.FC = () => {
                 <div className="w-full max-w-md">
                     {/* Mobile Logo */}
                     <div className="lg:hidden flex justify-center mb-8">
-                        <Link to="/" className="flex items-center gap-2">
-                            <div className="w-10 h-10 bg-[#005CFF] rounded-xl flex items-center justify-center">
-                                <span className="text-white font-bold text-xl">F</span>
-                            </div>
-                            <span className="text-xl font-bold text-gray-900">
-                                Fluxor<span className="text-[#005CFF]">Cloud</span>
-                            </span>
+                        <Link to="/">
+                            <img src="/fluxor-logo.png" alt="Fluxor Cloud" className="h-12 w-auto" />
                         </Link>
                     </div>
 

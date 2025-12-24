@@ -45,13 +45,31 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
                     {/* Brand */}
                     <div className="col-span-2">
-                        <Link to="/" className="flex items-center gap-2 mb-4">
-                            <div className="w-10 h-10 bg-[#005CFF] rounded-xl flex items-center justify-center">
-                                <span className="text-white font-bold text-xl">F</span>
+                        <Link to="/" className="flex items-center gap-3 mb-4">
+                            {/* Premium Cloud + Hexagon Network Logo */}
+                            <svg viewBox="0 0 40 40" className="h-10 w-10 flex-shrink-0">
+                                <defs>
+                                    <linearGradient id="footerCloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#3B82F6" />
+                                        <stop offset="100%" stopColor="#60A5FA" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M32 22c0-4.4-3.6-8-8-8-1.5 0-2.9.4-4.1 1.1C18.5 12.3 15.5 10 12 10c-4.4 0-8 3.6-8 8 0 .4 0 .8.1 1.2C1.7 20.1 0 22.4 0 25c0 3.3 2.7 6 6 6h24c3.3 0 6-2.7 6-6 0-2.6-1.7-4.8-4-5.6 0-.1 0-.3 0-.4z"
+                                    fill="url(#footerCloudGrad)" transform="translate(4, 5) scale(0.8)" />
+                                <g transform="translate(20, 20)">
+                                    <polygon points="0,-6 5.2,-3 5.2,3 0,6 -5.2,3 -5.2,-3" fill="none" stroke="white" strokeWidth="1" opacity="0.9" />
+                                    <circle cx="0" cy="-6" r="1.5" fill="white" />
+                                    <circle cx="5.2" cy="-3" r="1.5" fill="white" />
+                                    <circle cx="5.2" cy="3" r="1.5" fill="white" />
+                                    <circle cx="0" cy="6" r="1.5" fill="white" />
+                                    <circle cx="-5.2" cy="3" r="1.5" fill="white" />
+                                    <circle cx="-5.2" cy="-3" r="1.5" fill="white" />
+                                </g>
+                            </svg>
+                            <div className="flex flex-col">
+                                <span className="text-lg font-bold tracking-tight text-white">FLUXOR</span>
+                                <span className="text-xs font-medium tracking-widest text-blue-400">CLOUD</span>
                             </div>
-                            <span className="text-xl font-bold">
-                                Fluxor<span className="text-[#005CFF]">Cloud</span>
-                            </span>
                         </Link>
                         <p className="text-gray-400 mb-6 max-w-xs">
                             AI-powered operations management for small convenience stores. Smarter insights, better decisions.

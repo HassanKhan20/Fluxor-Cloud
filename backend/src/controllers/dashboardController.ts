@@ -24,14 +24,41 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         const storeId = await getStoreId(req);
         if (!storeId) return res.status(403).json({ message: 'No active store found' });
 
-        const now = new Date();
-        const today = getDayBounds(now);
+        // FIXED: Use data-based dates instead of system clock
+        // Find the most recent sale date in the database to define "today"
+        const mostRecentSale = await prisma.sale.findFirst({
+            where: { storeId },
+            orderBy: { dateTime: 'desc' },
+            select: { dateTime: true }
+        });
 
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayBounds = getDayBounds(yesterday);
+        // If no sales exist, return empty stats
+        if (!mostRecentSale) {
+            return res.json({
+                totalRevenue: 0,
+                salesCount: 0,
+                lowStockCount: 0,
+                chartData: [],
+                revenueChange: null,
+                salesCountChange: null,
+                yesterdayRevenue: 0,
+                hasInventorySetupNeeded: true,
+                unmatchedCount: 0,
+                avgTransaction: 0,
+                productsWithoutStock: 0
+            });
+        }
 
-        // 1. Today's Revenue
+        // Define "today" as the most recent date in sales data
+        const dataToday = new Date(mostRecentSale.dateTime);
+        const today = getDayBounds(dataToday);
+
+        // Define "yesterday" as one day before the most recent sale date
+        const dataYesterday = new Date(dataToday);
+        dataYesterday.setDate(dataYesterday.getDate() - 1);
+        const yesterdayBounds = getDayBounds(dataYesterday);
+
+        // 1. Today's Revenue (based on data's "today")
         const todaySales = await prisma.sale.findMany({
             where: { storeId, dateTime: { gte: today.start, lte: today.end } },
             select: { totalAmount: true }
@@ -39,7 +66,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         const todayRevenue = todaySales.reduce((acc, sale) => acc + sale.totalAmount, 0);
         const todaySalesCount = todaySales.length;
 
-        // 2. Yesterday's Revenue (for comparison)
+        // 2. Yesterday's Revenue (for comparison - based on data's "yesterday")
         const yesterdaySales = await prisma.sale.findMany({
             where: { storeId, dateTime: { gte: yesterdayBounds.start, lte: yesterdayBounds.end } },
             select: { totalAmount: true }
@@ -82,14 +109,14 @@ export const getDashboardStats = async (req: Request, res: Response) => {
             where: { storeId, isUnmatched: true }
         });
 
-        // 7. Recent Sales for Chart (Last 7 days)
-        const sevenDaysAgo = new Date();
+        // 7. Recent Sales for Chart (Last 7 days relative to data's "today")
+        const sevenDaysAgo = new Date(dataToday);
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
         const recentSales = await prisma.sale.findMany({
             where: {
                 storeId,
-                dateTime: { gte: sevenDaysAgo }
+                dateTime: { gte: sevenDaysAgo, lte: today.end }
             },
             select: { dateTime: true, totalAmount: true }
         });

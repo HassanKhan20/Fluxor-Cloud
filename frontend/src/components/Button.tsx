@@ -31,8 +31,8 @@ export const Button: React.FC<ButtonProps> = ({
         primary: `
       bg-[#005CFF] text-white
       hover:bg-[#0047CC] hover:-translate-y-0.5
-      shadow-[0_4px_14px_0_rgba(0,92,255,0.39)]
-      hover:shadow-[0_6px_20px_0_rgba(0,92,255,0.45)]
+      shadow-[0_4px_20px_-4px_rgba(0,92,255,0.5)]
+      hover:shadow-[0_8px_30px_-4px_rgba(0,92,255,0.6)]
       focus:ring-[#005CFF]
     `,
         secondary: `
