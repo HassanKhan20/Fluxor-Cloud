@@ -10,6 +10,7 @@ import Analytics from './pages/Analytics';
 import Pricing from './pages/Pricing';
 import Features from './pages/Features';
 import About from './pages/About';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/sales" element={<Sales />} />
         <Route path="/invoices" element={<Invoices />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/settings" element={<Settings />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -98,8 +98,9 @@ export default function Analytics() {
         setLoading(false);
     };
 
-    // Safe calculations - handle empty arrays
-    const maxTrendValue = trends.length > 0 ? Math.max(...trends.map(t => t.amount), 1) : 1;
+    // Safe calculations - handle empty arrays and null values
+    const validTrendAmounts = trends.map(t => t.amount).filter((a): a is number => a !== null);
+    const maxTrendValue = validTrendAmounts.length > 0 ? Math.max(...validTrendAmounts, 1) : 1;
     const maxPredictionValue = predictions.length > 0 ? Math.max(...predictions.map(p => p.predicted), 1) : 1;
 
     if (loading) {
@@ -220,11 +221,19 @@ export default function Analytics() {
                                 <div className="h-64 flex items-end gap-1 px-2">
                                     {trends.slice(-14).map((trend, i) => (
                                         <div key={i} className="flex-1 flex flex-col items-center">
-                                            <div
-                                                className="w-full bg-blue-500 rounded-t-sm hover:bg-blue-600 transition-colors"
-                                                style={{ height: `${(trend.amount / maxTrendValue) * 200}px` }}
-                                                title={`$${trend.amount.toLocaleString()}`}
-                                            />
+                                            {trend.amount !== null ? (
+                                                <div
+                                                    className="w-full bg-blue-500 rounded-t-sm hover:bg-blue-600 transition-colors"
+                                                    style={{ height: `${(trend.amount / maxTrendValue) * 200}px` }}
+                                                    title={`$${trend.amount.toLocaleString()}`}
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="w-full bg-gray-200 rounded-t-sm"
+                                                    style={{ height: '4px' }}
+                                                    title="No sales"
+                                                />
+                                            )}
                                             <span className="text-[10px] text-gray-500 mt-1 truncate w-full text-center">
                                                 {trend.period.slice(-5)}
                                             </span>

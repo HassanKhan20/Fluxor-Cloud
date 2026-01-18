@@ -75,7 +75,7 @@ const Landing: React.FC = () => {
                     <div className="max-w-3xl mx-auto text-center">
                         {/* FLUXOR Title */}
                         <div className="mb-8">
-                            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-lg" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                                 FLUXOR
                             </h2>
                             <p className="text-xl sm:text-2xl font-medium tracking-widest text-blue-900 mt-2" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -152,10 +152,10 @@ const Landing: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Features Section */}
-            <section id="features" className="py-20 lg:py-32 bg-gray-50">
+            < section id="features" className="py-20 lg:py-32 bg-gray-50" >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Section Header */}
                     <div className="text-center max-w-3xl mx-auto mb-16">
@@ -181,10 +181,10 @@ const Landing: React.FC = () => {
                         ))}
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* CTA Section */}
-            <section className="py-20 lg:py-32 bg-gray-900">
+            < section className="py-20 lg:py-32 bg-gray-900" >
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
                         Ready to transform your store?
@@ -205,10 +205,10 @@ const Landing: React.FC = () => {
                         </Link>
                     </div>
                 </div>
-            </section>
+            </section >
 
             <Footer />
-        </div>
+        </div >
     );
 };
 

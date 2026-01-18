@@ -19,7 +19,8 @@ import {
     Clock,
     Bot,
     X,
-    Send
+    Send,
+    LineChart
 } from 'lucide-react';
 import type { DashboardStats } from '@/types';
 import Button from '@/components/Button';
@@ -31,6 +32,17 @@ export default function Dashboard() {
     const [aiPanelOpen, setAiPanelOpen] = useState(false);
     const [aiTooltipVisible, setAiTooltipVisible] = useState(true);
     const [userName, setUserName] = useState<string>('');
+    const [inventoryHealth, setInventoryHealth] = useState<{
+        slowMovers: Array<{ id: string; name: string; category: string | null; salesLast7Days: number; daysSinceLastSale: number | null }>;
+        restockAlerts: Array<{ id: string; name: string; currentStock: number; daysUntilStockout: number; urgency: string }>;
+        deadStock: Array<{ id: string; name: string; currentStock: number; daysSinceLastSale: number }>;
+        summary: { slowMoversCount: number; restockAlertsCount: number; deadStockCount: number; criticalAlerts: number };
+    } | null>(null);
+    const [moneyWasted, setMoneyWasted] = useState<{
+        summary: { totalWasted: number; deadStockValue: number; overstockValue: number; missedSalesValue: number; netRecoverable: number };
+        insights: string[];
+    } | null>(null);
+    const [showWastedBreakdown, setShowWastedBreakdown] = useState(false);
 
     // AI Chat state
     const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
@@ -39,6 +51,8 @@ export default function Dashboard() {
 
     useEffect(() => {
         fetchStats();
+        fetchInventoryHealth();
+        fetchMoneyWasted();
         loadUserInfo();
     }, []);
 
@@ -139,6 +153,36 @@ export default function Dashboard() {
         }
     };
 
+    const fetchInventoryHealth = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/analytics/inventory-health`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setInventoryHealth(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch inventory health:', error);
+        }
+    };
+
+    const fetchMoneyWasted = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/analytics/money-wasted`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setMoneyWasted(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch money wasted:', error);
+        }
+    };
+
     // Calculate action items
     const getActionItems = () => {
         const items: { text: string; type: 'warning' | 'info' | 'success'; link: string }[] = [];
@@ -191,7 +235,7 @@ export default function Dashboard() {
             <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-100 flex flex-col transition-all duration-300`}>
                 {/* Logo */}
                 <div className="h-20 flex items-center px-4 border-b border-gray-100">
-                    <Link to="/" className="flex items-center gap-2">
+                    <Link to="/dashboard" className="flex items-center gap-2">
                         {/* Premium Cloud + Hexagon Network Logo */}
                         <svg viewBox="0 0 40 40" className="h-10 w-10 flex-shrink-0">
                             <defs>
@@ -230,13 +274,14 @@ export default function Dashboard() {
                         { icon: <Package size={20} />, label: 'Inventory', path: '/products', active: false },
                         { icon: <Upload size={20} />, label: 'Import Sales', path: '/sales', active: false },
                         { icon: <TrendingUp size={20} />, label: 'Invoices', path: '/invoices', active: false },
+                        { icon: <LineChart size={20} />, label: 'Analytics', path: '/analytics', active: false },
                     ].map((item) => (
                         <Link
                             key={item.label}
                             to={item.path}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${item.active
                                 ? 'bg-blue-50 text-blue-600'
-                                : 'text-gray-600 hover:bg-gray-50'
+                                : 'text-gray-600 hover:bg-gray-50:bg-gray-700'
                                 }`}
                         >
                             {item.icon}
@@ -247,13 +292,13 @@ export default function Dashboard() {
 
                 {/* Bottom */}
                 <div className="p-4 border-t border-gray-100 space-y-1">
-                    <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors">
+                    <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50:bg-gray-700 transition-colors">
                         <Settings size={20} />
                         {sidebarOpen && <span className="font-medium text-sm">Settings</span>}
                     </Link>
                     <button
                         onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login'; }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50"
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50:bg-gray-700"
                     >
                         <LogOut size={20} />
                         {sidebarOpen && <span className="font-medium text-sm">Sign out</span>}
@@ -281,13 +326,13 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className="p-2.5 hover:bg-blue-100 rounded-xl text-gray-600 relative transition-colors">
+                            <button className="p-2.5 hover:bg-blue-100:bg-gray-700 rounded-xl text-gray-600 relative transition-colors">
                                 <Bell size={20} />
                                 {hasActions && (
                                     <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full" />
                                 )}
                             </button>
-                            <button className="p-2.5 hover:bg-blue-100 rounded-xl text-gray-600 transition-colors">
+                            <button className="p-2.5 hover:bg-blue-100:bg-gray-700 rounded-xl text-gray-600 transition-colors">
                                 <Settings size={18} />
                             </button>
                         </div>
@@ -296,6 +341,65 @@ export default function Dashboard() {
 
                 {/* Dashboard Content */}
                 <div className="p-6 max-w-5xl mx-auto space-y-6">
+
+                    {/* 0. MONEY WASTED - THE KILLER METRIC */}
+                    {moneyWasted && moneyWasted.summary.totalWasted > 0 && (
+                        <div className="bg-gradient-to-br from-red-50 to-orange-50 border border-red-200 rounded-xl p-6 shadow-sm">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                                        <span className="text-xl">💸</span>
+                                    </div>
+                                    <div>
+                                        <h2 className="font-semibold text-red-900">Money Wasted This Month</h2>
+                                        <p className="text-sm text-red-700">Cash tied up or lost from inventory issues</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowWastedBreakdown(!showWastedBreakdown)}
+                                    className="text-sm text-red-700 hover:text-red-800 underline"
+                                >
+                                    {showWastedBreakdown ? 'Hide' : 'See breakdown'}
+                                </button>
+                            </div>
+
+                            <p className="text-4xl font-bold text-red-600 mb-3">
+                                ${moneyWasted.summary.totalWasted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+
+                            {showWastedBreakdown && (
+                                <div className="grid grid-cols-3 gap-4 py-4 border-t border-red-200 mb-3">
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wide">Dead Stock</p>
+                                        <p className="text-lg font-semibold text-gray-800">${moneyWasted.summary.deadStockValue.toFixed(2)}</p>
+                                        <p className="text-xs text-gray-500">No sales 30+ days</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wide">Overstock</p>
+                                        <p className="text-lg font-semibold text-gray-800">${moneyWasted.summary.overstockValue.toFixed(2)}</p>
+                                        <p className="text-xs text-gray-500">Excess inventory</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wide">Missed Sales</p>
+                                        <p className="text-lg font-semibold text-gray-800">${moneyWasted.summary.missedSalesValue.toFixed(2)}</p>
+                                        <p className="text-xs text-gray-500">From stockouts</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {moneyWasted.insights.length > 0 && (
+                                <p className="text-sm text-red-800 mb-3">{moneyWasted.insights[0]}</p>
+                            )}
+
+                            <div className="flex gap-3">
+                                <Link to="/products">
+                                    <Button variant="primary" size="md" className="bg-red-600 hover:bg-red-700">
+                                        Recover This Cash →
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
+                    )}
 
                     {/* 1. TODAY'S ACTIONS (PRIMARY) */}
                     {hasActions ? (
@@ -349,7 +453,66 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    {/* 2. KEY OPERATIONAL SIGNALS (SECONDARY) */}
+                    {/* 2. INVENTORY HEALTH (NEW - operational intelligence) */}
+                    {inventoryHealth && (inventoryHealth.slowMovers.length > 0 || inventoryHealth.restockAlerts.length > 0 || inventoryHealth.deadStock.length > 0) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Restock Alerts */}
+                            {inventoryHealth.restockAlerts.length > 0 && (
+                                <div className="bg-amber-50 border border-amber-100 rounded-xl p-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <AlertCircle size={18} className="text-amber-600" />
+                                        <h3 className="font-semibold text-amber-900">Restock Soon</h3>
+                                        <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full ml-auto">
+                                            {inventoryHealth.summary.restockAlertsCount} items
+                                        </span>
+                                    </div>
+                                    <ul className="space-y-2">
+                                        {inventoryHealth.restockAlerts.slice(0, 3).map((item) => (
+                                            <li key={item.id} className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-700 truncate max-w-[60%]">{item.name}</span>
+                                                <span className={`font-medium ${item.urgency === 'critical' ? 'text-red-600' :
+                                                    item.urgency === 'warning' ? 'text-amber-600' : 'text-gray-600'
+                                                    }`}>
+                                                    {item.daysUntilStockout} days left
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <Link to="/products" className="text-xs text-amber-700 hover:text-amber-800 mt-3 inline-flex items-center gap-1">
+                                        View all <ChevronRight size={14} />
+                                    </Link>
+                                </div>
+                            )}
+
+                            {/* Slow Movers */}
+                            {inventoryHealth.slowMovers.length > 0 && (
+                                <div className="bg-gray-50 border border-gray-100 rounded-xl p-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Package size={18} className="text-gray-500" />
+                                        <h3 className="font-semibold text-gray-700">Slow Movers</h3>
+                                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full ml-auto">
+                                            {inventoryHealth.summary.slowMoversCount} items
+                                        </span>
+                                    </div>
+                                    <ul className="space-y-2">
+                                        {inventoryHealth.slowMovers.slice(0, 3).map((item) => (
+                                            <li key={item.id} className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-700 truncate max-w-[60%]">{item.name}</span>
+                                                <span className="text-gray-500 text-xs">
+                                                    {item.daysSinceLastSale ? `${item.daysSinceLastSale}d since sale` : 'No recent sales'}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <Link to="/products" className="text-xs text-gray-500 hover:text-gray-700 mt-3 inline-flex items-center gap-1">
+                                        View all <ChevronRight size={14} />
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* 3. KEY OPERATIONAL SIGNALS (TERTIARY) */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Revenue - de-emphasized */}
                         <div className="bg-white rounded-xl p-5 border border-gray-100">
@@ -424,8 +587,8 @@ export default function Dashboard() {
                         </div>
 
                         {hasData ? (
-                            <div className="h-56">
-                                <ResponsiveContainer width="100%" height="100%">
+                            <div className="h-56 min-w-0 relative" style={{ minHeight: 224, minWidth: 200 }}>
+                                <ResponsiveContainer width="100%" height={224} minWidth={200}>
                                     <AreaChart data={stats?.chartData}>
                                         <defs>
                                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">

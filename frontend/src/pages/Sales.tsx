@@ -3,8 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { FileText, Upload, CheckCircle2, AlertCircle, FileSpreadsheet, ArrowRight, ChevronLeft } from 'lucide-react';
+import { FileText, Upload, CheckCircle2, AlertCircle, FileSpreadsheet, ArrowRight, ChevronLeft, XCircle } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+
+interface ValidationError {
+    row: number;
+    field: string;
+    value: string;
+    message: string;
+}
 
 export default function Sales() {
     const navigate = useNavigate();
@@ -13,11 +20,14 @@ export default function Sales() {
     const [status, setStatus] = useState('');
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
+    const [errors, setErrors] = useState<ValidationError[]>([]);
+    const [importResult, setImportResult] = useState<{ imported?: number; skipped?: number } | null>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0]);
             setStatus('');
+            setErrors([]);
         }
     };
 
@@ -36,6 +46,7 @@ export default function Sales() {
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             setFile(e.dataTransfer.files[0]);
             setStatus('');
+            setErrors([]);
         }
     };
 
@@ -43,7 +54,9 @@ export default function Sales() {
         if (!file) return;
         setUploading(true);
         setStatus('');
+        setErrors([]);
         setUploadProgress(0);
+        setImportResult(null);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -67,15 +80,20 @@ export default function Sales() {
             clearInterval(progressInterval);
             setUploadProgress(100);
 
-            if (res.ok) {
+            const data = await res.json();
+
+            if (res.ok && data.success) {
                 setStatus('success');
+                setImportResult({ imported: data.imported, skipped: data.skipped });
                 setFile(null);
             } else {
                 setStatus('error');
+                setErrors(data.errors || [{ row: 0, field: 'file', value: '', message: data.message || 'Upload failed' }]);
             }
         } catch (error) {
             clearInterval(progressInterval);
             setStatus('error');
+            setErrors([{ row: 0, field: 'file', value: '', message: 'Network error. Please try again.' }]);
         } finally {
             setUploading(false);
         }
@@ -131,14 +149,15 @@ export default function Sales() {
                                     <>
                                         <h3 className="text-xl font-semibold text-green-700 mb-2">Import Successful!</h3>
                                         <p className="text-gray-500 text-center max-w-md">
-                                            Your sales data has been imported. Check your dashboard for updated insights.
+                                            {importResult?.imported} rows imported successfully.
+                                            {importResult?.skipped ? ` ${importResult.skipped} rows skipped.` : ''}
                                         </p>
                                     </>
                                 ) : status === 'error' ? (
                                     <>
                                         <h3 className="text-xl font-semibold text-red-700 mb-2">Import Failed</h3>
-                                        <p className="text-gray-500 text-center max-w-md">
-                                            There was an error processing your file. Please check the format and try again.
+                                        <p className="text-gray-500 text-center max-w-md mb-4">
+                                            {errors.length > 0 ? `Found ${errors.length} error(s) in your file:` : 'There was an error processing your file.'}
                                         </p>
                                     </>
                                 ) : (
@@ -200,6 +219,40 @@ export default function Sales() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Error List */}
+                    {status === 'error' && errors.length > 0 && (
+                        <Card className="border-red-200 bg-red-50">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-lg text-red-700 flex items-center gap-2">
+                                    <XCircle className="w-5 h-5" />
+                                    Validation Errors
+                                </CardTitle>
+                                <CardDescription className="text-red-600">
+                                    Please fix these issues in your CSV file and try again
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {errors.map((error, index) => (
+                                        <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-red-100">
+                                            <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {error.row > 0 ? `Row ${error.row}` : 'File error'}
+                                                    {error.field && error.field !== 'file' && ` - ${error.field}`}
+                                                </p>
+                                                <p className="text-sm text-gray-600">{error.message}</p>
+                                                {error.value && (
+                                                    <p className="text-xs text-gray-400 mt-1">Value: "{error.value}"</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Selected File Preview */}
                     {file && !uploading && status !== 'success' && (
