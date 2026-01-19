@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, BarChart3, Target, Lightbulb, Package, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { TrendingUp, TrendingDown, BarChart3, Target, Lightbulb, Package, ArrowUp, ArrowDown, Minus, ChevronLeft } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { api } from '@/lib/api';
@@ -33,12 +34,12 @@ interface Insight {
 }
 
 export default function Analytics() {
+    const navigate = useNavigate();
     const [trends, setTrends] = useState<TrendData[]>([]);
     const [trendSummary, setTrendSummary] = useState<any>(null);
     const [predictions, setPredictions] = useState<Prediction[]>([]);
     const [predictionSummary, setPredictionSummary] = useState<any>(null);
     const [topProducts, setTopProducts] = useState<ProductData[]>([]);
-    const [trendingProducts, setTrendingProducts] = useState<ProductData[]>([]);
     const [insights, setInsights] = useState<Insight[]>([]);
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
@@ -80,11 +81,9 @@ export default function Analytics() {
         try {
             const productsRes = await api.get('/analytics/top-products', token);
             setTopProducts(productsRes?.topPerformers || []);
-            setTrendingProducts(productsRes?.trending || []);
         } catch (e) {
             console.error('Top products fetch failed:', e);
             setTopProducts([]);
-            setTrendingProducts([]);
         }
 
         try {
@@ -121,9 +120,17 @@ export default function Analytics() {
             <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-white p-8">
                 <div className="max-w-7xl mx-auto space-y-8">
                     {/* Header */}
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Analytics & Predictions</h1>
-                        <p className="text-gray-500 mt-1">Track trends, forecast sales, and discover insights</p>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm hover:shadow-md transition-all hover:text-blue-600"
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Analytics & Predictions</h1>
+                            <p className="text-gray-500 mt-1">Track trends, forecast sales, and discover insights</p>
+                        </div>
                     </div>
 
                     {/* Summary Cards */}

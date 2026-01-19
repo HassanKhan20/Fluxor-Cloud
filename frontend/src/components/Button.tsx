@@ -32,7 +32,7 @@ export const Button: React.FC<ButtonProps> = ({
       bg-[#005CFF] text-white
       hover:bg-[#0047CC] hover:-translate-y-0.5
       shadow-[0_4px_20px_-4px_rgba(0,92,255,0.5)]
-      hover:shadow-[0_8px_30px_-4px_rgba(0,92,255,0.6)]
+      hover:shadow-[0_0_25px_rgba(0,92,255,0.6)]
       focus:ring-[#005CFF]
     `,
         secondary: `

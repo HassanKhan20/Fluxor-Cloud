@@ -279,9 +279,9 @@ export default function Dashboard() {
                         <Link
                             key={item.label}
                             to={item.path}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${item.active
-                                ? 'bg-blue-50 text-blue-600'
-                                : 'text-gray-600 hover:bg-gray-50:bg-gray-700'
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${item.active
+                                ? 'bg-blue-50 text-blue-600 shadow-[0_0_15px_rgba(0,92,255,0.2)]'
+                                : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-[0_0_15px_rgba(0,92,255,0.2)]'
                                 }`}
                         >
                             {item.icon}
@@ -292,13 +292,13 @@ export default function Dashboard() {
 
                 {/* Bottom */}
                 <div className="p-4 border-t border-gray-100 space-y-1">
-                    <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50:bg-gray-700 transition-colors">
+                    <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 transition-all duration-300 hover:bg-blue-50 hover:text-blue-600 hover:shadow-[0_0_15px_rgba(0,92,255,0.2)]">
                         <Settings size={20} />
                         {sidebarOpen && <span className="font-medium text-sm">Settings</span>}
                     </Link>
                     <button
                         onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login'; }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50:bg-gray-700"
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 transition-all duration-300 hover:bg-red-50 hover:text-red-600 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]"
                     >
                         <LogOut size={20} />
                         {sidebarOpen && <span className="font-medium text-sm">Sign out</span>}
@@ -326,15 +326,19 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className="p-2.5 hover:bg-blue-100:bg-gray-700 rounded-xl text-gray-600 relative transition-colors">
-                                <Bell size={20} />
-                                {hasActions && (
-                                    <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full" />
-                                )}
-                            </button>
-                            <button className="p-2.5 hover:bg-blue-100:bg-gray-700 rounded-xl text-gray-600 transition-colors">
-                                <Settings size={18} />
-                            </button>
+                            <Link to="/settings">
+                                <button className="p-2.5 hover:bg-blue-100 rounded-xl text-gray-600 relative transition-all duration-300 hover:shadow-[0_0_15px_rgba(0,92,255,0.3)] hover:text-blue-600">
+                                    <Bell size={20} />
+                                    {hasActions && (
+                                        <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full" />
+                                    )}
+                                </button>
+                            </Link>
+                            <Link to="/settings">
+                                <button className="p-2.5 hover:bg-blue-100 rounded-xl text-gray-600 transition-all duration-300 hover:shadow-[0_0_15px_rgba(0,92,255,0.3)] hover:text-blue-600">
+                                    <Settings size={18} />
+                                </button>
+                            </Link>
                         </div>
                     </div>
                 </header>

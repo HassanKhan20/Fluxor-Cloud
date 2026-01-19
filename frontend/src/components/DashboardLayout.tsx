@@ -165,9 +165,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                         <Link
                             key={`desktop-${item.id}`}
                             to={item.path}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${isActive(item.path)
-                                ? 'bg-blue-50 text-blue-600'
-                                : 'text-gray-600 hover:bg-gray-50:bg-gray-700'
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${isActive(item.path)
+                                ? 'bg-blue-50 text-blue-600 shadow-[0_0_15px_rgba(0,92,255,0.2)]'
+                                : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-[0_0_15px_rgba(0,92,255,0.2)]'
                                 }`}
                         >
                             <span className="flex-shrink-0">{item.icon}</span>
@@ -178,13 +178,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
                 {/* Bottom */}
                 <div className="p-3 border-t border-gray-100 space-y-1">
-                    <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50:bg-gray-700 transition-colors">
+                    <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 transition-all duration-300 hover:bg-blue-50 hover:text-blue-600 hover:shadow-[0_0_15px_rgba(0,92,255,0.2)]">
                         <Settings size={20} />
                         {sidebarOpen && <span className="font-medium text-sm">Settings</span>}
                     </Link>
                     <button
                         onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login'; }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50:bg-gray-700 transition-colors"
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 transition-all duration-300 hover:bg-red-50 hover:text-red-600 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]"
                     >
                         <LogOut size={20} />
                         {sidebarOpen && <span className="font-medium text-sm">Sign out</span>}

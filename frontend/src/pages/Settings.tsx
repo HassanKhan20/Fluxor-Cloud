@@ -12,7 +12,8 @@ import {
     HelpCircle,
     ChevronRight,
     Save,
-    LogOut
+    LogOut,
+    ChevronLeft
 } from 'lucide-react';
 
 interface UserInfo {
@@ -204,7 +205,13 @@ export default function Settings() {
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 p-8">
                 <div className="max-w-4xl mx-auto space-y-6">
                     {/* Header */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm hover:shadow-md transition-all hover:text-blue-600"
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </button>
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
                             <p className="text-gray-500 mt-1">Manage your account and preferences</p>
