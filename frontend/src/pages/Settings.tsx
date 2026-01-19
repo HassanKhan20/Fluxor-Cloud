@@ -116,11 +116,11 @@ export default function Settings() {
                                     ...notifications,
                                     [item.key]: !notifications[item.key as keyof typeof notifications]
                                 })}
-                                className={`relative w-10 h-5 rounded-full transition-colors ${notifications[item.key as keyof typeof notifications] ? 'bg-blue-600' : 'bg-gray-300'
+                                className={`relative w-11 h-6 rounded-full transition-colors ${notifications[item.key as keyof typeof notifications] ? 'bg-blue-600' : 'bg-gray-300'
                                     }`}
                             >
                                 <span
-                                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${notifications[item.key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-0.5'
+                                    className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${notifications[item.key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-0'
                                         }`}
                                 />
                             </button>

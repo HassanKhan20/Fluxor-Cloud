@@ -232,7 +232,7 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-gray-50 flex">
             {/* Sidebar */}
-            <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-100 flex flex-col transition-all duration-300`}>
+            <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-100 flex flex-col transition-all duration-300 h-screen sticky top-0`}>
                 {/* Logo */}
                 <div className="h-20 flex items-center px-4 border-b border-gray-100">
                     <Link to="/dashboard" className="flex items-center gap-2">
