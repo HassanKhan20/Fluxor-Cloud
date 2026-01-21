@@ -262,14 +262,12 @@ const Features: React.FC = () => {
                     <p className="text-lg text-blue-100 mb-8" style={{ lineHeight: '1.7' }}>
                         Book a demo and see how Fluxor can transform your store.
                     </p>
-                    <Button
-                        variant="dark"
-                        size="lg"
-                        className="bg-white text-blue-600 hover:bg-gray-100"
+                    <button
+                        className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors text-lg"
                         onClick={() => setShowDemoModal(true)}
                     >
                         Book a Demo
-                    </Button>
+                    </button>
                 </div>
             </section>
 
