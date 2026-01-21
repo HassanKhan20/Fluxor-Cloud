@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap } from 'lucide-react';
+import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
@@ -8,6 +8,10 @@ import FeatureCard from '../components/FeatureCard';
 import AuroraBackground from '../components/AuroraBackground';
 
 const Landing: React.FC = () => {
+    const [showDemoModal, setShowDemoModal] = useState(false);
+    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [formLoading, setFormLoading] = useState(false);
+
     const features = [
         {
             icon: <Package size={28} />,
@@ -47,9 +51,103 @@ const Landing: React.FC = () => {
         },
     ];
 
+    const handleDemoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setFormLoading(true);
+
+        const form = e.currentTarget;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('https://formspree.io/f/mojjraqw', {
+                method: 'POST',
+                body: formData,
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                setFormSubmitted(true);
+            }
+        } catch (error) {
+            console.error('Form submission error:', error);
+        } finally {
+            setFormLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white">
-            <Navbar />
+            <Navbar onBookDemo={() => setShowDemoModal(true)} />
+
+            {/* Demo Request Modal */}
+            {showDemoModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 relative">
+                        <button
+                            onClick={() => { setShowDemoModal(false); setFormSubmitted(false); }}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <X size={24} />
+                        </button>
+
+                        {!formSubmitted ? (
+                            <>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Book a Demo</h2>
+                                <p className="text-gray-600 mb-6">Get early access to Fluxor Cloud. We'll reach out within 24 hours.</p>
+
+                                <form onSubmit={handleDemoSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            required
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="Your name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            required
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="you@example.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Store Name (optional)</label>
+                                        <input
+                                            type="text"
+                                            name="store"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="Your store name"
+                                        />
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        size="lg"
+                                        className="w-full"
+                                        disabled={formLoading}
+                                    >
+                                        {formLoading ? 'Sending...' : 'Request Demo'}
+                                    </Button>
+                                </form>
+                            </>
+                        ) : (
+                            <div className="text-center py-8">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span className="text-3xl">✓</span>
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Received!</h2>
+                                <p className="text-gray-600">We'll be in touch within 24 hours to schedule your demo.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Hero Section */}
             <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
@@ -101,11 +199,14 @@ const Landing: React.FC = () => {
 
                         {/* CTA Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                            <Link to="/signup">
-                                <Button variant="primary" size="lg" rightIcon={<ArrowRight size={20} />}>
-                                    Get Started Free
-                                </Button>
-                            </Link>
+                            <Button
+                                variant="primary"
+                                size="lg"
+                                rightIcon={<ArrowRight size={20} />}
+                                onClick={() => setShowDemoModal(true)}
+                            >
+                                Book a Demo
+                            </Button>
                             <Link to="/features">
                                 <Button variant="secondary" size="lg" className="border-white/30 text-white hover:bg-white/10">
                                     Learn More
@@ -113,49 +214,19 @@ const Landing: React.FC = () => {
                             </Link>
                         </div>
 
-                        {/* Trust Badges */}
+                        {/* Trust Badge - Rating Only */}
                         <div className="pt-8 border-t border-white/20">
-                            <p className="text-sm text-gray-400 mb-4">Trusted by convenience stores worldwide</p>
-                            <div className="flex items-center gap-6 justify-center">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex -space-x-2">
-                                        {/* Professional store logos with gradients */}
-                                        <div className="w-8 h-8 rounded-full border-2 border-white/30 overflow-hidden">
-                                            <div className="w-full h-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
-                                                <span className="text-white text-[8px] font-black tracking-tight">MART</span>
-                                            </div>
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full border-2 border-white/30 overflow-hidden">
-                                            <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-green-700 flex items-center justify-center">
-                                                <span className="text-white text-[7px] font-black tracking-tight">QS</span>
-                                            </div>
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full border-2 border-white/30 overflow-hidden">
-                                            <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center">
-                                                <span className="text-[10px]">☀️</span>
-                                            </div>
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full border-2 border-white/30 overflow-hidden">
-                                            <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-800 flex items-center justify-center">
-                                                <span className="text-white text-[7px] font-black tracking-tight">LG</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-300">500+ stores</span>
-                                </div>
-                                <div className="h-6 w-px bg-white/20" />
-                                <div className="flex items-center gap-1">
-                                    <span className="text-yellow-400">★★★★★</span>
-                                    <span className="text-sm font-medium text-gray-300">4.9/5</span>
-                                </div>
+                            <div className="flex items-center gap-2 justify-center">
+                                <span className="text-yellow-400 text-xl">★★★★★</span>
+                                <span className="text-sm font-medium text-gray-300">4.9/5 from early testers</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </section >
+            </section>
 
             {/* Features Section */}
-            < section id="features" className="py-20 lg:py-32 bg-gray-50" >
+            <section id="features" className="py-20 lg:py-32 bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Section Header */}
                     <div className="text-center max-w-3xl mx-auto mb-16">
@@ -181,34 +252,37 @@ const Landing: React.FC = () => {
                         ))}
                     </div>
                 </div>
-            </section >
+            </section>
 
             {/* CTA Section */}
-            < section className="py-20 lg:py-32 bg-gray-900" >
+            <section className="py-20 lg:py-32 bg-gray-900">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
                         Ready to transform your store?
                     </h2>
                     <p className="text-lg text-gray-400 mb-10 max-w-2xl mx-auto" style={{ lineHeight: '1.7' }}>
-                        Join hundreds of store owners who are already using Fluxor Cloud to make smarter decisions.
+                        Join store owners who are getting early access to Fluxor Cloud.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link to="/signup">
-                            <Button variant="primary" size="lg" rightIcon={<ArrowRight size={20} />}>
-                                Start Free Trial
-                            </Button>
-                        </Link>
-                        <Link to="/pricing">
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            rightIcon={<ArrowRight size={20} />}
+                            onClick={() => setShowDemoModal(true)}
+                        >
+                            Book a Demo
+                        </Button>
+                        <Link to="/features">
                             <Button variant="secondary" size="lg" className="border-gray-600 text-white hover:border-white hover:bg-white/10">
-                                View Pricing
+                                View Features
                             </Button>
                         </Link>
                     </div>
                 </div>
-            </section >
+            </section>
 
             <Footer />
-        </div >
+        </div>
     );
 };
 

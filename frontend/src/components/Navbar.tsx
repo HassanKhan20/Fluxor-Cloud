@@ -3,18 +3,31 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Button from './Button';
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+    onBookDemo?: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
     const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
 
     const navLinks = [
         { name: 'Home', path: '/' },
         { name: 'Features', path: '/features' },
-        { name: 'Pricing', path: '/pricing' },
         { name: 'About', path: '/about' },
     ];
 
     const isActive = (path: string) => location.pathname === path;
+
+    const handleBookDemo = () => {
+        setIsOpen(false);
+        if (onBookDemo) {
+            onBookDemo();
+        } else {
+            // If not on landing page, navigate to landing and open modal
+            window.location.href = '/?demo=true';
+        }
+    };
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-white via-blue-200 to-blue-400 backdrop-blur-lg border-b border-blue-200/50">
@@ -75,18 +88,11 @@ const Navbar: React.FC = () => {
                         ))}
                     </div>
 
-                    {/* Desktop CTA */}
-                    <div className="hidden md:flex items-center gap-4">
-                        <Link to="/login">
-                            <Button variant="ghost" size="sm" className="text-blue-900 hover:text-blue-950">
-                                Sign In
-                            </Button>
-                        </Link>
-                        <Link to="/signup">
-                            <Button variant="primary" size="sm">
-                                Get Started
-                            </Button>
-                        </Link>
+                    {/* Desktop CTA - Single Book a Demo button */}
+                    <div className="hidden md:flex items-center">
+                        <Button variant="primary" size="sm" onClick={handleBookDemo}>
+                            Book a Demo
+                        </Button>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -118,17 +124,10 @@ const Navbar: React.FC = () => {
                             {link.name}
                         </Link>
                     ))}
-                    <div className="pt-4 border-t border-gray-100 space-y-3">
-                        <Link to="/login" onClick={() => setIsOpen(false)}>
-                            <Button variant="secondary" size="md" className="w-full">
-                                Sign In
-                            </Button>
-                        </Link>
-                        <Link to="/signup" onClick={() => setIsOpen(false)}>
-                            <Button variant="primary" size="md" className="w-full">
-                                Get Started
-                            </Button>
-                        </Link>
+                    <div className="pt-4 border-t border-gray-100">
+                        <Button variant="primary" size="md" className="w-full" onClick={handleBookDemo}>
+                            Book a Demo
+                        </Button>
                     </div>
                 </div>
             </div>

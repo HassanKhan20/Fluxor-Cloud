@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Shield, Clock, Users } from 'lucide-react';
+import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Shield, Clock, Users, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
 
 const Features: React.FC = () => {
+    const [showDemoModal, setShowDemoModal] = useState(false);
+    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [formLoading, setFormLoading] = useState(false);
+
     const mainFeatures = [
         {
             id: 'inventory',
@@ -63,9 +67,103 @@ const Features: React.FC = () => {
         { icon: <Users size={24} />, title: 'Multi-User Access', desc: 'Add your team with role-based permissions' },
     ];
 
+    const handleDemoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setFormLoading(true);
+
+        const form = e.currentTarget;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('https://formspree.io/f/mojjraqw', {
+                method: 'POST',
+                body: formData,
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                setFormSubmitted(true);
+            }
+        } catch (error) {
+            console.error('Form submission error:', error);
+        } finally {
+            setFormLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white">
-            <Navbar />
+            <Navbar onBookDemo={() => setShowDemoModal(true)} />
+
+            {/* Demo Request Modal */}
+            {showDemoModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 relative">
+                        <button
+                            onClick={() => { setShowDemoModal(false); setFormSubmitted(false); }}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <X size={24} />
+                        </button>
+
+                        {!formSubmitted ? (
+                            <>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Book a Demo</h2>
+                                <p className="text-gray-600 mb-6">Get early access to Fluxor Cloud. We'll reach out within 24 hours.</p>
+
+                                <form onSubmit={handleDemoSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            required
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="Your name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            required
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="you@example.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Store Name (optional)</label>
+                                        <input
+                                            type="text"
+                                            name="store"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="Your store name"
+                                        />
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        size="lg"
+                                        className="w-full"
+                                        disabled={formLoading}
+                                    >
+                                        {formLoading ? 'Sending...' : 'Request Demo'}
+                                    </Button>
+                                </form>
+                            </>
+                        ) : (
+                            <div className="text-center py-8">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span className="text-3xl">✓</span>
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Received!</h2>
+                                <p className="text-gray-600">We'll be in touch within 24 hours to schedule your demo.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Hero */}
             <section className="pt-32 pb-16 bg-gradient-to-b from-gray-50 to-white">
@@ -76,11 +174,14 @@ const Features: React.FC = () => {
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8" style={{ lineHeight: '1.7' }}>
                         Everything you need to run your convenience store more efficiently. No technical expertise required.
                     </p>
-                    <Link to="/signup">
-                        <Button variant="primary" size="lg" rightIcon={<ArrowRight size={20} />}>
-                            Get Started Free
-                        </Button>
-                    </Link>
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        rightIcon={<ArrowRight size={20} />}
+                        onClick={() => setShowDemoModal(true)}
+                    >
+                        Book a Demo
+                    </Button>
                 </div>
             </section>
 
@@ -130,10 +231,10 @@ const Features: React.FC = () => {
                         ))}
                     </div>
                 </div>
-            </section >
+            </section>
 
             {/* Additional Features */}
-            < section className="py-16 bg-gray-50" >
+            <section className="py-16 bg-gray-50">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
                         And so much more...
@@ -150,27 +251,30 @@ const Features: React.FC = () => {
                         ))}
                     </div>
                 </div>
-            </section >
+            </section>
 
             {/* CTA */}
-            < section className="py-20 bg-blue-600" >
+            <section className="py-20 bg-blue-600">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
                         Ready to try these features?
                     </h2>
                     <p className="text-lg text-blue-100 mb-8" style={{ lineHeight: '1.7' }}>
-                        Start your free trial today. No credit card required.
+                        Book a demo and see how Fluxor can transform your store.
                     </p>
-                    <Link to="/signup">
-                        <Button variant="dark" size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
-                            Get Started Free
-                        </Button>
-                    </Link>
+                    <Button
+                        variant="dark"
+                        size="lg"
+                        className="bg-white text-blue-600 hover:bg-gray-100"
+                        onClick={() => setShowDemoModal(true)}
+                    >
+                        Book a Demo
+                    </Button>
                 </div>
-            </section >
+            </section>
 
             <Footer />
-        </div >
+        </div>
     );
 };
 

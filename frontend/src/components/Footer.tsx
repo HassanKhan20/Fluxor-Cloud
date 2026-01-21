@@ -1,40 +1,24 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Twitter, Linkedin, Github, Mail } from 'lucide-react';
+import { Twitter, Linkedin, Mail } from 'lucide-react';
 
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
 
     const footerLinks = {
         product: [
-            { name: 'Features', path: '/#features' },
-            { name: 'Pricing', path: '/pricing' },
-            { name: 'Integrations', path: '/integrations' },
-            { name: 'Changelog', path: '/changelog' },
-        ],
-        company: [
+            { name: 'Features', path: '/features' },
             { name: 'About', path: '/about' },
-            { name: 'Blog', path: '/blog' },
-            { name: 'Careers', path: '/careers' },
-            { name: 'Contact', path: '/contact' },
-        ],
-        resources: [
-            { name: 'Documentation', path: '/docs' },
-            { name: 'Help Center', path: '/help' },
-            { name: 'API Reference', path: '/api' },
-            { name: 'Status', path: '/status' },
         ],
         legal: [
-            { name: 'Privacy', path: '/privacy' },
-            { name: 'Terms', path: '/terms' },
-            { name: 'Security', path: '/security' },
+            { name: 'Privacy', path: '#' },
+            { name: 'Terms', path: '#' },
         ],
     };
 
     const socialLinks = [
         { icon: <Twitter size={20} />, url: 'https://twitter.com/fluxorcloud' },
         { icon: <Linkedin size={20} />, url: 'https://linkedin.com/company/fluxorcloud' },
-        { icon: <Github size={20} />, url: 'https://github.com/fluxorcloud' },
         { icon: <Mail size={20} />, url: 'mailto:hello@fluxorcloud.com' },
     ];
 
@@ -42,7 +26,7 @@ const Footer: React.FC = () => {
         <footer className="bg-[#0B0B0B] text-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 {/* Top Section */}
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
                     {/* Brand */}
                     <div className="col-span-2">
                         <Link to="/" className="flex items-center gap-3 mb-4">
@@ -95,40 +79,6 @@ const Footer: React.FC = () => {
                         <h4 className="font-semibold text-white mb-4">Product</h4>
                         <ul className="space-y-3">
                             {footerLinks.product.map((link) => (
-                                <li key={link.name}>
-                                    <Link
-                                        to={link.path}
-                                        className="text-gray-400 hover:text-white transition-colors duration-200"
-                                    >
-                                        {link.name}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Company Links */}
-                    <div>
-                        <h4 className="font-semibold text-white mb-4">Company</h4>
-                        <ul className="space-y-3">
-                            {footerLinks.company.map((link) => (
-                                <li key={link.name}>
-                                    <Link
-                                        to={link.path}
-                                        className="text-gray-400 hover:text-white transition-colors duration-200"
-                                    >
-                                        {link.name}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Resources Links */}
-                    <div>
-                        <h4 className="font-semibold text-white mb-4">Resources</h4>
-                        <ul className="space-y-3">
-                            {footerLinks.resources.map((link) => (
                                 <li key={link.name}>
                                     <Link
                                         to={link.path}
