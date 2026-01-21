@@ -1,8 +1,6 @@
-import React from 'react';
 import { Sparkles, Check, X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { AISuggestionBadge } from './AISuggestionBadge';
 import type { Product } from '@/types';
 
 interface BulkReviewModalProps {
@@ -19,7 +17,7 @@ export function BulkReviewModal({
     onClose,
     products,
     onConfirmHighConfidence,
-    onConfirmAll,
+    onConfirmAll: _onConfirmAll,
     onReviewIndividually
 }: BulkReviewModalProps) {
     // Categorize by confidence

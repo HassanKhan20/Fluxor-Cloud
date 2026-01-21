@@ -17,7 +17,6 @@ const StreamlineBackground: React.FC<StreamlineBackgroundProps> = ({ className =
 
         // Configuration
         const streamCount = 20;
-        const streamColor = 'rgba(30, 58, 138, 0.4)'; // Dark blue
         const glowColor = 'rgba(30, 58, 138, 0.15)';
 
         interface Stream {

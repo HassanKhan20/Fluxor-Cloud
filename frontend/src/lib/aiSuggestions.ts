@@ -21,7 +21,8 @@ const KNOWN_PRODUCTS: Record<string, { name: string; category: string; avgPrice:
     'lottery': { name: 'Lottery Ticket', category: 'Lottery', avgPrice: 5.00 },
 };
 
-const CATEGORIES = ['Beverages', 'Snacks', 'Grocery', 'Dairy', 'Tobacco', 'Alcohol', 'Energy Drinks', 'Lottery', 'Other'];
+
+
 
 /**
  * Generate AI suggestions for a product based on heuristics
@@ -30,7 +31,6 @@ const CATEGORIES = ['Beverages', 'Snacks', 'Grocery', 'Dairy', 'Tobacco', 'Alcoh
 export function generateAISuggestions(product: Product): ProductAISuggestions {
     const suggestions: ProductAISuggestions = {};
     const nameLower = (product.name || '').toLowerCase();
-    const barcode = product.barcode || '';
 
     // 1. Suggest name improvements for unmatched/raw products
     if (product.isUnmatched || !product.name || product.name.length < 3) {
@@ -86,7 +86,7 @@ export function generateAISuggestions(product: Product): ProductAISuggestions {
     }
 
     // 5. Calculate revenue at risk
-    if (suggestions.daysUntilStockout !== undefined && suggestions.daysUntilStockout <= 7) {
+    if (suggestions.daysUntilStockout != null && suggestions.daysUntilStockout <= 7) {
         const dailyRevenue = salesVelocity * (product.sellingPrice || 0);
         suggestions.revenueAtRisk = Math.round(dailyRevenue * (7 - suggestions.daysUntilStockout));
     }

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Sparkles, Check, Pencil, X } from 'lucide-react';
 import { getConfidenceDisplay } from '@/lib/aiSuggestions';
 import type { AISuggestion } from '@/types';
@@ -22,7 +21,7 @@ export function AISuggestionBadge<T>({
     onDismiss,
     compact = false
 }: AISuggestionBadgeProps<T>) {
-    const { color, bgColor, label: confidenceLabel, textColor } = getConfidenceDisplay(suggestion.confidence);
+    const { color, bgColor, textColor } = getConfidenceDisplay(suggestion.confidence);
     const valueToShow = displayValue ?? String(suggestion.value);
 
     if (compact) {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertTriangle, Package, Sparkles, Check, Pencil, Clock, DollarSign } from 'lucide-react';
 import { AISuggestionBadge } from './AISuggestionBadge';
 import { Button } from '@/components/ui/button';
@@ -115,7 +114,7 @@ export function ProductReviewCard({ product, onConfirmAll, onEdit, onIgnore }: P
             )}
 
             {/* Stockout warning */}
-            {suggestions?.daysUntilStockout !== undefined && suggestions.daysUntilStockout <= 7 && (
+            {suggestions?.daysUntilStockout != null && suggestions.daysUntilStockout <= 7 && (
                 <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg mb-4">
                     <Clock size={16} className="text-red-600" />
                     <span className="text-sm font-medium text-red-800">

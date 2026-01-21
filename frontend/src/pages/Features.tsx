@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+
 import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Shield, Clock, Users, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';

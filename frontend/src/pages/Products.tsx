@@ -11,8 +11,8 @@ import { ProductReviewCard } from '@/components/ProductReviewCard';
 import { BulkReviewModal } from '@/components/BulkReviewModal';
 import DashboardLayout from '@/components/DashboardLayout';
 import {
-    Plus, Search, Edit, Trash2, AlertTriangle, Package, Check, ChevronRight, ChevronLeft, ChevronDown, ChevronUp,
-    Sparkles, Clock, DollarSign, TrendingDown, AlertCircle
+    Plus, Search, Edit, Trash2, AlertTriangle, Package, Check, ChevronLeft, ChevronDown, ChevronUp,
+    Sparkles, DollarSign, TrendingDown, AlertCircle
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Product } from '@/types';
@@ -184,7 +184,7 @@ export default function Products() {
     };
 
     // Categorize products
-    const { needsReview, lowStock, healthy, totalRevenueAtRisk } = categorizeProducts(products);
+    const { needsReview, lowStock, healthy: _healthy, totalRevenueAtRisk } = categorizeProducts(products);
     const allProducts = products.filter(p => !p.isUnmatched);
     const filteredProducts = allProducts.filter(p => p.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
