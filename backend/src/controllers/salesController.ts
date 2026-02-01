@@ -14,6 +14,7 @@ interface SaleRow {
     quantity: string;
     unitPrice: string;
     paymentMethod: string;
+    vendor: string;  // NEW: Vendor/Supplier support
 }
 
 interface ValidationError {
@@ -41,7 +42,8 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
     category: ['category', 'Category', 'Department', 'department', 'Type'],
     quantity: ['quantity', 'Quantity', 'Qty', 'qty', 'Amount', 'Count'],
     unitPrice: ['unitPrice', 'Unit Price', 'unit_price', 'Price', 'price', 'Unit Cost'],
-    paymentMethod: ['paymentMethod', 'Payment Method', 'payment', 'Payment', 'Method']
+    paymentMethod: ['paymentMethod', 'Payment Method', 'payment', 'Payment', 'Method'],
+    vendor: ['vendor', 'Vendor', 'Supplier', 'supplier', 'Brand', 'brand', 'Manufacturer', 'manufacturer', 'Distributor', 'distributor']  // NEW
 };
 
 // Required fields
@@ -348,6 +350,7 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
 
             // Create new product if not found
             if (!product) {
+                const normalizedVendor = (item as any).vendor?.trim() || null;  // NEW: Extract vendor
                 product = await prisma.product.create({
                     data: {
                         storeId,
@@ -355,6 +358,7 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
                         barcode: normalizedBarcode,
                         sku: normalizedSku,
                         category: normalizedCategory || 'Uncategorized',
+                        vendor: normalizedVendor,  // NEW: Assign vendor
                         sellingPrice: price,
                         costPrice: price * 0.7,
                         isUnmatched: true,
@@ -367,6 +371,7 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
             } else {
                 // UPDATE EXISTING PRODUCT (only if NOT confirmed)
                 if (!product.isConfirmed) {
+                    const normalizedVendor = (item as any).vendor?.trim() || null;  // NEW: Extract vendor
                     await prisma.product.update({
                         where: { id: product.id },
                         data: {
@@ -374,6 +379,7 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
                             barcode: product.barcode || normalizedBarcode,
                             sku: product.sku || normalizedSku,
                             category: product.category === 'Uncategorized' ? (normalizedCategory || product.category) : product.category,
+                            vendor: product.vendor || normalizedVendor,  // NEW: Fill vendor if missing
                             sellingPrice: product.sellingPrice === 0 ? price : product.sellingPrice,
                             importCount: { increment: 1 }
                         }
