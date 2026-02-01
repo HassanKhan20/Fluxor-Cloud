@@ -139,6 +139,17 @@ const Login: React.FC = () => {
                             </div>
                         )}
 
+                        {/* Demo Credentials Hint */}
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                            <p className="text-sm text-blue-800 font-medium mb-1">🎯 Demo Account</p>
+                            <p className="text-sm text-blue-700">
+                                Email: <span className="font-mono bg-blue-100 px-1 rounded">demo@fluxor.cloud</span>
+                            </p>
+                            <p className="text-sm text-blue-700">
+                                Password: <span className="font-mono bg-blue-100 px-1 rounded">test123</span>
+                            </p>
+                        </div>
+
                         <Input
                             type="email"
                             label="Email address"

@@ -112,8 +112,13 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                         ))}
                     </div>
 
-                    {/* Desktop CTA - Single Book a Demo button */}
-                    <div className="hidden md:flex items-center">
+                    {/* Desktop CTA - Sign In + Book a Demo */}
+                    <div className="hidden md:flex items-center gap-3">
+                        <Link to="/login">
+                            <Button variant="secondary" size="sm">
+                                Sign In
+                            </Button>
+                        </Link>
                         <Button variant="primary" size="sm" onClick={handleBookDemo}>
                             Book a Demo
                         </Button>
@@ -148,7 +153,12 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                             {link.name}
                         </Link>
                     ))}
-                    <div className="pt-4 border-t border-gray-100">
+                    <div className="pt-4 border-t border-gray-100 space-y-3">
+                        <Link to="/login" onClick={() => setIsOpen(false)}>
+                            <Button variant="secondary" size="md" className="w-full">
+                                Sign In
+                            </Button>
+                        </Link>
                         <Button variant="primary" size="md" className="w-full" onClick={handleBookDemo}>
                             Book a Demo
                         </Button>
