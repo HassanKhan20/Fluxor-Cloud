@@ -21,6 +21,7 @@ export interface Product {
     sellingPrice: number;
     costPrice: number;
     category: string;
+    vendor?: string; // NEW: Vendor/Supplier name
     isActive: boolean;
     initialStock?: number | null;
     isUnmatched?: boolean;
@@ -67,4 +68,81 @@ export interface User {
     email: string;
     role: string;
 }
+
+// ==================== NEW TYPES FOR PRIORITY 1 FEATURES ====================
+
+// Alert types for notification system
+export interface Alert {
+    id: string;
+    type: 'low_stock' | 'overstock' | 'vendor_drop' | 'sales_decline' | 'pricing_risk';
+    priority: 'critical' | 'warning' | 'info';
+    title: string;
+    message: string;
+    action: string;
+    productId?: string;
+    vendorName?: string;
+    isRead: boolean;
+    createdAt: string;
+}
+
+// Weekly summary for owner dashboard
+export interface WeeklySummary {
+    id: string;
+    weekStart: string;
+    weekEnd: string;
+    revenue: {
+        amount: number;
+        change: number;
+        changePercent: number;
+    };
+    moneyWasted: {
+        total: number;
+        primaryReason: string;
+    };
+    topProduct: {
+        id: string;
+        name: string;
+        revenue: number;
+    } | null;
+    worstPerformer: {
+        id: string;
+        name: string;
+        type: 'product' | 'vendor';
+        reason: string;
+    } | null;
+    recommendations: string[];
+}
+
+// Vendor scorecard for vendor intelligence
+export interface VendorScorecard {
+    vendorName: string;
+    productCount: number;
+    revenue: number;
+    profit: number;
+    marginPercent: number;
+    inventoryDays: number;
+    wasteContribution: number;
+    overallScore: number;
+    rating: 'green' | 'yellow' | 'red';
+    trend: 'up' | 'down' | 'stable';
+}
+
+// Money wasted breakdown
+export interface MoneyWastedBreakdown {
+    total: number;
+    breakdown: {
+        deadStock: { amount: number; productCount: number };
+        overstock: { amount: number; productCount: number };
+        slowMovers: { amount: number; productCount: number };
+        shrinkLoss: { amount: number; productCount: number };
+    };
+    topCauses: Array<{
+        description: string;
+        amount: number;
+        action: string;
+        productIds?: string[];
+    }>;
+    explanation: string;
+}
+
 

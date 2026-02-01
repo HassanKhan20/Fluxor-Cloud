@@ -8,6 +8,8 @@ import Analytics from './pages/Analytics';
 import Features from './pages/Features';
 import About from './pages/About';
 import Settings from './pages/Settings';
+import Login from './pages/Login';
+import Vendors from './pages/Vendors';
 
 function App() {
   return (
@@ -17,6 +19,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/features" element={<Features />} />
         <Route path="/about" element={<About />} />
+        <Route path="/login" element={<Login />} />
 
         {/* Protected Pages (still accessible for demo) */}
         <Route path="/dashboard" element={<Dashboard />} />
@@ -25,6 +28,7 @@ function App() {
         <Route path="/invoices" element={<Invoices />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/vendors" element={<Vendors />} />
 
         {/* Fallback - redirect all unknown routes to landing */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -34,3 +38,4 @@ function App() {
 }
 
 export default App;
+

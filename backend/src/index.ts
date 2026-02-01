@@ -8,6 +8,8 @@ import invoiceRoutes from './routes/invoiceRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import aiRoutes from './routes/aiRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
+import alertsRoutes from './routes/alertsRoutes';
+import vendorRoutes from './routes/vendorRoutes';
 
 dotenv.config();
 
@@ -34,6 +36,9 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/alerts', alertsRoutes);
+app.use('/api/vendors', vendorRoutes);
+
 
 // Basic health check
 app.get('/health', (req, res) => {

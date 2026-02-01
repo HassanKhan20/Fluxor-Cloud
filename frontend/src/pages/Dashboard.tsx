@@ -11,7 +11,6 @@ import {
     Upload,
     BarChart3,
     Menu,
-    Bell,
     Settings,
     LogOut,
     CheckCircle2,
@@ -20,10 +19,13 @@ import {
     Bot,
     X,
     Send,
-    LineChart
+    LineChart,
+    Users
 } from 'lucide-react';
 import type { DashboardStats } from '@/types';
 import Button from '@/components/Button';
+import AlertsDropdown from '@/components/dashboard/AlertsDropdown';
+import WeeklySummaryCard from '@/components/dashboard/WeeklySummaryCard';
 
 export default function Dashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -275,6 +277,7 @@ export default function Dashboard() {
                         { icon: <Upload size={20} />, label: 'Import Sales', path: '/sales', active: false },
                         { icon: <TrendingUp size={20} />, label: 'Invoices', path: '/invoices', active: false },
                         { icon: <LineChart size={20} />, label: 'Analytics', path: '/analytics', active: false },
+                        { icon: <Users size={20} />, label: 'Vendors', path: '/vendors', active: false },
                     ].map((item) => (
                         <Link
                             key={item.label}
@@ -326,14 +329,7 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Link to="/settings">
-                                <button className="p-2.5 hover:bg-blue-100 rounded-xl text-gray-600 relative transition-all duration-300 hover:shadow-[0_0_15px_rgba(0,92,255,0.3)] hover:text-blue-600">
-                                    <Bell size={20} />
-                                    {hasActions && (
-                                        <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full" />
-                                    )}
-                                </button>
-                            </Link>
+                            <AlertsDropdown />
                             <Link to="/settings">
                                 <button className="p-2.5 hover:bg-blue-100 rounded-xl text-gray-600 transition-all duration-300 hover:shadow-[0_0_15px_rgba(0,92,255,0.3)] hover:text-blue-600">
                                     <Settings size={18} />
@@ -345,6 +341,9 @@ export default function Dashboard() {
 
                 {/* Dashboard Content */}
                 <div className="p-6 max-w-5xl mx-auto space-y-6">
+
+                    {/* Weekly Summary Card - New Priority 1 Feature */}
+                    <WeeklySummaryCard />
 
                     {/* 0. MONEY WASTED - THE KILLER METRIC */}
                     {moneyWasted && moneyWasted.summary.totalWasted > 0 && (

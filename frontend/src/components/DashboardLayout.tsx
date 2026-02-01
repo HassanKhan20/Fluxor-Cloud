@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Package, Upload, TrendingUp, LineChart, Settings, LogOut, Menu, X } from 'lucide-react';
+import { BarChart3, Package, Upload, TrendingUp, LineChart, Settings, LogOut, Menu, X, Users } from 'lucide-react';
 import StreamlineAnimation from './StreamlineAnimation';
 
 interface DashboardLayoutProps {
@@ -24,6 +24,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         { id: 2, icon: <Upload size={20} />, label: 'Import Sales', path: '/sales' },
         { id: 3, icon: <TrendingUp size={20} />, label: 'Invoices', path: '/invoices' },
         { id: 4, icon: <LineChart size={20} />, label: 'Analytics', path: '/analytics' },
+        { id: 5, icon: <Users size={20} />, label: 'Vendors', path: '/vendors' },
     ];
 
     const isActive = (path: string) => location.pathname === path;

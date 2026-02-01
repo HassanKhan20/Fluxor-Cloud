@@ -36,6 +36,8 @@ model Store {
   invoices        Invoice[]
   insights        Insight[]
   chatMessages    ChatMessage[]
+  alerts          Alert[]
+  weeklySummaries WeeklySummary[]
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -63,6 +65,7 @@ model Product {
   barcode      String?
   category     String?
   brand        String?
+  vendor       String?  // NEW: Vendor/Supplier name for vendor intelligence
   unitSize     String?
   costPrice    Float    @default(0)
   sellingPrice Float    @default(0)
@@ -171,3 +174,61 @@ model ChatMessage {
   
   createdAt       DateTime @default(now())
 }
+
+// NEW: Alerts for notification system
+model Alert {
+  id          String   @id @default(uuid())
+  storeId     String
+  type        String   // low_stock, overstock, vendor_drop, sales_decline, pricing_risk
+  priority    String   // critical, warning, info
+  title       String
+  message     String
+  action      String   // Recommended action
+  productId   String?  // Related product (optional)
+  vendorName  String?  // Related vendor (optional)
+  isRead      Boolean  @default(false)
+  
+  store       Store    @relation(fields: [storeId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+// NEW: Weekly summaries for owner dashboard
+model WeeklySummary {
+  id              String   @id @default(uuid())
+  storeId         String
+  weekStart       DateTime
+  weekEnd         DateTime
+  
+  // Revenue metrics
+  revenue         Float
+  revenueChange   Float    // vs previous week
+  
+  // Money wasted breakdown
+  totalWasted     Float
+  wastedDeadStock Float    @default(0)
+  wastedOverstock Float    @default(0)
+  wastedSlowMovers Float   @default(0)
+  wastedShrinkage Float    @default(0)
+  primaryWasteReason String?
+  
+  // Top/Worst performers
+  topProductId    String?
+  topProductName  String?
+  topProductRevenue Float?
+  
+  worstPerformerId   String?
+  worstPerformerName String?
+  worstPerformerType String?  // 'product' or 'vendor'
+  worstPerformerReason String?
+  
+  // AI recommendations (JSON array as string)
+  recommendations String   @default("[]")
+  
+  store           Store    @relation(fields: [storeId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([storeId, weekStart])
+}
+
