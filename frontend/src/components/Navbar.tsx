@@ -12,12 +12,35 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
     const location = useLocation();
 
     const navLinks = [
-        { name: 'Home', path: '/' },
-        { name: 'Features', path: '/features' },
-        { name: 'About', path: '/about' },
+        { name: 'Home', path: '/', hash: '' },
+        { name: 'Features', path: '/', hash: '#features' },
+        { name: 'Pricing', path: '/', hash: '#pricing' },
+        { name: 'About', path: '/', hash: '#about' },
     ];
 
-    const isActive = (path: string) => location.pathname === path;
+    const isActive = (path: string, hash: string) => {
+        if (location.pathname !== '/') return false;
+        if (path === '/' && hash === '' && !location.hash) return true;
+        return location.hash === hash;
+    };
+
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
+        if (location.pathname === '/') {
+            e.preventDefault();
+            if (hash) {
+                const element = document.querySelector(hash);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    // Update hash in URL without jumping
+                    window.history.pushState(null, '', hash);
+                }
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.history.pushState(null, '', '/');
+            }
+        }
+        setIsOpen(false);
+    };
 
     const handleBookDemo = () => {
         setIsOpen(false);
@@ -72,15 +95,16 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                         {navLinks.map((link) => (
                             <Link
                                 key={link.name}
-                                to={link.path}
-                                className={`relative text-sm font-medium transition-all duration-300 py-2 ${isActive(link.path)
+                                to={`${link.path}${link.hash}`}
+                                onClick={(e) => handleNavClick(e, link.hash)}
+                                className={`relative text-sm font-medium transition-all duration-300 py-2 ${isActive(link.path, link.hash)
                                     ? 'text-blue-900'
                                     : 'text-blue-700 hover:text-blue-900'
                                     }`}
                             >
                                 {link.name}
                                 {/* Underglow effect for active state */}
-                                <span className={`absolute -bottom-1 left-0 right-0 h-0.5 rounded-full transition-all duration-300 ${isActive(link.path)
+                                <span className={`absolute -bottom-1 left-0 right-0 h-0.5 rounded-full transition-all duration-300 ${isActive(link.path, link.hash)
                                     ? 'bg-blue-600 shadow-[0_0_8px_2px_rgba(37,99,235,0.5)]'
                                     : 'bg-transparent'
                                     }`} />
@@ -114,9 +138,9 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                     {navLinks.map((link) => (
                         <Link
                             key={link.name}
-                            to={link.path}
-                            onClick={() => setIsOpen(false)}
-                            className={`block py-2 text-lg font-medium ${isActive(link.path)
+                            to={`${link.path}${link.hash}`}
+                            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, link.hash)}
+                            className={`block py-2 text-lg font-medium ${isActive(link.path, link.hash)
                                 ? 'text-[#005CFF]'
                                 : 'text-gray-600'
                                 }`}
