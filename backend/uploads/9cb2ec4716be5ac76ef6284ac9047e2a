@@ -1,0 +1,41 @@
+date,productName,currentStock
+2026-01-02,Bottled Water,50
+2026-01-02,Chips,40
+2026-01-02,Coca-Cola,80
+2026-01-02,Red Bull Energy Drink 12oz,60
+2026-01-03,Bottled Water,47
+2026-01-03,Chips,38
+2026-01-03,Coca-Cola,75
+2026-01-03,Red Bull Energy Drink 12oz,56
+2026-01-04,Bottled Water,44
+2026-01-04,Chips,36
+2026-01-04,Coca-Cola,70
+2026-01-04,Red Bull Energy Drink 12oz,52
+2026-01-05,Bottled Water,41
+2026-01-05,Chips,34
+2026-01-05,Coca-Cola,65
+2026-01-05,Red Bull Energy Drink 12oz,48
+2026-01-06,Bottled Water,38
+2026-01-06,Chips,32
+2026-01-06,Coca-Cola,60
+2026-01-06,Red Bull Energy Drink 12oz,44
+2026-01-07,Bottled Water,35
+2026-01-07,Chips,30
+2026-01-07,Coca-Cola,55
+2026-01-07,Red Bull Energy Drink 12oz,40
+2026-01-08,Bottled Water,32
+2026-01-08,Chips,28
+2026-01-08,Coca-Cola,50
+2026-01-08,Red Bull Energy Drink 12oz,36
+2026-01-09,Bottled Water,29
+2026-01-09,Chips,26
+2026-01-09,Coca-Cola,45
+2026-01-09,Red Bull Energy Drink 12oz,32
+2026-01-10,Bottled Water,26
+2026-01-10,Chips,24
+2026-01-10,Coca-Cola,40
+2026-01-10,Red Bull Energy Drink 12oz,28
+2026-01-11,Bottled Water,23
+2026-01-11,Chips,22
+2026-01-11,Coca-Cola,35
+2026-01-11,Red Bull Energy Drink 12oz,24

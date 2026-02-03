@@ -81,10 +81,14 @@ const Login: React.FC = () => {
                             The AI insights alone have saved me thousands."
                         </p>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold">★</div>
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold">AB</div>
                             <div>
-                                <p className="font-medium text-white">Store Owner</p>
-                                <p className="text-sm text-gray-500">Verified Customer</p>
+                                <p className="font-medium text-white">Asian Brothers</p>
+                                <div className="flex text-yellow-400 text-xs">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <span key={star}>★</span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -138,6 +142,7 @@ const Login: React.FC = () => {
                                 {error}
                             </div>
                         )}
+
 
                         <Input
                             type="email"

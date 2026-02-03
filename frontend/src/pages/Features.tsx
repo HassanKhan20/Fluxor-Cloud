@@ -92,52 +92,52 @@ const Features: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-[#0f172a] text-white">
             <Navbar onBookDemo={() => setShowDemoModal(true)} />
 
             {/* Demo Request Modal */}
             {showDemoModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 relative">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                    <div className="bg-[#1e293b] rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 relative border border-white/10">
                         <button
                             onClick={() => { setShowDemoModal(false); setFormSubmitted(false); }}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                            className="absolute top-4 right-4 text-gray-400 hover:text-white"
                         >
                             <X size={24} />
                         </button>
 
                         {!formSubmitted ? (
                             <>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Book a Demo</h2>
-                                <p className="text-gray-600 mb-6">Get early access to Fluxor Cloud. We'll reach out within 24 hours.</p>
+                                <h2 className="text-2xl font-bold text-white mb-2">Book a Demo</h2>
+                                <p className="text-gray-400 mb-6">Get early access to Fluxor Cloud. We'll reach out within 24 hours.</p>
 
                                 <form onSubmit={handleDemoSubmit} className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                        <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
                                         <input
                                             type="text"
                                             name="name"
                                             required
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                                             placeholder="Your name"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
                                         <input
                                             type="email"
                                             name="email"
                                             required
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                                             placeholder="you@example.com"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Store Name (optional)</label>
+                                        <label className="block text-sm font-medium text-gray-300 mb-1">Store Name (optional)</label>
                                         <input
                                             type="text"
                                             name="store"
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                                             placeholder="Your store name"
                                         />
                                     </div>
@@ -154,11 +154,11 @@ const Features: React.FC = () => {
                             </>
                         ) : (
                             <div className="text-center py-8">
-                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="text-3xl">✓</span>
+                                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span className="text-3xl text-green-500">✓</span>
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Received!</h2>
-                                <p className="text-gray-600">We'll be in touch within 24 hours to schedule your demo.</p>
+                                <h2 className="text-2xl font-bold text-white mb-2">Request Received!</h2>
+                                <p className="text-gray-400">We'll be in touch within 24 hours to schedule your demo.</p>
                             </div>
                         )}
                     </div>
@@ -166,12 +166,12 @@ const Features: React.FC = () => {
             )}
 
             {/* Hero */}
-            <section className="pt-32 pb-16 bg-gradient-to-b from-gray-50 to-white">
+            <section className="pt-32 pb-16 bg-gradient-to-b from-[#0f172a] to-[#1e293b]">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-                        Powerful features for <span className="text-blue-600">smarter stores</span>
+                    <h1 className="text-4xl sm:text-5xl font-bold text-white mb-6">
+                        Powerful features for <span className="text-blue-500">smarter stores</span>
                     </h1>
-                    <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8" style={{ lineHeight: '1.7' }}>
+                    <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8" style={{ lineHeight: '1.7' }}>
                         Everything you need to run your convenience store more efficiently. No technical expertise required.
                     </p>
                     <Button
@@ -197,34 +197,34 @@ const Features: React.FC = () => {
                             >
                                 <div className={index % 2 === 1 ? 'lg:order-2' : ''}>
                                     <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                                        <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
                                             {feature.icon}
                                         </div>
                                     </div>
-                                    <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                                    <h2 className="text-3xl font-bold text-white mb-4">
                                         {feature.title}
                                     </h2>
-                                    <p className="text-lg text-gray-600 mb-6" style={{ lineHeight: '1.7' }}>
+                                    <p className="text-lg text-gray-400 mb-6" style={{ lineHeight: '1.7' }}>
                                         {feature.description}
                                     </p>
                                     <ul className="space-y-3">
                                         {feature.benefits.map((benefit) => (
                                             <li key={benefit} className="flex items-center gap-3">
-                                                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                                                    <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                                                    <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                     </svg>
                                                 </div>
-                                                <span className="text-gray-700">{benefit}</span>
+                                                <span className="text-gray-300">{benefit}</span>
                                             </li>
                                         ))}
                                     </ul>
                                 </div>
-                                <div className={`bg-gradient-to-br from-gray-100 to-gray-50 rounded-2xl h-80 flex items-center justify-center overflow-hidden ${index % 2 === 1 ? 'lg:order-1' : ''}`}>
+                                <div className={`bg-white/5 border border-white/10 rounded-2xl h-80 flex items-center justify-center overflow-hidden ${index % 2 === 1 ? 'lg:order-1' : ''}`}>
                                     <img
                                         src={feature.image}
                                         alt={feature.title}
-                                        className="w-full h-full object-cover rounded-2xl"
+                                        className="w-full h-full object-cover rounded-2xl opacity-80 hover:opacity-100 transition-opacity"
                                     />
                                 </div>
                             </div>
@@ -234,19 +234,19 @@ const Features: React.FC = () => {
             </section>
 
             {/* Additional Features */}
-            <section className="py-16 bg-gray-50">
+            <section className="py-16 bg-[#1e293b]">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+                    <h2 className="text-3xl font-bold text-white text-center mb-12">
                         And so much more...
                     </h2>
                     <div className="grid md:grid-cols-3 gap-8">
                         {additionalFeatures.map((feature) => (
-                            <div key={feature.title} className="bg-white rounded-xl p-6 text-center border border-gray-100">
-                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mx-auto mb-4">
+                            <div key={feature.title} className="bg-[#0f172a] rounded-xl p-6 text-center border border-white/5 hover:border-blue-500/30 transition-colors">
+                                <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 mx-auto mb-4">
                                     {feature.icon}
                                 </div>
-                                <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                                <p className="text-sm text-gray-600" style={{ lineHeight: '1.6' }}>{feature.desc}</p>
+                                <h3 className="font-semibold text-white mb-2">{feature.title}</h3>
+                                <p className="text-sm text-gray-400" style={{ lineHeight: '1.6' }}>{feature.desc}</p>
                             </div>
                         ))}
                     </div>

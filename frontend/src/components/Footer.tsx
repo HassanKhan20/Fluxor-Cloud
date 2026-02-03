@@ -1,9 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Twitter, Linkedin, Mail } from 'lucide-react';
+import { useGalaxyTransition } from './GalaxyTransition';
 
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();
+    const { navigateWithZoom } = useGalaxyTransition();
+    const location = useLocation();
 
     const footerLinks = {
         product: [
@@ -80,12 +83,18 @@ const Footer: React.FC = () => {
                         <ul className="space-y-3">
                             {footerLinks.product.map((link) => (
                                 <li key={link.name}>
-                                    <Link
-                                        to={link.path}
+                                    <button
+                                        onClick={() => {
+                                            if (location.pathname === link.path) {
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            } else {
+                                                navigateWithZoom(link.path);
+                                            }
+                                        }}
                                         className="text-gray-400 hover:text-white transition-colors duration-200"
                                     >
                                         {link.name}
-                                    </Link>
+                                    </button>
                                 </li>
                             ))}
                         </ul>

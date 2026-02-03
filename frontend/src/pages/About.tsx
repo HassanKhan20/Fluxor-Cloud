@@ -30,7 +30,7 @@ const About: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-[#0f172a] text-white">
             <Navbar />
 
             {/* Hero, Story, and Values container with side gradients */}
@@ -42,10 +42,10 @@ const About: React.FC = () => {
                 <div className="absolute right-0 top-0 h-full w-48 pointer-events-none bg-gradient-to-l from-blue-950/70 to-transparent z-10" />
 
                 {/* Hero */}
-                <section className="pt-32 pb-16 bg-gradient-to-b from-gray-50 to-white">
+                <section className="pt-32 pb-16 bg-gradient-to-b from-[#0f172a] to-[#1e293b]">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-                        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-                            We believe small stores deserve <span className="text-blue-600">big technology</span>
+                        <h1 className="text-4xl sm:text-5xl font-bold text-white mb-6">
+                            We believe small stores deserve <span className="text-blue-500">big technology</span>
                         </h1>
                         <p className="text-xl text-gray-600 max-w-2xl mx-auto" style={{ lineHeight: '1.7' }}>
                             Fluxor Cloud was born from a simple observation: convenience stores and small shops power our communities, but they're often left behind by technology.

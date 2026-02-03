@@ -9,6 +9,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     rightIcon?: React.ReactNode;
 }
 
+import { twMerge } from 'tailwind-merge';
+import { clsx, type ClassValue } from 'clsx';
+
+function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
+
 export const Button: React.FC<ButtonProps> = ({
     variant = 'primary',
     size = 'md',
@@ -20,36 +27,13 @@ export const Button: React.FC<ButtonProps> = ({
     disabled,
     ...props
 }) => {
-    const baseStyles = `
-    inline-flex items-center justify-center gap-2 font-semibold rounded-xl
-    transition-all duration-200 ease-out cursor-pointer
-    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-    focus:outline-none focus:ring-2 focus:ring-offset-2
-  `;
+    const baseStyles = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 ease-out cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none focus:outline-none focus:ring-2 focus:ring-offset-2';
 
     const variants = {
-        primary: `
-      bg-[#005CFF] text-white
-      hover:bg-[#0047CC] hover:-translate-y-0.5
-      shadow-[0_4px_20px_-4px_rgba(0,92,255,0.5)]
-      hover:shadow-[0_0_25px_rgba(0,92,255,0.6)]
-      focus:ring-[#005CFF]
-    `,
-        secondary: `
-      bg-transparent text-gray-900 border-2 border-gray-200
-      hover:border-[#005CFF] hover:text-[#005CFF] hover:bg-blue-50
-      focus:ring-[#005CFF]
-    `,
-        dark: `
-      bg-[#0B0B0B] text-white
-      hover:bg-[#1A1A1A] hover:-translate-y-0.5
-      focus:ring-gray-800
-    `,
-        ghost: `
-      bg-transparent text-gray-600
-      hover:text-[#005CFF] hover:bg-gray-50
-      focus:ring-[#005CFF]
-    `,
+        primary: 'bg-[#005CFF] text-white hover:bg-[#0047CC] hover:-translate-y-0.5 shadow-[0_4px_20px_-4px_rgba(0,92,255,0.5)] hover:shadow-[0_0_25px_rgba(0,92,255,0.6)] focus:ring-[#005CFF]',
+        secondary: 'bg-transparent text-white border-2 border-[#005CFF] hover:bg-[#005CFF] hover:text-white hover:shadow-[0_0_20px_rgba(0,92,255,0.5)] hover:-translate-y-0.5 focus:ring-[#005CFF]',
+        dark: 'bg-white/10 text-white hover:bg-white/20 hover:-translate-y-0.5 focus:ring-gray-500 backdrop-blur-sm',
+        ghost: 'bg-transparent text-gray-300 hover:text-white hover:bg-white/10 focus:ring-[#005CFF]',
     };
 
     const sizes = {
@@ -60,7 +44,7 @@ export const Button: React.FC<ButtonProps> = ({
 
     return (
         <button
-            className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+            className={cn(baseStyles, variants[variant], sizes[size], className)}
             disabled={disabled || isLoading}
             {...props}
         >
