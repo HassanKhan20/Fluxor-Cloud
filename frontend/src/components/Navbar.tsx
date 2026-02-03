@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Button from './Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGalaxyTransition } from './GalaxyTransition';
 
 interface NavbarProps {
     onBookDemo?: () => void;
@@ -12,12 +13,12 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeHash, setActiveHash] = useState('');
     const location = useLocation();
+    const { navigateWithZoom } = useGalaxyTransition();
 
     // Scroll Spy Logic
     useEffect(() => {
         const handleScroll = () => {
             const sections = [
-                { id: 'features', hash: '#features' },
                 { id: 'pricing', hash: '#pricing' }
             ];
 
@@ -46,32 +47,69 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
 
     const navLinks = [
         { name: 'Home', path: '/', hash: '' },
-        { name: 'Features', path: '/', hash: '#features' },
+        { name: 'Features', path: '/features', hash: '' },
         { name: 'Pricing', path: '/', hash: '#pricing' },
+        { name: 'About', path: '/about', hash: '' },
     ];
 
     const isActive = (path: string, hash: string) => {
-        if (location.pathname !== '/') return false;
-        return activeHash === hash;
+        // For hash links on landing page
+        if (hash && location.pathname === '/') {
+            return activeHash === hash;
+        }
+        // For page routes
+        if (!hash && path !== '/') {
+            return location.pathname === path;
+        }
+        // For home
+        if (path === '/' && !hash) {
+            return location.pathname === '/' && !activeHash;
+        }
+        return false;
     };
 
-    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
-        if (location.pathname === '/') {
-            e.preventDefault();
-            setActiveHash(hash);
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, link: { name: string; path: string; hash: string }) => {
+        e.preventDefault();
+        setIsOpen(false);
 
-            if (hash) {
-                const element = document.querySelector(hash);
+        // For page routes (Features, About)
+        if (link.path !== '/' && !link.hash) {
+            // Only use galaxy transition when navigating TO features (not FROM features)
+            if (link.path === '/features' && location.pathname !== '/features') {
+                navigateWithZoom(link.path);
+            } else {
+                // Regular navigation for About or when leaving Features
+                window.location.href = link.path;
+            }
+            return;
+        }
+
+        // For hash links on landing page
+        if (link.hash) {
+            if (location.pathname === '/') {
+                // Already on landing, just scroll
+                setActiveHash(link.hash);
+                const element = document.querySelector(link.hash);
                 if (element) {
                     element.scrollIntoView({ behavior: 'smooth' });
-                    window.history.pushState(null, '', hash);
+                    window.history.pushState(null, '', link.hash);
                 }
             } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                window.history.pushState(null, '', '/');
+                // Navigate to landing with hash - no transition from features
+                window.location.href = '/' + link.hash;
             }
+            return;
         }
-        setIsOpen(false);
+
+        // For home
+        if (location.pathname === '/') {
+            setActiveHash('');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.history.pushState(null, '', '/');
+        } else {
+            // Regular navigation back to home
+            window.location.href = '/';
+        }
     };
 
     const handleBookDemo = () => {
@@ -105,7 +143,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                             <Link
                                 key={link.name}
                                 to={`${link.path}${link.hash}`}
-                                onClick={(e) => handleNavClick(e, link.hash)}
+                                onClick={(e) => handleNavClick(e, link)}
                                 className={`relative text-sm font-medium transition-colors duration-300 ${isActive(link.path, link.hash) ? 'text-blue-400' : 'text-gray-300 hover:text-white'
                                     }`}
                             >
@@ -159,7 +197,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                                 <Link
                                     key={link.name}
                                     to={`${link.path}${link.hash}`}
-                                    onClick={(e) => handleNavClick(e, link.hash)}
+                                    onClick={(e) => handleNavClick(e, link)}
                                     className={`block py-2 text-lg font-medium ${isActive(link.path, link.hash) ? 'text-blue-400' : 'text-gray-300'
                                         }`}
                                 >

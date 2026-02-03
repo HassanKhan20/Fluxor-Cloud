@@ -27,11 +27,11 @@ export const GalaxyTransitionProvider: React.FC<{ children: React.ReactNode }> =
 
     useEffect(() => {
         if (viewState === 'zooming-out') {
-            const timer = setTimeout(() => setViewState('flying'), 600); // reduced from 1000
+            const timer = setTimeout(() => setViewState('flying'), 300); // was 600
             return () => clearTimeout(timer);
         }
         if (viewState === 'flying') {
-            const timer = setTimeout(() => setViewState('arriving'), 1200); // reduced from 2000
+            const timer = setTimeout(() => setViewState('arriving'), 500); // was 1200
             return () => clearTimeout(timer);
         }
         if (viewState === 'arriving') {
@@ -40,7 +40,7 @@ export const GalaxyTransitionProvider: React.FC<{ children: React.ReactNode }> =
                     navigate(targetPath);
                     setViewState('idle');
                 }
-            }, 600); // reduced from 1000
+            }, 300); // was 600
             return () => clearTimeout(timer);
         }
     }, [viewState, targetPath, navigate]);
@@ -184,10 +184,10 @@ export const GalaxyTransitionProvider: React.FC<{ children: React.ReactNode }> =
                                 className="text-center"
                             >
                                 <h2 className="text-5xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">
-                                    Ascending...
+                                    Loading...
                                 </h2>
                                 <p className="text-blue-200 tracking-[0.5em] uppercase text-sm font-medium drop-shadow-md">
-                                    Entering the Stratosphere
+                                    Preparing Your Workspace
                                 </p>
                             </motion.div>
                         </div>

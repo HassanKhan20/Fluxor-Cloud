@@ -139,6 +139,12 @@ const Landing: React.FC = () => {
                                 variant="secondary"
                                 size="lg"
                                 className="bg-white/5 border-white/30 hover:bg-white/10 text-white h-14 px-8 text-lg hover:border-white/50 backdrop-blur-lg"
+                                onClick={() => {
+                                    const element = document.querySelector('#features');
+                                    if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                }}
                             >
                                 Learn More
                             </Button>
@@ -343,25 +349,47 @@ const Landing: React.FC = () => {
                 <Footer />
             </main >
 
-            {/* DEMO MODAL (Simplified for brevity, keep logic) */}
+            {/* DEMO MODAL */}
             {
                 showDemoModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md">
-                        <GlassCard className="max-w-md w-full mx-4 p-8 relative border-white/20 bg-[#0f172a]/90">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-lg">
+                        <GlassCard className="max-w-lg w-full mx-4 p-10 relative border-blue-500/30 bg-[#0f172a]/95 shadow-[0_0_60px_rgba(59,130,246,0.3)]">
                             <button
                                 onClick={() => setShowDemoModal(false)}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-white"
+                                className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors"
                             >
-                                <X size={24} width={24} />
+                                <X size={28} width={28} />
                             </button>
-                            <div className="text-center mb-6">
-                                <h2 className="text-2xl font-bold mb-2">Book a Demo</h2>
-                                <p className="text-gray-400">Our team will get back to you shortly.</p>
+                            <div className="text-center mb-8">
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/20 border border-blue-500/30 mb-4">
+                                    <Zap size={14} className="text-blue-400" />
+                                    <span className="text-xs font-medium text-blue-300 uppercase tracking-wider">Free Demo</span>
+                                </div>
+                                <h2 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                                    Schedule Your Demo
+                                </h2>
+                                <p className="text-gray-400 text-lg">
+                                    See how Fluxor Cloud can transform your store operations.
+                                </p>
                             </div>
-                            {/* Reuse the form logic from before, just styled */}
-                            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setShowDemoModal(false); }}>
-                                <input type="email" placeholder="Email Address" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none" />
-                                <Button className="w-full justify-center">Submit</Button>
+                            <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); setShowDemoModal(false); }}>
+                                <div>
+                                    <input
+                                        type="email"
+                                        placeholder="Enter your email address"
+                                        className="w-full bg-white/5 border border-white/20 rounded-xl px-5 py-4 text-white text-lg placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+                                    />
+                                </div>
+                                <Button
+                                    variant="primary"
+                                    size="lg"
+                                    className="w-full justify-center h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 border-0 shadow-[0_0_30px_rgba(59,130,246,0.4)] hover:shadow-[0_0_40px_rgba(59,130,246,0.6)] transition-all"
+                                >
+                                    Request Demo
+                                </Button>
+                                <p className="text-center text-sm text-gray-500">
+                                    We'll reach out within 24 hours to schedule your personalized demo.
+                                </p>
                             </form>
                         </GlassCard>
                     </div>
