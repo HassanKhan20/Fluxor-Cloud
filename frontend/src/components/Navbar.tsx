@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Button from './Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGalaxyTransition } from './GalaxyTransition';
 
 interface NavbarProps {
     onBookDemo?: () => void;
@@ -13,7 +12,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeHash, setActiveHash] = useState('');
     const location = useLocation();
-    const { navigateWithZoom } = useGalaxyTransition();
+    const navigate = useNavigate();
 
     // Scroll Spy Logic
     useEffect(() => {
@@ -75,9 +74,9 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
         // For page routes (Features, About)
         // For page routes (Features, About)
         if (link.path !== '/' && !link.hash) {
-            // Use galaxy transition when navigating TO a new page
+            // Standard navigation
             if (location.pathname !== link.path) {
-                navigateWithZoom(link.path);
+                navigate(link.path);
             }
             return;
         }
@@ -93,8 +92,8 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                     window.history.pushState(null, '', link.hash);
                 }
             } else {
-                // Navigate to landing with hash - no transition from features
-                window.location.href = '/' + link.hash;
+                // Navigate to landing with hash
+                navigate('/' + link.hash);
             }
             return;
         }
@@ -106,7 +105,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
             window.history.pushState(null, '', '/');
         } else {
             // Regular navigation back to home
-            window.location.href = '/';
+            navigate('/');
         }
     };
 
@@ -115,7 +114,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
         if (onBookDemo) {
             onBookDemo();
         } else {
-            window.location.href = '/?demo=true';
+            navigate('/?demo=true');
         }
     };
 
