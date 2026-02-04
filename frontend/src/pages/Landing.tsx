@@ -331,7 +331,7 @@ const Landing: React.FC = () => {
                             <div className="grid lg:grid-cols-2 gap-16 items-center">
                                 <div>
                                     <h2 className="text-3xl md:text-5xl font-bold text-white mb-8">Built for Real Stores</h2>
-                                    <div className="space-y-6 text-lg text-gray-400 leading-relaxed">
+                                    <div className="space-y-6 text-lg text-white leading-relaxed">
                                         <p>
                                             In 2023, we spent months working in convenience stores to understand the real challenges owners face.
                                             Spreadsheets, gut feelings, and guesswork were running the show.
@@ -340,22 +340,6 @@ const Landing: React.FC = () => {
                                             We saw a gap. Big retailers had AI and supercomputers. Small stores had... nothing.
                                             Fluxor Cloud bridges that gap, bringing enterprise-grade intelligence to the people who power our neighborhoods.
                                         </p>
-                                    </div>
-
-                                    {/* Stats */}
-                                    <div className="grid grid-cols-3 gap-8 mt-12 border-t border-white/10 pt-8">
-                                        <div>
-                                            <div className="text-3xl font-bold text-white mb-1">500+</div>
-                                            <div className="text-sm text-gray-500">Stores</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-3xl font-bold text-white mb-1">$50M</div>
-                                            <div className="text-sm text-gray-500">Processed</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-3xl font-bold text-white mb-1">24/7</div>
-                                            <div className="text-sm text-gray-500">Support</div>
-                                        </div>
                                     </div>
                                 </div>
                                 <div className="relative">
