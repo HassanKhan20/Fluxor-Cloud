@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Check, LayoutDashboard, Brain, X } from 'lucide-react';
+import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Check, LayoutDashboard, Brain, X, Shield, Lock, Database, Activity } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -84,20 +84,20 @@ const Landing: React.FC = () => {
                 <section className="relative min-h-screen flex items-center justify-center px-4 pt-20">
                     <motion.div
                         style={{ opacity: heroOpacity, scale: heroScale }}
-                        className="max-w-5xl mx-auto text-center space-y-8"
+                        className="max-w-4xl mx-auto text-center space-y-6"
                     >
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            className="flex flex-col items-center mb-12"
+                            className="flex flex-col items-center mb-8"
                         >
-                            <h1 className="text-7xl md:text-9xl font-bold font-outfit tracking-tighter text-white mb-2">FLUXOR</h1>
-                            <span className="text-2xl md:text-4xl font-space tracking-[0.3em] text-blue-400 font-light uppercase mb-12">Cloud</span>
+                            <h1 className="text-6xl md:text-8xl font-bold tracking-tighter text-white mb-2">FLUXOR</h1>
+                            <span className="text-xl md:text-3xl tracking-[0.3em] text-blue-400 font-light uppercase mb-8">Cloud</span>
 
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm mb-8">
-                                <Zap size={16} className="text-blue-400" />
-                                <span className="text-sm font-medium text-blue-200">AI-Powered Store Management</span>
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm mb-6">
+                                <Shield size={14} className="text-blue-400" />
+                                <span className="text-xs font-medium text-blue-200">Enterprise-Grade Tools for Local Stores</span>
                             </div>
                         </motion.div>
 
@@ -105,20 +105,44 @@ const Landing: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2, duration: 0.8 }}
-                            className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight"
+                            className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight"
                         >
-                            Smart Operations for <span className="text-blue-500">Small Stores</span>
+                            Enterprise-grade insights. <span className="text-blue-500">Built for small stores.</span>
                         </motion.h2>
 
                         <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.4, duration: 0.8 }}
-                            className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed"
+                            className="text-base md:text-lg text-gray-400 max-w-xl mx-auto leading-relaxed"
                         >
-                            Real insights, smart forecasting, and an AI assistant all in one beautiful
-                            dashboard. No spreadsheets. No guesswork.
+                            The same analytics and automation trusted by large retailers—built specifically for convenience stores. Reliable, secure, and designed for real-world operations.
                         </motion.p>
+
+                        {/* Trust Strip */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5, duration: 0.6 }}
+                            className="flex flex-wrap justify-center gap-4 mt-6 text-xs text-gray-400"
+                        >
+                            <div className="flex items-center gap-1.5">
+                                <Lock size={12} className="text-emerald-400" />
+                                <span>Secure Cloud Infrastructure</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Database size={12} className="text-blue-400" />
+                                <span>Store-Level Data Isolation</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Shield size={12} className="text-violet-400" />
+                                <span>Role-Based Access</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Activity size={12} className="text-cyan-400" />
+                                <span>Reliable Real-Time Analytics</span>
+                            </div>
+                        </motion.div>
 
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}

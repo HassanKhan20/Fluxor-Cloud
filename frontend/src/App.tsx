@@ -11,6 +11,8 @@ import About from './pages/About';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Vendors from './pages/Vendors';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 
 import ScrollToTop from './components/ScrollToTop';
 
@@ -24,6 +26,8 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/features" element={<Features />} />
           <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
 
           {/* Protected Pages (still accessible for demo) */}
