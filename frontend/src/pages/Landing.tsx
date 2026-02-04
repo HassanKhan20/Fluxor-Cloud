@@ -92,8 +92,8 @@ const Landing: React.FC = () => {
                             transition={{ duration: 0.8 }}
                             className="flex flex-col items-center mb-12"
                         >
-                            <h1 className="text-7xl md:text-9xl font-bold tracking-tighter text-white mb-2">FLUXOR</h1>
-                            <span className="text-2xl md:text-4xl tracking-[0.3em] text-blue-400 font-light uppercase mb-12">Cloud</span>
+                            <h1 className="text-7xl md:text-9xl font-bold font-outfit tracking-tighter text-white mb-2">FLUXOR</h1>
+                            <span className="text-2xl md:text-4xl font-space tracking-[0.3em] text-blue-400 font-light uppercase mb-12">Cloud</span>
 
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm mb-8">
                                 <Zap size={16} className="text-blue-400" />
@@ -175,7 +175,7 @@ const Landing: React.FC = () => {
                                 </div>
                                 <h2 className="text-3xl md:text-5xl font-bold text-white">Command Center</h2>
                                 <p className="text-xl text-gray-400 leading-relaxed">
-                                    A unified dashboard that gives you a god's eye view of your entire operation.
+                                    A unified dashboard that gives you a bird's eye view of your entire operation.
                                     Track sales, inventory, and staff performance in real-time with zero latency.
                                 </p>
                                 <ul className="space-y-4 pt-4">
@@ -329,7 +329,7 @@ const Landing: React.FC = () => {
                     <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
                         <AnimatedSection>
                             <h2 className="text-4xl md:text-6xl font-bold mb-8 tracking-tight text-white">
-                                Ready to <span className="text-blue-500">Fluxor</span>?
+                                Ready to <span className="text-blue-500">transform your store</span>?
                             </h2>
                             <p className="text-xl text-gray-400 mb-12">
                                 Join the waiting list and be the first to experience the future.

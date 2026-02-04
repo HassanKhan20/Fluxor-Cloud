@@ -262,8 +262,8 @@ export default function Dashboard() {
                         </svg>
                         {sidebarOpen && (
                             <div className="flex flex-col">
-                                <span className="text-base font-bold tracking-tight text-slate-800">FLUXOR</span>
-                                <span className="text-[10px] font-medium tracking-widest text-blue-500">CLOUD</span>
+                                <span className="text-base font-bold font-outfit tracking-tight text-slate-800">FLUXOR</span>
+                                <span className="text-[10px] font-medium font-space tracking-widest text-blue-500">CLOUD</span>
                             </div>
                         )}
                     </Link>
@@ -729,7 +729,7 @@ export default function Dashboard() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-gray-900">Fluxor AI</h3>
+                                    <h3 className="font-semibold font-outfit text-gray-900">Fluxor AI</h3>
                                     <p className="text-xs text-gray-500">Your operations assistant</p>
                                 </div>
                             </div>

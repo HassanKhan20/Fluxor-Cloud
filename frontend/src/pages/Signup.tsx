@@ -71,16 +71,16 @@ const Signup: React.FC = () => {
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-                            <span className="text-[#005CFF] font-bold text-xl">F</span>
+                            <span className="text-[#005CFF] font-bold font-outfit text-xl">F</span>
                         </div>
-                        <span className="text-xl font-bold text-white">
-                            FluxorCloud
+                        <span className="text-xl font-bold font-outfit text-white">
+                            Fluxor<span className="text-[#005CFF] font-space">Cloud</span>
                         </span>
                     </Link>
 
                     {/* Main Content */}
                     <div className="max-w-md">
-                        <h1 className="text-4xl font-bold text-white mb-6 leading-tight">
+                        <h1 className="text-4xl font-bold font-outfit text-white mb-6 leading-tight">
                             Start your journey to smarter store management
                         </h1>
                         <p className="text-blue-100 text-lg leading-relaxed mb-8">

@@ -133,7 +133,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                             <img src="/logo.png" alt="Fluxor Cloud Logo" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-xl font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">FLUXOR</span>
+                            <span className="text-xl font-bold font-outfit tracking-tight text-white group-hover:text-blue-400 transition-colors">FLUXOR</span>
                         </div>
                     </Link>
 

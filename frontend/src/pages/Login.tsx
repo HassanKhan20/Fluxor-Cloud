@@ -59,14 +59,14 @@ const Login: React.FC = () => {
                         <div className="w-10 h-10 bg-[#005CFF] rounded-xl flex items-center justify-center">
                             <span className="text-white font-bold text-xl">F</span>
                         </div>
-                        <span className="text-xl font-bold text-white">
-                            Fluxor<span className="text-[#005CFF]">Cloud</span>
+                        <span className="text-xl font-bold font-outfit text-white">
+                            Fluxor<span className="text-[#005CFF] font-space">Cloud</span>
                         </span>
                     </Link>
 
                     {/* Main Content */}
                     <div className="max-w-md">
-                        <h1 className="text-4xl font-bold text-white mb-6 leading-tight">
+                        <h1 className="text-4xl font-bold font-outfit text-white mb-6 leading-tight">
                             Welcome back to your store command center
                         </h1>
                         <p className="text-gray-400 text-lg leading-relaxed">

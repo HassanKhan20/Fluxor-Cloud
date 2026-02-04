@@ -54,8 +54,8 @@ const Footer: React.FC = () => {
                                 </g>
                             </svg>
                             <div className="flex flex-col">
-                                <span className="text-lg font-bold tracking-tight text-white">FLUXOR</span>
-                                <span className="text-xs font-medium tracking-widest text-blue-400">CLOUD</span>
+                                <span className="text-lg font-bold font-outfit tracking-tight text-white">FLUXOR</span>
+                                <span className="text-xs font-medium font-space tracking-widest text-blue-400">CLOUD</span>
                             </div>
                         </Link>
                         <p className="text-gray-400 mb-6 max-w-xs">
