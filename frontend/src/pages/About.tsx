@@ -47,7 +47,7 @@ const About: React.FC = () => {
                         <h1 className="text-4xl sm:text-5xl font-bold text-white mb-6">
                             We believe small stores deserve <span className="text-blue-500">big technology</span>
                         </h1>
-                        <p className="text-xl text-gray-600 max-w-2xl mx-auto" style={{ lineHeight: '1.7' }}>
+                        <p className="text-xl text-gray-300 max-w-2xl mx-auto" style={{ lineHeight: '1.7' }}>
                             Fluxor Cloud was born from a simple observation: convenience stores and small shops power our communities, but they're often left behind by technology.
                         </p>
                     </div>

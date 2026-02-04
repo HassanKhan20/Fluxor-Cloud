@@ -73,13 +73,11 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
         setIsOpen(false);
 
         // For page routes (Features, About)
+        // For page routes (Features, About)
         if (link.path !== '/' && !link.hash) {
-            // Only use galaxy transition when navigating TO features (not FROM features)
-            if (link.path === '/features' && location.pathname !== '/features') {
+            // Use galaxy transition when navigating TO a new page
+            if (location.pathname !== link.path) {
                 navigateWithZoom(link.path);
-            } else {
-                // Regular navigation for About or when leaving Features
-                window.location.href = link.path;
             }
             return;
         }
