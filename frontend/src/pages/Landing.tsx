@@ -332,11 +332,11 @@ const Landing: React.FC = () => {
                                 <div>
                                     <h2 className="text-3xl md:text-5xl font-bold text-white mb-8">Built for Real Stores</h2>
                                     <div className="space-y-6 text-lg text-white leading-relaxed">
-                                        <p>
+                                        <p className="text-white">
                                             In 2023, we spent months working in convenience stores to understand the real challenges owners face.
                                             Spreadsheets, gut feelings, and guesswork were running the show.
                                         </p>
-                                        <p>
+                                        <p className="text-white">
                                             We saw a gap. Big retailers had AI and supercomputers. Small stores had... nothing.
                                             Fluxor Cloud bridges that gap, bringing enterprise-grade intelligence to the people who power our neighborhoods.
                                         </p>
@@ -358,7 +358,7 @@ const Landing: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <h4 className="text-white font-medium">{val.title}</h4>
-                                                        <p className="text-sm text-gray-400">{val.desc}</p>
+                                                        <p className="text-sm text-gray-200">{val.desc}</p>
                                                     </div>
                                                 </div>
                                             ))}
