@@ -323,8 +323,71 @@ const Landing: React.FC = () => {
                     </div >
                 </section >
 
+                {/* ABOUT SECTION */}
+                <section id="about" className="py-32 relative">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        {/* Story */}
+                        <AnimatedSection className="mb-32">
+                            <div className="grid lg:grid-cols-2 gap-16 items-center">
+                                <div>
+                                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-8">Built for Real Stores</h2>
+                                    <div className="space-y-6 text-lg text-gray-400 leading-relaxed">
+                                        <p>
+                                            In 2023, we spent months working in convenience stores to understand the real challenges owners face.
+                                            Spreadsheets, gut feelings, and guesswork were running the show.
+                                        </p>
+                                        <p>
+                                            We saw a gap. Big retailers had AI and supercomputers. Small stores had... nothing.
+                                            Fluxor Cloud bridges that gap, bringing enterprise-grade intelligence to the people who power our neighborhoods.
+                                        </p>
+                                    </div>
+
+                                    {/* Stats */}
+                                    <div className="grid grid-cols-3 gap-8 mt-12 border-t border-white/10 pt-8">
+                                        <div>
+                                            <div className="text-3xl font-bold text-white mb-1">500+</div>
+                                            <div className="text-sm text-gray-500">Stores</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-3xl font-bold text-white mb-1">$50M</div>
+                                            <div className="text-sm text-gray-500">Processed</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-3xl font-bold text-white mb-1">24/7</div>
+                                            <div className="text-sm text-gray-500">Support</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full opacity-30" />
+                                    <GlassCard className="p-8 space-y-8">
+                                        <h3 className="text-xl font-bold text-white mb-4">Our Core Values</h3>
+                                        <div className="space-y-6">
+                                            {[
+                                                { title: 'Customer First', desc: 'Every feature starts with your needs.', icon: '❤️' },
+                                                { title: 'Simplicity', desc: 'Powerful tech should feel simple.', icon: '🎯' },
+                                                { title: 'Innovation', desc: 'Democratizing AI for everyone.', icon: '⚡' },
+                                            ].map((val, i) => (
+                                                <div key={i} className="flex gap-4">
+                                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-xl">
+                                                        {val.icon}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-white font-medium">{val.title}</h4>
+                                                        <p className="text-sm text-gray-400">{val.desc}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </GlassCard>
+                                </div>
+                            </div>
+                        </AnimatedSection>
+                    </div>
+                </section>
+
                 {/* FINAL CTA */}
-                < section className="py-32 relative overflow-hidden" >
+                <section className="py-32 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent pointer-events-none" />
                     <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
                         <AnimatedSection>

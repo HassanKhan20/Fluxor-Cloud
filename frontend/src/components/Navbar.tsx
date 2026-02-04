@@ -46,9 +46,9 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
 
     const navLinks = [
         { name: 'Home', path: '/', hash: '' },
-        { name: 'Features', path: '/features', hash: '' },
+        { name: 'Features', path: '/', hash: '#features' },
         { name: 'Pricing', path: '/', hash: '#pricing' },
-        { name: 'About', path: '/about', hash: '' },
+        { name: 'About', path: '/', hash: '#about' },
     ];
 
     const isActive = (path: string, hash: string) => {
@@ -71,41 +71,32 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
         e.preventDefault();
         setIsOpen(false);
 
-        // For page routes (Features, About)
-        // For page routes (Features, About)
-        if (link.path !== '/' && !link.hash) {
-            // Standard navigation
-            if (location.pathname !== link.path) {
-                navigate(link.path);
-            }
-            return;
-        }
-
-        // For hash links on landing page
-        if (link.hash) {
-            if (location.pathname === '/') {
-                // Already on landing, just scroll
-                setActiveHash(link.hash);
+        // If we are on the landing page
+        if (location.pathname === '/') {
+            if (link.hash) {
+                // Scroll to section
                 const element = document.querySelector(link.hash);
                 if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
+                    const offset = 80; // Navbar height
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: "smooth"
+                    });
+                    setActiveHash(link.hash);
                     window.history.pushState(null, '', link.hash);
                 }
             } else {
-                // Navigate to landing with hash
-                navigate('/' + link.hash);
+                // Scroll to top (Home)
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setActiveHash('');
+                window.history.pushState(null, '', '/');
             }
-            return;
-        }
-
-        // For home
-        if (location.pathname === '/') {
-            setActiveHash('');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            window.history.pushState(null, '', '/');
         } else {
-            // Regular navigation back to home
-            navigate('/');
+            // Not on landing page? Navigate there with hash
+            navigate('/' + link.hash);
         }
     };
 
