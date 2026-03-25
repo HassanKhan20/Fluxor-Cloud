@@ -16,6 +16,7 @@ import staffRoutes from './routes/staffRoutes';
 import reorderRoutes from './routes/reorderRoutes';
 import { prisma } from './lib/prisma';
 import { generateAlertsForStore } from './controllers/alertsController';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -96,9 +97,33 @@ async function runAlertGeneration() {
     }
 }
 
+// Seed demo account on startup
+async function seedDemoAccount() {
+    try {
+        const existing = await prisma.user.findUnique({ where: { email: 'demo@fluxor.cloud' } });
+        if (existing) return;
+
+        const hashedPassword = await bcrypt.hash('test123', 10);
+        await prisma.$transaction(async (tx: any) => {
+            const user = await tx.user.create({
+                data: { name: 'Demo User', email: 'demo@fluxor.cloud', password: hashedPassword, role: 'OWNER' },
+            });
+            const store = await tx.store.create({
+                data: { name: 'Demo Store', address: '123 Demo Street', timezone: 'UTC', defaultCurrency: 'USD' },
+            });
+            await tx.storeMembership.create({
+                data: { userId: user.id, storeId: store.id, role: 'OWNER' },
+            });
+        });
+        console.log('[Seed] Demo account created (demo@fluxor.cloud)');
+    } catch (err) {
+        console.error('[Seed] Failed to create demo account:', err);
+    }
+}
+
 const server = app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
-    // Run once on startup, then every hour
+    await seedDemoAccount();
     await runAlertGeneration();
     setInterval(runAlertGeneration, 60 * 60 * 1000);
 });

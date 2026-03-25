@@ -191,6 +191,15 @@ const Login: React.FC = () => {
                         </Button>
                     </form>
 
+                    {/* Demo Login */}
+                    <button
+                        type="button"
+                        onClick={() => { setEmail('demo@fluxor.cloud'); setPassword('test123'); }}
+                        className="w-full mt-4 py-3 border-2 border-dashed border-blue-200 rounded-xl text-sm font-medium text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all"
+                    >
+                        Try Demo Account
+                    </button>
+
                     {/* Footer */}
                     <p className="mt-8 text-center text-sm text-gray-500">
                         By signing in, you agree to our{' '}
