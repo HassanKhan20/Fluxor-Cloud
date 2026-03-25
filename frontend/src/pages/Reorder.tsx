@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Mail, CheckCircle, AlertTriangle, Package, ChevronDown, ChevronUp, Copy, X, Truck } from 'lucide-react';
+import { ShoppingCart, Mail, CheckCircle, AlertTriangle, ChevronDown, ChevronUp, Copy, X, Truck } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { api } from '@/lib/api';
 
