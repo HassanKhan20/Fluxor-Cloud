@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getTrends, getPredictions, getTopProducts, getInsights, getInventoryHealth, getMoneyWasted } from '../controllers/analyticsController';
+import { getTrends, getPredictions, getTopProducts, getInsights, getInventoryHealth, getMoneyWasted, getCashFlow } from '../controllers/analyticsController';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
@@ -12,6 +12,7 @@ router.get('/top-products', getTopProducts);
 router.get('/insights', getInsights);
 router.get('/inventory-health', getInventoryHealth);
 router.get('/money-wasted', getMoneyWasted);
+router.get('/cashflow', getCashFlow);
 
 export default router;
 

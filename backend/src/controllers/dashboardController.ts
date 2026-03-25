@@ -1,14 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-
-// Helper (reused)
-const getStoreId = async (req: Request): Promise<string | null> => {
-    // @ts-ignore
-    const userId = req.user?.userId;
-    if (!userId) return null;
-    const membership = await prisma.storeMembership.findFirst({ where: { userId } });
-    return membership?.storeId || null;
-};
+import { getStoreId } from '../lib/storeContext';
 
 // Helper to get start/end of a day
 const getDayBounds = (date: Date) => {
@@ -276,7 +268,7 @@ export const getWeeklySummary = async (req: Request, res: Response) => {
             recommendations.push(`Consider raising price on ${worstPerformer.name} — margin is only ${worstMargin.toFixed(0)}%.`);
         }
 
-        res.json({
+        const summaryPayload = {
             weekStart: thisWeek.start.toISOString(),
             weekEnd: thisWeek.end.toISOString(),
             revenue: {
@@ -291,7 +283,52 @@ export const getWeeklySummary = async (req: Request, res: Response) => {
             topProduct: topProductData,
             worstPerformer,
             recommendations
+        };
+
+        // Persist to WeeklySummary table (upsert by storeId + weekStart)
+        await prisma.weeklySummary.upsert({
+            where: { storeId_weekStart: { storeId, weekStart: thisWeek.start } },
+            create: {
+                storeId,
+                weekStart: thisWeek.start,
+                weekEnd: thisWeek.end,
+                revenue: Math.round(thisWeekRevenue * 100) / 100,
+                revenueChange: Math.round(revenueChange * 100) / 100,
+                totalWasted: wastedData.total,
+                wastedDeadStock: wastedData.breakdown.deadStock.amount,
+                wastedOverstock: wastedData.breakdown.overstock.amount,
+                wastedSlowMovers: wastedData.breakdown.slowMovers.amount,
+                wastedShrinkage: wastedData.breakdown.shrinkLoss.amount,
+                primaryWasteReason: wastedData.topCauses[0]?.description || null,
+                topProductId: topProductData?.id || null,
+                topProductName: topProductData?.name || null,
+                topProductRevenue: topProductData?.revenue || null,
+                worstPerformerId: worstPerformer?.id || null,
+                worstPerformerName: worstPerformer?.name || null,
+                worstPerformerType: worstPerformer?.type || null,
+                worstPerformerReason: worstPerformer?.reason || null,
+                recommendations: JSON.stringify(recommendations)
+            },
+            update: {
+                revenue: Math.round(thisWeekRevenue * 100) / 100,
+                revenueChange: Math.round(revenueChange * 100) / 100,
+                totalWasted: wastedData.total,
+                wastedDeadStock: wastedData.breakdown.deadStock.amount,
+                wastedOverstock: wastedData.breakdown.overstock.amount,
+                wastedSlowMovers: wastedData.breakdown.slowMovers.amount,
+                primaryWasteReason: wastedData.topCauses[0]?.description || null,
+                topProductId: topProductData?.id || null,
+                topProductName: topProductData?.name || null,
+                topProductRevenue: topProductData?.revenue || null,
+                worstPerformerId: worstPerformer?.id || null,
+                worstPerformerName: worstPerformer?.name || null,
+                worstPerformerType: worstPerformer?.type || null,
+                worstPerformerReason: worstPerformer?.reason || null,
+                recommendations: JSON.stringify(recommendations)
+            }
         });
+
+        res.json(summaryPayload);
 
     } catch (error) {
         console.error('Error generating weekly summary:', error);
@@ -410,6 +447,162 @@ async function calculateMoneyWasted(storeId: string) {
         explanation
     };
 }
+
+// Cash Flow — last 30 days of inflows (sales) vs outflows (invoices)
+export const getCashFlow = async (req: Request, res: Response) => {
+    try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+        // Daily sales (inflows)
+        const sales = await prisma.sale.findMany({
+            where: { storeId, dateTime: { gte: thirtyDaysAgo } },
+            select: { dateTime: true, totalAmount: true }
+        });
+
+        // Daily invoice costs (outflows)
+        const invoices = await prisma.invoice.findMany({
+            where: { storeId, createdAt: { gte: thirtyDaysAgo }, status: { not: 'ERROR' } },
+            select: { createdAt: true, totalAmount: true, invoiceDate: true }
+        });
+
+        // Build daily buckets
+        const dailyMap: Record<string, { date: string; inflow: number; outflow: number }> = {};
+        for (let i = 0; i < 30; i++) {
+            const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+            const key = d.toISOString().split('T')[0];
+            dailyMap[key] = { date: key, inflow: 0, outflow: 0 };
+        }
+
+        for (const s of sales) {
+            const key = new Date(s.dateTime).toISOString().split('T')[0];
+            if (dailyMap[key]) dailyMap[key].inflow += s.totalAmount;
+        }
+
+        for (const inv of invoices) {
+            const d = inv.invoiceDate || inv.createdAt;
+            const key = new Date(d).toISOString().split('T')[0];
+            if (dailyMap[key] && inv.totalAmount) dailyMap[key].outflow += inv.totalAmount;
+        }
+
+        const daily = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
+        const totalInflow = daily.reduce((s, d) => s + d.inflow, 0);
+        const totalOutflow = daily.reduce((s, d) => s + d.outflow, 0);
+        const netCashFlow = totalInflow - totalOutflow;
+
+        // 7-day vs prior 7-day trend
+        const last7 = daily.slice(-7);
+        const prior7 = daily.slice(-14, -7);
+        const last7Net = last7.reduce((s, d) => s + d.inflow - d.outflow, 0);
+        const prior7Net = prior7.reduce((s, d) => s + d.inflow - d.outflow, 0);
+        const trendPercent = prior7Net !== 0 ? ((last7Net - prior7Net) / Math.abs(prior7Net)) * 100 : 0;
+
+        res.json({
+            daily,
+            totalInflow: Math.round(totalInflow * 100) / 100,
+            totalOutflow: Math.round(totalOutflow * 100) / 100,
+            netCashFlow: Math.round(netCashFlow * 100) / 100,
+            last7DaysNet: Math.round(last7Net * 100) / 100,
+            trendPercent: Math.round(trendPercent * 10) / 10
+        });
+    } catch (error) {
+        console.error('Error fetching cash flow:', error);
+        res.status(500).json({ message: 'Error fetching cash flow' });
+    }
+};
+
+// Daily Briefing — one-glance morning summary
+export const getDailyBriefing = async (req: Request, res: Response) => {
+    try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
+        const now = new Date();
+        const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(now); todayEnd.setHours(23, 59, 59, 999);
+        const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        const yesterdayEnd = new Date(todayEnd); yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        // Use latest sale date as "today" (for demo data)
+        const latestSale = await prisma.sale.findFirst({
+            where: { storeId },
+            orderBy: { dateTime: 'desc' },
+            select: { dateTime: true }
+        });
+
+        const dataToday = latestSale ? new Date(latestSale.dateTime) : now;
+        const dtStart = new Date(dataToday); dtStart.setHours(0, 0, 0, 0);
+        const dtEnd = new Date(dataToday); dtEnd.setHours(23, 59, 59, 999);
+        const dtYestStart = new Date(dtStart); dtYestStart.setDate(dtYestStart.getDate() - 1);
+        const dtYestEnd = new Date(dtEnd); dtYestEnd.setDate(dtYestEnd.getDate() - 1);
+        const dt7Ago = new Date(dataToday.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        const [todaySales, yesterdaySales, lowStockProducts, openFlags, openAlerts, recentInvoices] = await Promise.all([
+            prisma.sale.aggregate({ where: { storeId, dateTime: { gte: dtStart, lte: dtEnd } }, _sum: { totalAmount: true }, _count: true }),
+            prisma.sale.aggregate({ where: { storeId, dateTime: { gte: dtYestStart, lte: dtYestEnd } }, _sum: { totalAmount: true }, _count: true }),
+            prisma.product.count({
+                where: { storeId, isActive: true, inventorySnapshots: { some: { quantityOnHand: { lt: 10 } } } }
+            }),
+            prisma.staffFlag.count({ where: { storeId, isResolved: false } }),
+            prisma.alert.count({ where: { storeId, isRead: false } }),
+            prisma.invoice.count({ where: { storeId, createdAt: { gte: dt7Ago } } })
+        ]);
+
+        const todayRev = todaySales._sum.totalAmount || 0;
+        const yesterdayRev = yesterdaySales._sum.totalAmount || 0;
+        const revChange = yesterdayRev > 0 ? ((todayRev - yesterdayRev) / yesterdayRev) * 100 : 0;
+
+        // Build briefing bullets
+        const bullets: { icon: string; text: string; type: 'good' | 'warning' | 'info' }[] = [];
+
+        if (todayRev > 0) {
+            const dir = revChange >= 0 ? 'up' : 'down';
+            bullets.push({
+                icon: revChange >= 0 ? 'trending-up' : 'trending-down',
+                text: `Today's revenue: $${todayRev.toFixed(2)} (${dir} ${Math.abs(revChange).toFixed(0)}% vs yesterday)`,
+                type: revChange >= 0 ? 'good' : 'warning'
+            });
+        } else {
+            bullets.push({ icon: 'info', text: 'No sales recorded yet today.', type: 'info' });
+        }
+
+        if (lowStockProducts > 0) {
+            bullets.push({ icon: 'package', text: `${lowStockProducts} product${lowStockProducts > 1 ? 's' : ''} running low on stock`, type: 'warning' });
+        }
+
+        if (openFlags > 0) {
+            bullets.push({ icon: 'flag', text: `${openFlags} unresolved staff flag${openFlags > 1 ? 's' : ''}`, type: 'warning' });
+        }
+
+        if (openAlerts > 0) {
+            bullets.push({ icon: 'bell', text: `${openAlerts} unread alert${openAlerts > 1 ? 's' : ''} waiting`, type: 'info' });
+        }
+
+        if (recentInvoices > 0) {
+            bullets.push({ icon: 'file-text', text: `${recentInvoices} invoice${recentInvoices > 1 ? 's' : ''} received this week`, type: 'info' });
+        }
+
+        if (bullets.length <= 1) {
+            bullets.push({ icon: 'check', text: 'Everything looks smooth. Keep it up!', type: 'good' });
+        }
+
+        res.json({
+            date: dataToday.toISOString(),
+            revenue: { today: Math.round(todayRev * 100) / 100, yesterday: Math.round(yesterdayRev * 100) / 100, changePercent: Math.round(revChange * 10) / 10 },
+            transactions: todaySales._count,
+            lowStock: lowStockProducts,
+            openFlags,
+            openAlerts,
+            bullets
+        });
+    } catch (error) {
+        console.error('Error generating daily briefing:', error);
+        res.status(500).json({ message: 'Error generating daily briefing' });
+    }
+};
 
 // NEW: Money Wasted Breakdown endpoint
 export const getMoneyWastedBreakdown = async (req: Request, res: Response) => {

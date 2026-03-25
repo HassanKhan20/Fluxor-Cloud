@@ -26,7 +26,7 @@ const Footer: React.FC = () => {
     ];
 
     return (
-        <footer className="bg-[#0B0B0B] text-white">
+        <footer className="bg-gray-50 border-t border-gray-200 text-gray-900">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 {/* Top Section */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
@@ -44,21 +44,21 @@ const Footer: React.FC = () => {
                                 <path d="M32 22c0-4.4-3.6-8-8-8-1.5 0-2.9.4-4.1 1.1C18.5 12.3 15.5 10 12 10c-4.4 0-8 3.6-8 8 0 .4 0 .8.1 1.2C1.7 20.1 0 22.4 0 25c0 3.3 2.7 6 6 6h24c3.3 0 6-2.7 6-6 0-2.6-1.7-4.8-4-5.6 0-.1 0-.3 0-.4z"
                                     fill="url(#footerCloudGrad)" transform="translate(4, 5) scale(0.8)" />
                                 <g transform="translate(20, 20)">
-                                    <polygon points="0,-6 5.2,-3 5.2,3 0,6 -5.2,3 -5.2,-3" fill="none" stroke="white" strokeWidth="1" opacity="0.9" />
-                                    <circle cx="0" cy="-6" r="1.5" fill="white" />
-                                    <circle cx="5.2" cy="-3" r="1.5" fill="white" />
-                                    <circle cx="5.2" cy="3" r="1.5" fill="white" />
-                                    <circle cx="0" cy="6" r="1.5" fill="white" />
-                                    <circle cx="-5.2" cy="3" r="1.5" fill="white" />
-                                    <circle cx="-5.2" cy="-3" r="1.5" fill="white" />
+                                    <polygon points="0,-6 5.2,-3 5.2,3 0,6 -5.2,3 -5.2,-3" fill="none" stroke="#3B82F6" strokeWidth="1" opacity="0.9" />
+                                    <circle cx="0" cy="-6" r="1.5" fill="#3B82F6" />
+                                    <circle cx="5.2" cy="-3" r="1.5" fill="#3B82F6" />
+                                    <circle cx="5.2" cy="3" r="1.5" fill="#3B82F6" />
+                                    <circle cx="0" cy="6" r="1.5" fill="#3B82F6" />
+                                    <circle cx="-5.2" cy="3" r="1.5" fill="#3B82F6" />
+                                    <circle cx="-5.2" cy="-3" r="1.5" fill="#3B82F6" />
                                 </g>
                             </svg>
                             <div className="flex flex-col">
-                                <span className="text-lg font-bold font-outfit tracking-tight text-white">FLUXOR</span>
-                                <span className="text-xs font-medium font-space tracking-widest text-blue-400">CLOUD</span>
+                                <span className="text-lg font-bold font-outfit tracking-tight text-gray-900">FLUXOR</span>
+                                <span className="text-xs font-medium font-space tracking-widest text-blue-600">CLOUD</span>
                             </div>
                         </Link>
-                        <p className="text-gray-400 mb-6 max-w-xs">
+                        <p className="text-gray-600 mb-6 max-w-xs">
                             AI-powered operations management for small convenience stores. Smarter insights, better decisions.
                         </p>
                         <div className="flex gap-4">
@@ -68,8 +68,8 @@ const Footer: React.FC = () => {
                                     href={link.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center
-                             text-gray-400 hover:text-white hover:bg-[#005CFF] transition-all duration-200"
+                                    className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center
+                             text-gray-500 hover:text-white hover:bg-blue-600 transition-all duration-200"
                                 >
                                     {link.icon}
                                 </a>
@@ -79,7 +79,7 @@ const Footer: React.FC = () => {
 
                     {/* Product Links */}
                     <div>
-                        <h4 className="font-semibold text-white mb-4">Product</h4>
+                        <h4 className="font-semibold text-gray-900 mb-4">Product</h4>
                         <ul className="space-y-3">
                             {footerLinks.product.map((link) => (
                                 <li key={link.name}>
@@ -91,7 +91,7 @@ const Footer: React.FC = () => {
                                                 navigateWithZoom(link.path);
                                             }
                                         }}
-                                        className="text-gray-400 hover:text-white transition-colors duration-200"
+                                        className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
                                     >
                                         {link.name}
                                     </button>
@@ -102,13 +102,13 @@ const Footer: React.FC = () => {
 
                     {/* Legal Links */}
                     <div>
-                        <h4 className="font-semibold text-white mb-4">Legal</h4>
+                        <h4 className="font-semibold text-gray-900 mb-4">Legal</h4>
                         <ul className="space-y-3">
                             {footerLinks.legal.map((link) => (
                                 <li key={link.name}>
                                     <Link
                                         to={link.path}
-                                        className="text-gray-400 hover:text-white transition-colors duration-200"
+                                        className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
                                     >
                                         {link.name}
                                     </Link>
@@ -119,11 +119,11 @@ const Footer: React.FC = () => {
                 </div>
 
                 {/* Bottom Section */}
-                <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-gray-400 text-sm">
+                <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-gray-500 text-sm">
                         © {currentYear} Fluxor Cloud. All rights reserved.
                     </p>
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-400 text-sm">
                         Made with ❤️ for small business owners
                     </p>
                 </div>

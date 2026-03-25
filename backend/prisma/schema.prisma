@@ -38,6 +38,9 @@ model Store {
   chatMessages    ChatMessage[]
   alerts          Alert[]
   weeklySummaries WeeklySummary[]
+  staff           Staff[]
+  shifts          Shift[]
+  staffFlags      StaffFlag[]
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -190,6 +193,60 @@ model Alert {
   
   store       Store    @relation(fields: [storeId], references: [id])
   
+  createdAt   DateTime @default(now())
+}
+
+// Staff management
+model Staff {
+  id          String   @id @default(uuid())
+  storeId     String
+  name        String
+  role        String   @default("CASHIER") // CASHIER, SUPERVISOR, MANAGER
+  phone       String?
+  email       String?
+  pin         String?  // 4-digit PIN for shift check-in (hashed)
+  isActive    Boolean  @default(true)
+  hireDate    DateTime?
+
+  store       Store    @relation(fields: [storeId], references: [id])
+  shifts      Shift[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Shift {
+  id          String   @id @default(uuid())
+  storeId     String
+  staffId     String
+  startTime   DateTime
+  endTime     DateTime?
+  notes       String?
+  salesTotal  Float?   // Sales revenue generated during this shift
+
+  store       Store    @relation(fields: [storeId], references: [id])
+  staff       Staff    @relation(fields: [staffId], references: [id])
+  flags       StaffFlag[]
+
+  createdAt   DateTime @default(now())
+}
+
+model StaffFlag {
+  id          String   @id @default(uuid())
+  storeId     String
+  shiftId     String?
+  staffId     String?
+  type        String   // shrinkage, low_sales, pattern_break, manual
+  severity    String   @default("warning") // info, warning, critical
+  title       String
+  description String
+  value       Float?   // Numeric value (e.g. shrinkage amount)
+  isResolved  Boolean  @default(false)
+  resolvedNote String?
+
+  store       Store    @relation(fields: [storeId], references: [id])
+  shift       Shift?   @relation(fields: [shiftId], references: [id])
+
   createdAt   DateTime @default(now())
 }
 

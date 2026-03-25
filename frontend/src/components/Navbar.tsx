@@ -111,7 +111,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
 
     return (
         <nav
-            className="fixed top-0 left-0 right-0 z-50 bg-[#0f172a]/80 backdrop-blur-xl border-b border-white/5 py-4 transition-all duration-300"
+            className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-200/80 py-4 transition-all duration-300"
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between">
@@ -121,7 +121,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                             <img src="/logo.png" alt="Fluxor Cloud Logo" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-xl font-bold font-outfit tracking-tight text-white group-hover:text-blue-400 transition-colors">FLUXOR</span>
+                            <span className="text-xl font-bold font-outfit tracking-tight text-gray-900 group-hover:text-blue-600 transition-colors">FLUXOR</span>
                         </div>
                     </Link>
 
@@ -132,14 +132,14 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                                 key={link.name}
                                 to={`${link.path}${link.hash}`}
                                 onClick={(e) => handleNavClick(e, link)}
-                                className={`relative text-sm font-medium transition-colors duration-300 ${isActive(link.path, link.hash) ? 'text-blue-400' : 'text-gray-300 hover:text-white'
+                                className={`relative text-sm font-medium transition-colors duration-300 ${isActive(link.path, link.hash) ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'
                                     }`}
                             >
                                 {link.name}
                                 {isActive(link.path, link.hash) && (
                                     <motion.span
                                         layoutId="nav-underline"
-                                        className="absolute -bottom-1 left-0 right-0 h-px bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"
+                                        className="absolute -bottom-1 left-0 right-0 h-px bg-blue-600"
                                     />
                                 )}
                             </Link>
@@ -148,7 +148,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
 
                     {/* Desktop CTA */}
                     <div className="hidden md:flex items-center gap-4">
-                        <Link to="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+                        <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                             Sign In
                         </Link>
                         <Button
@@ -164,7 +164,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsOpen(!isOpen)}
-                        className="md:hidden p-2 text-gray-300 hover:text-white transition-colors"
+                        className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
                     >
                         {isOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
@@ -178,7 +178,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-[#0f172a] border-b border-white/10 overflow-hidden"
+                        className="md:hidden bg-white border-b border-gray-100 overflow-hidden"
                     >
                         <div className="px-4 py-6 space-y-4">
                             {navLinks.map((link) => (
@@ -186,14 +186,14 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                                     key={link.name}
                                     to={`${link.path}${link.hash}`}
                                     onClick={(e) => handleNavClick(e, link)}
-                                    className={`block py-2 text-lg font-medium ${isActive(link.path, link.hash) ? 'text-blue-400' : 'text-gray-300'
+                                    className={`block py-2 text-lg font-medium ${isActive(link.path, link.hash) ? 'text-blue-600' : 'text-gray-700'
                                         }`}
                                 >
                                     {link.name}
                                 </Link>
                             ))}
-                            <div className="pt-4 border-t border-white/10 space-y-3">
-                                <Link to="/login" onClick={() => setIsOpen(false)} className="block w-full text-center py-2 text-gray-300 hover:text-white">
+                            <div className="pt-4 border-t border-gray-100 space-y-3">
+                                <Link to="/login" onClick={() => setIsOpen(false)} className="block w-full text-center py-2 text-gray-600 hover:text-gray-900">
                                     Sign In
                                 </Link>
                                 <Button variant="primary" size="md" className="w-full bg-blue-600 border-0" onClick={handleBookDemo}>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { api } from '@/lib/api';
+import { api, API_URL } from '@/lib/api';
 import { Upload, FileImage, CheckCircle2, Clock, AlertCircle, Eye, Sparkles, ChevronLeft } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import type { Invoice } from '@/types';
@@ -59,7 +59,7 @@ export default function Invoices() {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/invoices/upload`, {
+            const response = await fetch(`${API_URL}/invoices/upload`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
@@ -319,7 +319,7 @@ export default function Invoices() {
                                                 if (!extractedData.invoiceId) return;
                                                 const token = localStorage.getItem('token');
                                                 try {
-                                                    const res = await fetch(`${import.meta.env.VITE_API_URL}/invoices/${extractedData.invoiceId}/confirm`, {
+                                                    const res = await fetch(`${API_URL}/invoices/${extractedData.invoiceId}/confirm`, {
                                                         method: 'POST',
                                                         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
                                                     });

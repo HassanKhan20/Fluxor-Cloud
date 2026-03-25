@@ -49,14 +49,7 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
 // Required fields
 const REQUIRED_FIELDS = ['productName', 'quantity', 'unitPrice'];
 
-// Helper: Get Store ID
-const getStoreId = async (req: Request): Promise<string | null> => {
-    // @ts-ignore
-    const userId = req.user?.userId;
-    if (!userId) return null;
-    const membership = await prisma.storeMembership.findFirst({ where: { userId } });
-    return membership?.storeId || null;
-};
+import { getStoreId } from '../lib/storeContext';
 
 // Helper: Generate hash for idempotency
 function generateImportHash(receiptId: string, date: string, items: string): string {

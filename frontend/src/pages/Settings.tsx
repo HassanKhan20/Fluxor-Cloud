@@ -15,6 +15,7 @@ import {
     LogOut,
     ChevronLeft
 } from 'lucide-react';
+import { API_URL } from '@/lib/api';
 
 interface UserInfo {
     name: string;
@@ -30,9 +31,10 @@ export default function Settings() {
     });
     const [userInfo, setUserInfo] = useState<UserInfo>({ name: '', email: '' });
     const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState('');
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
     useEffect(() => {
-        // Load user info
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
             try {
@@ -46,10 +48,34 @@ export default function Settings() {
 
     const handleSaveProfile = async () => {
         setSaving(true);
-        // Simulate save
-        await new Promise(resolve => setTimeout(resolve, 500));
-        localStorage.setItem('user', JSON.stringify(userInfo));
-        setSaving(false);
+        setSaveError('');
+        setSaveSuccess(false);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/auth/profile`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: userInfo.name })
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || 'Failed to save');
+            }
+            const data = await res.json();
+            // Update stored user info
+            const stored = localStorage.getItem('user');
+            const parsed = stored ? JSON.parse(stored) : {};
+            localStorage.setItem('user', JSON.stringify({ ...parsed, name: data.user.name }));
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
+        } catch (err: any) {
+            setSaveError(err.message || 'Failed to save profile');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleSignOut = () => {
@@ -89,6 +115,12 @@ export default function Settings() {
                         />
                         <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                     </div>
+                    {saveError && (
+                        <p className="text-sm text-red-600">{saveError}</p>
+                    )}
+                    {saveSuccess && (
+                        <p className="text-sm text-green-600">Profile saved successfully.</p>
+                    )}
                     <Button onClick={handleSaveProfile} disabled={saving}>
                         <Save className="w-4 h-4 mr-2" />
                         {saving ? 'Saving...' : 'Save Changes'}

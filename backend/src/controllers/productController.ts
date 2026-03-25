@@ -1,21 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-
-// Helper to get storeId from request (assuming auth middleware attaches user/store info)
-// For MVP, we'll assume the storeId is passed in headers or body, 
-// OR simpler: we extract it from the authenticated user's active store context.
-// Let's assume for now the frontend sends `x-store-id` header or we look up the user's first store.
-const getStoreId = async (req: Request): Promise<string | null> => {
-    // @ts-ignore - implicitly added by auth middleware (which we need to implement fully)
-    const userId = req.user?.userId;
-    if (!userId) return null;
-
-    // Quick lookup for the user's store
-    const membership = await prisma.storeMembership.findFirst({
-        where: { userId }
-    });
-    return membership?.storeId || null;
-};
+import { getStoreId } from '../lib/storeContext';
 
 export const getProducts = async (req: Request, res: Response) => {
     try {

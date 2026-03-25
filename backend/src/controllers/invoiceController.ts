@@ -6,14 +6,7 @@ import {
     InvoiceParseResult
 } from '../services/invoiceAIService';
 
-// Helper (reused)
-const getStoreId = async (req: Request): Promise<string | null> => {
-    // @ts-ignore
-    const userId = req.user?.userId;
-    if (!userId) return null;
-    const membership = await prisma.storeMembership.findFirst({ where: { userId } });
-    return membership?.storeId || null;
-};
+import { getStoreId } from '../lib/storeContext';
 
 // Upload and process invoice with AI
 export const uploadInvoice = async (req: Request, res: Response) => {

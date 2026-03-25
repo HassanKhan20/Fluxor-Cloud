@@ -50,16 +50,12 @@ export default function Products() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || '';
         try {
             if (currentProduct.id) {
-                await fetch(`${import.meta.env.VITE_API_URL}/products/${currentProduct.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(currentProduct)
-                });
+                await api.put(`/products/${currentProduct.id}`, currentProduct, token);
             } else {
-                await api.post('/products', currentProduct, token || '');
+                await api.post('/products', currentProduct, token);
             }
             setIsDialogOpen(false);
             fetchProducts();
@@ -70,12 +66,9 @@ export default function Products() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure?')) return;
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || '';
         try {
-            await fetch(`${import.meta.env.VITE_API_URL}/products/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await api.delete(`/products/${id}`, token);
             fetchProducts();
         } catch (error) {
             alert('Failed to delete');
@@ -84,13 +77,9 @@ export default function Products() {
 
     const handleSetInitialStock = async () => {
         if (!stockProduct || stockValue === '') return;
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || '';
         try {
-            await fetch(`${import.meta.env.VITE_API_URL}/products/${stockProduct.id}/initial-stock`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ initialStock: parseInt(stockValue) })
-            });
+            await api.patch(`/products/${stockProduct.id}/initial-stock`, { initialStock: parseInt(stockValue) }, token);
             setIsStockDialogOpen(false);
             setStockProduct(null);
             setStockValue('');
@@ -126,19 +115,11 @@ export default function Products() {
             }
 
             // Single API call to persist all confirmed values
-            await fetch(`${import.meta.env.VITE_API_URL}/products/${product.id}/match`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(confirmedData)
-            });
+            await api.post(`/products/${product.id}/match`, confirmedData, token || '');
 
             // Set initial stock if suggested
             if (suggestions?.suggestedMinStock?.value && (product.initialStock === null || product.initialStock === undefined)) {
-                await fetch(`${import.meta.env.VITE_API_URL}/products/${product.id}/initial-stock`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ initialStock: suggestions.suggestedMinStock.value })
-                });
+                await api.patch(`/products/${product.id}/initial-stock`, { initialStock: suggestions.suggestedMinStock.value }, token || '');
             }
 
             fetchProducts();
@@ -173,7 +154,7 @@ export default function Products() {
     };
 
     const openNew = () => {
-        setCurrentProduct({ name: '', barcode: '', sellingPrice: 0, costPrice: 0, category: '' });
+        setCurrentProduct({ name: '', barcode: '', sellingPrice: 0, costPrice: 0, category: '', vendor: '' });
         setIsDialogOpen(true);
     };
 
@@ -480,6 +461,10 @@ export default function Products() {
                                         <Label>Category</Label>
                                         <Input value={currentProduct.category} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentProduct({ ...currentProduct, category: e.target.value })} />
                                     </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Vendor / Supplier</Label>
+                                    <Input placeholder="e.g. Coca-Cola Co." value={currentProduct.vendor || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentProduct({ ...currentProduct, vendor: e.target.value })} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">

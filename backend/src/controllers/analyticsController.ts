@@ -1,14 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-
-// Helper: Get Store ID
-const getStoreId = async (req: Request): Promise<string | null> => {
-    // @ts-ignore
-    const userId = req.user?.userId;
-    if (!userId) return null;
-    const membership = await prisma.storeMembership.findFirst({ where: { userId } });
-    return membership?.storeId || null;
-};
+import { getStoreId } from '../lib/storeContext';
 
 // Helper: Get Monday of a week (ISO week start)
 const getMonday = (date: Date): Date => {
@@ -807,3 +799,73 @@ function generateMoneyWastedInsights(deadStock: number, overstock: number, misse
 
     return insights;
 }
+
+// ── CASH FLOW ─────────────────────────────────────────────────────────────────
+
+export const getCashFlow = async (req: Request, res: Response) => {
+    try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store' });
+
+        const days = parseInt(req.query.days as string) || 30;
+        const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+        // Revenue: from sales
+        const sales = await prisma.sale.findMany({
+            where: { storeId, dateTime: { gte: startDate } },
+            include: { items: { include: { product: { select: { costPrice: true } } } } }
+        });
+
+        // Expenses: from invoices
+        const invoices = await prisma.invoice.findMany({
+            where: { storeId, createdAt: { gte: startDate }, totalAmount: { not: null } }
+        });
+
+        // Build daily breakdown
+        const dailyMap: Record<string, { date: string; revenue: number; cogs: number; invoiceSpend: number }> = {};
+
+        for (const sale of sales) {
+            const date = formatDate(new Date(sale.dateTime));
+            if (!dailyMap[date]) dailyMap[date] = { date, revenue: 0, cogs: 0, invoiceSpend: 0 };
+            dailyMap[date].revenue += sale.totalAmount;
+            // COGS = sum of (qty * costPrice) for each item
+            for (const item of sale.items) {
+                dailyMap[date].cogs += item.quantity * (item.product?.costPrice || 0);
+            }
+        }
+
+        for (const invoice of invoices) {
+            const date = formatDate(new Date(invoice.createdAt));
+            if (!dailyMap[date]) dailyMap[date] = { date, revenue: 0, cogs: 0, invoiceSpend: 0 };
+            dailyMap[date].invoiceSpend += invoice.totalAmount || 0;
+        }
+
+        const daily = Object.values(dailyMap)
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .map(d => ({
+                ...d,
+                grossProfit: Math.round((d.revenue - d.cogs) * 100) / 100,
+                grossMargin: d.revenue > 0 ? Math.round(((d.revenue - d.cogs) / d.revenue) * 1000) / 10 : 0
+            }));
+
+        const totalRevenue = daily.reduce((sum, d) => sum + d.revenue, 0);
+        const totalCOGS = daily.reduce((sum, d) => sum + d.cogs, 0);
+        const totalInvoiceSpend = daily.reduce((sum, d) => sum + d.invoiceSpend, 0);
+        const totalGrossProfit = totalRevenue - totalCOGS;
+
+        res.json({
+            daily,
+            summary: {
+                totalRevenue: Math.round(totalRevenue * 100) / 100,
+                totalCOGS: Math.round(totalCOGS * 100) / 100,
+                totalGrossProfit: Math.round(totalGrossProfit * 100) / 100,
+                grossMargin: totalRevenue > 0 ? Math.round((totalGrossProfit / totalRevenue) * 1000) / 10 : 0,
+                totalInvoiceSpend: Math.round(totalInvoiceSpend * 100) / 100,
+                avgDailyProfit: daily.length > 0 ? Math.round((totalGrossProfit / daily.length) * 100) / 100 : 0
+            }
+        });
+    } catch (e) {
+        console.error('Cash flow error:', e);
+        res.status(500).json({ message: 'Failed to fetch cash flow' });
+    }
+};

@@ -34,7 +34,7 @@ const HeroBackground = () => {
                 this.size = Math.random() * 2;
                 this.speedX = (Math.random() - 0.5) * 0.5;
                 this.speedY = (Math.random() - 0.5) * 0.5;
-                this.color = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.5})`; // Brighter white dots
+                this.color = `rgba(59, 130, 246, ${0.15 + Math.random() * 0.25})`; // Blue dots for light theme
             }
 
             update() {
@@ -65,7 +65,7 @@ const HeroBackground = () => {
 
         const drawGrid = () => {
             if (!ctx) return;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; // Slightly brighter grid
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.08)'; // Subtle indigo grid for light theme
             ctx.lineWidth = 1;
             const gridSize = 50;
             const offsetX = (time * 10) % gridSize;
@@ -88,7 +88,7 @@ const HeroBackground = () => {
 
         const animate = () => {
             if (!ctx) return;
-            ctx.fillStyle = '#0f172a'; // Lighter Navy Blue (Slate 900)
+            ctx.fillStyle = '#EEF4FF'; // Light blue-white background
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             drawGrid();
@@ -102,7 +102,7 @@ const HeroBackground = () => {
             const waveCount = 3;
             for (let i = 0; i < waveCount; i++) {
                 ctx.beginPath();
-                ctx.strokeStyle = `rgba(56, 189, 248, ${0.1 - i * 0.02})`; // Light Blue
+                ctx.strokeStyle = `rgba(99, 102, 241, ${0.12 - i * 0.03})`; // Indigo energy lines
                 ctx.lineWidth = 2;
                 for (let x = 0; x < canvas.width; x += 10) {
                     const y = canvas.height / 2 + Math.sin(x * 0.005 + time * 2 + i) * 100 * Math.sin(time);

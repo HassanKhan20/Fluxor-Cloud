@@ -39,9 +39,9 @@ const Login: React.FC = () => {
     return (
         <div className="min-h-screen flex">
             {/* Left Panel - Decorative */}
-            <div className="hidden lg:flex lg:w-1/2 bg-[#0B0B0B] relative overflow-hidden">
+            <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 relative overflow-hidden">
                 {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-5">
+                <div className="absolute inset-0 opacity-10">
                     <div className="absolute inset-0" style={{
                         backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
                         backgroundSize: '40px 40px'
@@ -49,18 +49,18 @@ const Login: React.FC = () => {
                 </div>
 
                 {/* Gradient Orbs */}
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#005CFF]/20 rounded-full blur-3xl" />
-                <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#FECF33]/20 rounded-full blur-3xl" />
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-300/20 rounded-full blur-3xl" />
 
                 {/* Content */}
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-[#005CFF] rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                             <span className="text-white font-bold text-xl">F</span>
                         </div>
                         <span className="text-xl font-bold font-outfit text-white">
-                            Fluxor<span className="text-[#005CFF] font-space">Cloud</span>
+                            Fluxor<span className="text-blue-200 font-space">Cloud</span>
                         </span>
                     </Link>
 

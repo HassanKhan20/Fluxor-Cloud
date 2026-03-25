@@ -10,11 +10,16 @@ import Features from './pages/Features';
 import About from './pages/About';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Pricing from './pages/Pricing';
 import Vendors from './pages/Vendors';
+import Staff from './pages/Staff';
+import Reorder from './pages/Reorder';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 
 import ScrollToTop from './components/ScrollToTop';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
@@ -26,20 +31,24 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/features" element={<Features />} />
           <Route path="/about" element={<About />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-          {/* Protected Pages (still accessible for demo) */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/sales" element={<Sales />} />
-          <Route path="/invoices" element={<Invoices />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/vendors" element={<Vendors />} />
+          {/* Protected Pages */}
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route path="/products" element={<PrivateRoute><Products /></PrivateRoute>} />
+          <Route path="/sales" element={<PrivateRoute><Sales /></PrivateRoute>} />
+          <Route path="/invoices" element={<PrivateRoute><Invoices /></PrivateRoute>} />
+          <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
+          <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+          <Route path="/vendors" element={<PrivateRoute><Vendors /></PrivateRoute>} />
+          <Route path="/staff" element={<PrivateRoute><Staff /></PrivateRoute>} />
+          <Route path="/reorder" element={<PrivateRoute><Reorder /></PrivateRoute>} />
 
-          {/* Fallback - redirect all unknown routes to landing */}
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </GalaxyTransitionProvider>

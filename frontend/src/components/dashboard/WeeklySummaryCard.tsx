@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Star, AlertTriangle, Lightbulb, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Star, AlertTriangle, BarChart3, ChevronRight } from 'lucide-react';
 import type { WeeklySummary } from '@/types';
 import { api } from '@/lib/api';
 
@@ -28,12 +28,12 @@ export default function WeeklySummaryCard() {
 
     if (loading) {
         return (
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 border border-slate-700/50 animate-pulse">
-                <div className="h-6 bg-slate-700 rounded w-1/3 mb-4"></div>
+            <div className="bg-white rounded-xl p-6 border border-blue-100 shadow-sm animate-pulse">
+                <div className="h-5 bg-blue-50 rounded w-1/3 mb-4"></div>
                 <div className="space-y-3">
-                    <div className="h-4 bg-slate-700 rounded w-full"></div>
-                    <div className="h-4 bg-slate-700 rounded w-2/3"></div>
-                    <div className="h-4 bg-slate-700 rounded w-3/4"></div>
+                    <div className="h-4 bg-blue-50 rounded w-full"></div>
+                    <div className="h-4 bg-blue-50 rounded w-2/3"></div>
+                    <div className="h-4 bg-blue-50 rounded w-3/4"></div>
                 </div>
             </div>
         );
@@ -41,8 +41,8 @@ export default function WeeklySummaryCard() {
 
     if (error || !summary) {
         return (
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 border border-slate-700/50">
-                <div className="text-slate-400 text-center py-4">
+            <div className="bg-white rounded-xl p-6 border border-blue-100 shadow-sm">
+                <div className="text-gray-400 text-center py-4">
                     {error || 'No data available'}
                 </div>
             </div>
@@ -52,85 +52,80 @@ export default function WeeklySummaryCard() {
     const isRevenueUp = summary.revenue.change >= 0;
 
     return (
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+        <div className="bg-white rounded-xl p-6 border border-blue-100 shadow-sm">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-500 rounded-lg flex items-center justify-center">
-                        <Lightbulb size={20} className="text-white" />
+                    <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                        <BarChart3 size={18} className="text-blue-600" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-semibold text-white">Your Weekly Summary</h2>
-                        <p className="text-xs text-slate-400">
-                            {new Date(summary.weekStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} -
+                        <h2 className="text-sm font-bold text-blue-900 tracking-tight">Weekly Summary</h2>
+                        <p className="text-xs text-gray-400">
+                            {new Date(summary.weekStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} -{' '}
                             {new Date(summary.weekEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* Key Metrics Grid */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                {/* Revenue */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                    <div className="flex items-center gap-2 mb-2">
-                        <DollarSign size={16} className="text-emerald-400" />
-                        <span className="text-sm text-slate-400">Revenue</span>
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+                <div className="bg-blue-50 rounded-lg p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                        <DollarSign size={14} className="text-blue-500" />
+                        <span className="text-xs text-gray-500">Revenue</span>
                     </div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-xl font-bold text-gray-900">
                         ${summary.revenue.amount.toLocaleString()}
                     </div>
-                    <div className={`flex items-center gap-1 text-sm mt-1 ${isRevenueUp ? 'text-emerald-400' : 'text-rose-400'
-                        }`}>
-                        {isRevenueUp ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                    <div className={`flex items-center gap-1 text-xs mt-1 ${isRevenueUp ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {isRevenueUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                         {Math.abs(summary.revenue.changePercent).toFixed(0)}% vs last week
                     </div>
                 </div>
 
-                {/* Money Wasted */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                    <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle size={16} className="text-amber-400" />
-                        <span className="text-sm text-slate-400">Money Wasted</span>
+                <div className="bg-amber-50 rounded-lg p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                        <AlertTriangle size={14} className="text-amber-500" />
+                        <span className="text-xs text-gray-500">Money Wasted</span>
                     </div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-xl font-bold text-gray-900">
                         ${summary.moneyWasted.total.toLocaleString()}
                     </div>
-                    <div className="text-xs text-slate-500 mt-1 line-clamp-1">
+                    <div className="text-xs text-gray-400 mt-1 line-clamp-1">
                         {summary.moneyWasted.primaryReason}
                     </div>
                 </div>
             </div>
 
             {/* Top & Worst Performer */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                {/* Top Performer */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
                 {summary.topProduct && (
-                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Star size={14} className="text-emerald-400" />
-                            <span className="text-xs text-emerald-400 font-medium">TOP PERFORMER</span>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                            <Star size={12} className="text-emerald-500" />
+                            <span className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wide">Top Performer</span>
                         </div>
-                        <div className="text-sm font-medium text-white truncate">
+                        <div className="text-sm font-medium text-gray-900 truncate">
                             {summary.topProduct.name}
                         </div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs text-gray-500">
                             ${summary.topProduct.revenue.toLocaleString()} revenue
                         </div>
                     </div>
                 )}
 
-                {/* Worst Performer */}
                 {summary.worstPerformer && (
-                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle size={14} className="text-rose-400" />
-                            <span className="text-xs text-rose-400 font-medium">NEEDS ATTENTION</span>
+                    <div className="bg-red-50 border border-red-100 rounded-lg p-3">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                            <AlertTriangle size={12} className="text-red-400" />
+                            <span className="text-[10px] text-red-500 font-semibold uppercase tracking-wide">Needs Attention</span>
                         </div>
-                        <div className="text-sm font-medium text-white truncate">
+                        <div className="text-sm font-medium text-gray-900 truncate">
                             {summary.worstPerformer.name}
                         </div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs text-gray-500">
                             {summary.worstPerformer.reason}
                         </div>
                     </div>
@@ -140,14 +135,14 @@ export default function WeeklySummaryCard() {
             {/* Recommendations */}
             {summary.recommendations.length > 0 && (
                 <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-slate-300 mb-3">💡 Recommendations</h3>
+                    <h3 className="text-xs font-bold text-blue-900/60 uppercase tracking-wider mb-2">Recommendations</h3>
                     {summary.recommendations.slice(0, 3).map((rec, index) => (
                         <div
                             key={index}
-                            className="flex items-start gap-3 bg-slate-800/30 rounded-lg p-3 border border-slate-700/30 hover:border-violet-500/30 transition-colors cursor-pointer group"
+                            className="flex items-start gap-2.5 rounded-lg p-2.5 border border-blue-50 hover:border-blue-200 hover:bg-blue-50/50 transition-colors cursor-pointer group"
                         >
-                            <span className="text-sm text-slate-300 flex-1">{rec}</span>
-                            <ChevronRight size={16} className="text-slate-500 group-hover:text-violet-400 transition-colors flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-gray-600 flex-1">{rec}</span>
+                            <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-500 transition-colors flex-shrink-0 mt-0.5" />
                         </div>
                     ))}
                 </div>

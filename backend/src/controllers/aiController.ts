@@ -1,18 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-
-// Get store ID from token
-const getStoreId = async (req: Request): Promise<string | null> => {
-    const user = (req as any).user;
-    const userId = user?.userId;
-    if (!userId) return null;
-
-    const membership = await prisma.storeMembership.findFirst({
-        where: { userId },
-        select: { storeId: true }
-    });
-    return membership?.storeId || null;
-};
+import { getStoreId } from '../lib/storeContext';
 
 // Holiday detection
 const getHolidayContext = (): { isNearHoliday: boolean; holiday: string | null; daysAway: number } => {
@@ -189,10 +177,18 @@ export const chat = async (req: Request, res: Response) => {
         }
 
         const storeId = await getStoreId(req);
+        const userId = (req as any).user?.userId || null;
         let storeContext: any = {};
 
         if (storeId) {
             storeContext = await buildStoreContext(storeId);
+        }
+
+        // Persist user message
+        if (storeId) {
+            await prisma.chatMessage.create({
+                data: { storeId, userId, role: 'user', content: message }
+            });
         }
 
         // Generate proactive explanation
@@ -214,6 +210,9 @@ Guidelines:
 - If near a holiday, mention how it affects sales patterns
 - Focus on what the owner should DO next`;
 
+        let reply: string;
+        let source: string;
+
         // Try Ollama first
         try {
             const ollamaResponse = await fetch('http://localhost:11434/api/chat', {
@@ -231,21 +230,27 @@ Guidelines:
 
             if (ollamaResponse.ok) {
                 const data = await ollamaResponse.json();
-                return res.json({
-                    reply: data.message?.content || 'No response generated',
-                    source: 'ollama',
-                    context: { patterns: storeContext.patterns, holidayContext: storeContext.holidayContext }
-                });
+                reply = data.message?.content || 'No response generated';
+                source = 'ollama';
+            } else {
+                throw new Error('Ollama returned non-OK status');
             }
-        } catch (ollamaError) {
+        } catch {
             console.log('Ollama not available, using fallback');
+            reply = generateFallbackResponse(message, storeContext, proactiveExplanation);
+            source = 'fallback';
         }
 
-        // Enhanced fallback with explanations
-        const fallbackResponse = generateFallbackResponse(message, storeContext, proactiveExplanation);
+        // Persist assistant reply
+        if (storeId) {
+            await prisma.chatMessage.create({
+                data: { storeId, userId, role: 'assistant', content: reply }
+            });
+        }
+
         return res.json({
-            reply: fallbackResponse,
-            source: 'fallback',
+            reply,
+            source,
             context: { patterns: storeContext.patterns, holidayContext: storeContext.holidayContext }
         });
 

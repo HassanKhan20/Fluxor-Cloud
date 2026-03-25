@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { FileText, Upload, CheckCircle2, AlertCircle, FileSpreadsheet, ArrowRight, ChevronLeft, XCircle } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import { API_URL } from '@/lib/api';
 
 interface ValidationError {
     row: number;
@@ -69,7 +70,7 @@ export default function Sales() {
         }, 200);
 
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/sales/upload`, {
+            const res = await fetch(`${API_URL}/sales/upload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
