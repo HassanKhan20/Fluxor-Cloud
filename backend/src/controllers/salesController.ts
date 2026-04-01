@@ -14,7 +14,7 @@ interface SaleRow {
     quantity: string;
     unitPrice: string;
     paymentMethod: string;
-    vendor: string;  // NEW: Vendor/Supplier support
+    vendor: string;
 }
 
 interface ValidationError {
@@ -34,16 +34,16 @@ interface ValidationResult {
 
 // Column name mappings (support multiple CSV formats)
 const COLUMN_MAPPINGS: Record<string, string[]> = {
-    receiptId: ['receiptId', 'receipt', 'Receipt', 'Receipt ID', 'receipt_id', 'ReceiptID', 'Transaction ID'],
-    date: ['date', 'Date', 'DateTime', 'datetime', 'Transaction Date', 'Sale Date', 'Time'],
-    productName: ['productName', 'product', 'Product', 'Description', 'description', 'Item', 'item', 'Product Name'],
-    barcode: ['barcode', 'Barcode', 'UPC', 'upc', 'Product Code'],
-    sku: ['sku', 'SKU', 'Item Code', 'item_code', 'ItemCode'],
-    category: ['category', 'Category', 'Department', 'department', 'Type'],
-    quantity: ['quantity', 'Quantity', 'Qty', 'qty', 'Amount', 'Count'],
-    unitPrice: ['unitPrice', 'Unit Price', 'unit_price', 'Price', 'price', 'Unit Cost'],
-    paymentMethod: ['paymentMethod', 'Payment Method', 'payment', 'Payment', 'Method'],
-    vendor: ['vendor', 'Vendor', 'Supplier', 'supplier', 'Brand', 'brand', 'Manufacturer', 'manufacturer', 'Distributor', 'distributor']  // NEW
+    receiptId: ['receiptId', 'receipt', 'Receipt', 'Receipt ID', 'receipt_id', 'ReceiptID', 'Transaction ID', 'Order ID', 'order_id', 'Invoice', 'invoice'],
+    date: ['date', 'Date', 'DateTime', 'datetime', 'Transaction Date', 'Sale Date', 'Time', 'Timestamp', 'timestamp', 'Created', 'created_at', 'order_date'],
+    productName: ['productName', 'product', 'Product', 'Description', 'description', 'Item', 'item', 'Product Name', 'Item Name', 'item_name', 'product_name', 'name', 'Name', 'Menu Item', 'LineItem'],
+    barcode: ['barcode', 'Barcode', 'UPC', 'upc', 'Product Code', 'EAN', 'ean', 'GTIN', 'gtin'],
+    sku: ['sku', 'SKU', 'Item Code', 'item_code', 'ItemCode', 'Product ID', 'product_id', 'Item Number', 'item_number'],
+    category: ['category', 'Category', 'Department', 'department', 'Type', 'type', 'Group', 'group', 'Class', 'class'],
+    quantity: ['quantity', 'Quantity', 'Qty', 'qty', 'Amount', 'Count', 'count', 'Units', 'units', 'Qty Sold', 'qty_sold'],
+    unitPrice: ['unitPrice', 'Unit Price', 'unit_price', 'Price', 'price', 'Unit Cost', 'Rate', 'rate', 'Sell Price', 'sell_price', 'Amount', 'Total', 'total', 'Gross Sales', 'Net Sales'],
+    paymentMethod: ['paymentMethod', 'Payment Method', 'payment', 'Payment', 'Method', 'Payment Type', 'payment_type', 'Tender'],
+    vendor: ['vendor', 'Vendor', 'Supplier', 'supplier', 'Brand', 'brand', 'Manufacturer', 'manufacturer', 'Distributor', 'distributor']
 };
 
 // Required fields
@@ -103,11 +103,49 @@ function parseDateTime(dateStr: string): Date | null {
         return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     }
 
+    // DD/MM/YYYY
+    const ddmmyyyyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (ddmmyyyyMatch) {
+        const [, day, month, year] = ddmmyyyyMatch;
+        const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        if (!isNaN(d.getTime())) return d;
+    }
+
     const parsed = new Date(trimmed);
     return !isNaN(parsed.getTime()) ? parsed : null;
 }
 
-// Helper: Validate row
+// Helper: Clean price string — handles "$1,234.56", "(1.50)", "1.234,56" etc
+function cleanPrice(val: string): number {
+    if (!val || val.trim() === '') return 0;
+    let s = val.trim();
+    // Handle negative in parentheses: (5.00) → -5.00
+    const isNeg = s.startsWith('(') && s.endsWith(')');
+    s = s.replace(/[()]/g, '');
+    // Remove currency symbols and spaces
+    s = s.replace(/[$€£¥₹,\s]/g, '');
+    const num = parseFloat(s);
+    if (isNaN(num)) return 0;
+    return isNeg ? -num : num;
+}
+
+// Helper: Clean quantity string
+function cleanQuantity(val: string): number {
+    if (!val || val.trim() === '') return 1;
+    const num = parseFloat(val.trim().replace(/[,\s]/g, ''));
+    return isNaN(num) || num <= 0 ? 1 : num;
+}
+
+// Helper: Detect if file content looks like CSV
+function looksLikeCsv(content: string): boolean {
+    const lines = content.split('\n').filter(l => l.trim().length > 0);
+    if (lines.length < 2) return false;
+    // Check if first line has comma/tab/pipe separators
+    const firstLine = lines[0];
+    return firstLine.includes(',') || firstLine.includes('\t') || firstLine.includes('|');
+}
+
+// Helper: Validate row — lenient, skips bad rows instead of failing
 function validateRow(row: any, rowNumber: number, headerMapping: Record<string, string>): { errors: ValidationError[], normalized: SaleRow | null } {
     const errors: ValidationError[] = [];
     const normalized: any = {};
@@ -116,19 +154,16 @@ function validateRow(row: any, rowNumber: number, headerMapping: Record<string, 
         normalized[standardName] = row[csvColumn] || '';
     }
 
+    // Product name is truly required — skip row if missing
     if (!normalized.productName || normalized.productName.trim() === '') {
         errors.push({ row: rowNumber, field: 'productName', value: normalized.productName || '', message: 'Product name is required' });
     }
 
-    const qty = parseFloat(normalized.quantity);
-    if (isNaN(qty) || qty <= 0) {
-        errors.push({ row: rowNumber, field: 'quantity', value: normalized.quantity || '', message: 'Quantity must be a positive number' });
-    }
+    // Quantity defaults to 1 if missing/invalid
+    normalized.quantity = String(cleanQuantity(normalized.quantity));
 
-    const price = parseFloat(normalized.unitPrice);
-    if (isNaN(price) || price < 0) {
-        errors.push({ row: rowNumber, field: 'unitPrice', value: normalized.unitPrice || '', message: 'Unit price must be a valid number' });
-    }
+    // Price defaults to 0 if missing/invalid
+    normalized.unitPrice = String(cleanPrice(normalized.unitPrice));
 
     return {
         errors,
@@ -143,25 +178,43 @@ export const validateSalesCsv = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: 'No file uploaded', errors: [] });
         }
 
-        const fileName = req.file.originalname.toLowerCase();
-        if (!fileName.endsWith('.csv')) {
+        const ext = req.file.originalname.toLowerCase().split('.').pop() || '';
+
+        // For non-CSV files, give a helpful message
+        if (!['csv', 'tsv', 'txt'].includes(ext)) {
             fs.unlinkSync(req.file.path);
-            return res.status(400).json({ success: false, message: 'Only CSV files are accepted', errors: [] });
+            return res.status(400).json({
+                success: false,
+                message: `We received a .${ext} file. Please export your data as CSV from your POS system and upload that instead. Most POS systems have an "Export to CSV" option in their reports section.`,
+                errors: []
+            });
         }
 
-        const maxSize = 10 * 1024 * 1024;
-        if (req.file.size > maxSize) {
+        // Try to read the file and check if it's valid CSV
+        let fileContent: string;
+        try {
+            fileContent = fs.readFileSync(req.file.path, 'utf8');
+        } catch {
             fs.unlinkSync(req.file.path);
-            return res.status(400).json({ success: false, message: 'File size exceeds 10MB limit', errors: [] });
+            return res.status(400).json({ success: false, message: 'Could not read file. It may be corrupted.', errors: [] });
+        }
+
+        if (!looksLikeCsv(fileContent)) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({
+                success: false,
+                message: 'This file does not appear to be a valid CSV. Make sure your file has column headers in the first row and comma-separated values.',
+                errors: []
+            });
         }
 
         const result: ValidationResult = { isValid: true, errors: [], warnings: [], validRows: [], totalRows: 0 };
         let headerMapping: Record<string, string> = {};
         let rowNumber = 0;
 
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
             fs.createReadStream(req.file!.path, { encoding: 'utf8' })
-                .on('error', (error) => { result.isValid = false; reject(error); })
+                .on('error', () => resolve())
                 .pipe(csv())
                 .on('headers', (csvHeaders: string[]) => {
                     const { mapping, missing } = normalizeHeaders(csvHeaders);
@@ -169,7 +222,8 @@ export const validateSalesCsv = async (req: Request, res: Response) => {
                     if (missing.length > 0) {
                         result.isValid = false;
                         missing.forEach(field => {
-                            result.errors.push({ row: 0, field, value: '', message: `Required column "${field}" not found` });
+                            const suggestions = COLUMN_MAPPINGS[field]?.slice(0, 4).join(', ') || field;
+                            result.errors.push({ row: 0, field, value: '', message: `Required column "${field}" not found. Expected one of: ${suggestions}` });
                         });
                     }
                 })
@@ -180,33 +234,41 @@ export const validateSalesCsv = async (req: Request, res: Response) => {
                         const { errors, normalized } = validateRow(row, rowNumber, headerMapping);
                         if (errors.length > 0) {
                             result.errors.push(...errors);
-                            result.isValid = false;
                         }
                         if (normalized) result.validRows.push(normalized);
                     }
                 })
                 .on('end', () => resolve())
                 .on('error', () => resolve());
-        }).catch(() => { });
+        });
+
+        // If we got some valid rows despite errors, it's still partially valid
+        if (result.validRows.length > 0 && result.errors.length > 0) {
+            result.isValid = true;
+            result.warnings.push(`${result.errors.length} row(s) had issues and will be skipped. ${result.validRows.length} row(s) are valid and will be imported.`);
+        }
 
         if (result.totalRows === 0 && result.errors.length === 0) {
             result.isValid = false;
-            result.errors.push({ row: 0, field: 'file', value: '', message: 'CSV file is empty' });
+            result.errors.push({ row: 0, field: 'file', value: '', message: 'CSV file is empty or has no data rows' });
         }
 
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
         res.json({
             success: result.isValid,
-            message: result.isValid ? `${result.validRows.length} rows ready to import` : `${result.errors.length} error(s) found`,
+            message: result.isValid
+                ? `${result.validRows.length} rows ready to import${result.warnings.length > 0 ? ' (with some warnings)' : ''}`
+                : `${result.errors.length} error(s) found`,
             totalRows: result.totalRows,
             validRows: result.validRows.length,
             errors: result.errors.slice(0, 20),
+            warnings: result.warnings,
             preview: result.validRows.slice(0, 5)
         });
     } catch (error: any) {
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        res.status(500).json({ success: false, message: error.message || 'Validation failed', errors: [] });
+        res.status(500).json({ success: false, message: 'Failed to process file. It may be corrupted or in an unsupported format.', errors: [] });
     }
 };
 
@@ -220,39 +282,76 @@ export const uploadSalesCsv = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
         }
 
-        const fileName = req.file.originalname.toLowerCase();
-        if (!fileName.endsWith('.csv')) {
+        const ext = req.file.originalname.toLowerCase().split('.').pop() || '';
+
+        if (!['csv', 'tsv', 'txt'].includes(ext)) {
             fs.unlinkSync(req.file.path);
-            return res.status(400).json({ success: false, message: 'Only CSV files are accepted' });
+            return res.status(400).json({
+                success: false,
+                message: `We received a .${ext} file. Please export your data as CSV from your POS system. Most POS systems have an "Export to CSV" or "Download Report" option.`
+            });
+        }
+
+        // Check if file is readable and looks like CSV
+        let fileContent: string;
+        try {
+            fileContent = fs.readFileSync(req.file.path, 'utf8');
+        } catch {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: 'Could not read file. It may be corrupted.' });
+        }
+
+        if (!looksLikeCsv(fileContent)) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({
+                success: false,
+                message: 'This file does not appear to be valid CSV data. Make sure it has column headers and comma-separated values.'
+            });
         }
 
         const results: SaleRow[] = [];
-        const errors: ValidationError[] = [];
+        const skippedRows: number[] = [];
         let headerMapping: Record<string, string> = {};
         let rowNumber = 0;
+        let headerError: string | null = null;
 
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
             fs.createReadStream(req.file!.path, { encoding: 'utf8' })
-                .on('error', reject)
+                .on('error', () => resolve())
                 .pipe(csv())
                 .on('headers', (csvHeaders: string[]) => {
                     const { mapping, missing } = normalizeHeaders(csvHeaders);
                     headerMapping = mapping;
-                    if (missing.length > 0) reject(new Error(`Missing columns: ${missing.join(', ')}`));
+                    if (missing.length > 0) {
+                        headerError = `Missing required columns: ${missing.join(', ')}. Your CSV needs at least: productName (or Product/Item/Description), quantity (or Qty), unitPrice (or Price).`;
+                    }
                 })
                 .on('data', (row: any) => {
                     rowNumber++;
-                    const { errors: rowErrors, normalized } = validateRow(row, rowNumber, headerMapping);
-                    if (normalized) results.push(normalized);
-                    errors.push(...rowErrors.filter(e => !e.message.startsWith('Warning')));
+                    if (!headerError) {
+                        const { normalized } = validateRow(row, rowNumber, headerMapping);
+                        if (normalized) {
+                            results.push(normalized);
+                        } else {
+                            skippedRows.push(rowNumber);
+                        }
+                    }
                 })
                 .on('end', () => resolve())
-                .on('error', reject);
+                .on('error', () => resolve());
         });
+
+        if (headerError) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: headerError });
+        }
 
         if (results.length === 0) {
             fs.unlinkSync(req.file.path);
-            return res.status(400).json({ success: false, message: 'No valid data found' });
+            return res.status(400).json({
+                success: false,
+                message: `No valid data found in ${rowNumber} rows. Make sure your CSV has product names, quantities, and prices.`
+            });
         }
 
         const importResult = await processSalesData(storeId, results);
@@ -261,19 +360,21 @@ export const uploadSalesCsv = async (req: Request, res: Response) => {
 
         res.json({
             success: true,
-            message: 'Sales data imported successfully',
+            message: `Sales data imported successfully`,
             imported: importResult.imported,
-            skipped: importResult.skipped,
-            duplicates: importResult.duplicates
+            skipped: importResult.skipped + skippedRows.length,
+            duplicates: importResult.duplicates,
+            totalRows: rowNumber,
+            validRows: results.length
         });
     } catch (error: any) {
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        res.status(500).json({ success: false, message: error.message || 'Error processing CSV' });
+        res.status(500).json({ success: false, message: 'Error processing file. Please check the format and try again.' });
     }
 };
 
 /**
- * FIXED: processSalesData with idempotency, proper identity resolution, and learning mode
+ * processSalesData with idempotency, proper identity resolution, and learning mode
  */
 async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imported: number; skipped: number; duplicates: number }> {
     let imported = 0;
@@ -289,26 +390,24 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
     }
 
     for (const [receiptId, items] of salesMap) {
-        // Generate import hash for idempotency
         const itemsString = items.map(i => `${i.productName}|${i.quantity}|${i.unitPrice}`).sort().join(';');
         const importHash = generateImportHash(receiptId, items[0].date || '', itemsString);
 
-        // CHECK IDEMPOTENCY: Skip if already imported
         const existingSale = await prisma.sale.findFirst({
             where: { storeId, importHash }
         });
 
         if (existingSale) {
             duplicates++;
-            continue; // Skip - already processed
+            continue;
         }
 
         let totalAmount = 0;
         const validItems: Array<{ product: any; qty: number; price: number }> = [];
 
         for (const item of items) {
-            const qty = parseFloat(item.quantity) || 1;
-            const price = parseFloat(item.unitPrice) || 0; // CRITICAL: Use unitPrice, NOT total
+            const qty = cleanQuantity(item.quantity);
+            const price = cleanPrice(item.unitPrice);
             totalAmount += qty * price;
 
             const normalizedBarcode = item.barcode?.trim() || null;
@@ -318,22 +417,19 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
 
             let product = null;
 
-            // PRODUCT IDENTITY RESOLUTION (STRICT ORDER)
-            // 1. Barcode (absolute identifier)
+            // PRODUCT IDENTITY RESOLUTION
             if (normalizedBarcode && normalizedBarcode !== '') {
                 product = await prisma.product.findFirst({
                     where: { storeId, barcode: normalizedBarcode }
                 });
             }
 
-            // 2. SKU (if no barcode match)
             if (!product && normalizedSku && normalizedSku !== '') {
                 product = await prisma.product.findFirst({
                     where: { storeId, sku: normalizedSku }
                 });
             }
 
-            // 3. Normalized name (last resort)
             if (!product && normalizedName && normalizedName !== '') {
                 const existingProducts = await prisma.product.findMany({ where: { storeId } });
                 product = existingProducts.find(p =>
@@ -341,9 +437,8 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
                 );
             }
 
-            // Create new product if not found
             if (!product) {
-                const normalizedVendor = (item as any).vendor?.trim() || null;  // NEW: Extract vendor
+                const normalizedVendor = (item as any).vendor?.trim() || null;
                 product = await prisma.product.create({
                     data: {
                         storeId,
@@ -351,7 +446,7 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
                         barcode: normalizedBarcode,
                         sku: normalizedSku,
                         category: normalizedCategory || 'Uncategorized',
-                        vendor: normalizedVendor,  // NEW: Assign vendor
+                        vendor: normalizedVendor,
                         sellingPrice: price,
                         costPrice: price * 0.7,
                         isUnmatched: true,
@@ -362,23 +457,20 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
                     }
                 });
             } else {
-                // UPDATE EXISTING PRODUCT (only if NOT confirmed)
                 if (!product.isConfirmed) {
-                    const normalizedVendor = (item as any).vendor?.trim() || null;  // NEW: Extract vendor
+                    const normalizedVendor = (item as any).vendor?.trim() || null;
                     await prisma.product.update({
                         where: { id: product.id },
                         data: {
-                            // Only fill in missing fields, don't overwrite
                             barcode: product.barcode || normalizedBarcode,
                             sku: product.sku || normalizedSku,
                             category: product.category === 'Uncategorized' ? (normalizedCategory || product.category) : product.category,
-                            vendor: product.vendor || normalizedVendor,  // NEW: Fill vendor if missing
+                            vendor: product.vendor || normalizedVendor,
                             sellingPrice: product.sellingPrice === 0 ? price : product.sellingPrice,
                             importCount: { increment: 1 }
                         }
                     });
                 } else {
-                    // Product is confirmed - only increment import count
                     await prisma.product.update({
                         where: { id: product.id },
                         data: { importCount: { increment: 1 } }
@@ -389,7 +481,6 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
             validItems.push({ product, qty, price });
         }
 
-        // Create Sale Record with importHash for idempotency
         const firstItem = items[0];
         const date = parseDateTime(firstItem.date) || new Date();
 
@@ -413,7 +504,6 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
 
         imported++;
 
-        // INVENTORY UPDATE (only for new sales, not duplicates)
         for (const vi of validItems) {
             if (vi.product.initialStock !== null) {
                 const latestSnapshot = await prisma.inventorySnapshot.findFirst({

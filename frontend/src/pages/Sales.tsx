@@ -167,7 +167,7 @@ export default function Sales() {
                                             {file ? file.name : 'Drop your CSV file here'}
                                         </h3>
                                         <p className="text-gray-500 text-center max-w-md mb-6">
-                                            or click to browse. Supports CSV exports from all major POS systems.
+                                            or click to browse. Upload CSV files from any POS system — we'll handle the rest.
                                         </p>
                                     </>
                                 )}
@@ -192,7 +192,7 @@ export default function Sales() {
                                         <label className="cursor-pointer">
                                             <Input
                                                 type="file"
-                                                accept=".csv"
+                                                accept=".csv,.tsv,.txt,.xls,.xlsx,.pdf,.jpg,.jpeg,.png"
                                                 onChange={handleFileChange}
                                                 className="hidden"
                                             />
