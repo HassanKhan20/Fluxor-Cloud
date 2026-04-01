@@ -40,6 +40,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Render runs behind a reverse proxy — Express needs to trust it for rate limiting to work
+app.set('trust proxy', 1);
+
 // ── Security headers via Helmet ─────────────────────────────────────────────
 app.use(helmet({
     contentSecurityPolicy: {
