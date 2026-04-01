@@ -175,6 +175,9 @@ export const chat = async (req: Request, res: Response) => {
         if (!message || typeof message !== 'string') {
             return res.status(400).json({ error: 'Message is required' });
         }
+        if (message.length > 500) {
+            return res.status(400).json({ error: 'Message is too long (max 500 characters)' });
+        }
 
         const storeId = await getStoreId(req);
         const userId = (req as any).user?.userId || null;
@@ -213,30 +216,38 @@ Guidelines:
         let reply: string;
         let source: string;
 
-        // Try Ollama first
-        try {
-            const ollamaResponse = await fetch('http://localhost:11434/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'llama3.2:3b',
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: message }
-                    ],
-                    stream: false
-                })
-            });
-
-            if (ollamaResponse.ok) {
-                const data = await ollamaResponse.json();
-                reply = data.message?.content || 'No response generated';
-                source = 'ollama';
-            } else {
-                throw new Error('Ollama returned non-OK status');
+        // Try OpenAI-compatible API if key is set, otherwise use rule-based fallback
+        const openaiKey = process.env.OPENAI_API_KEY;
+        if (openaiKey) {
+            try {
+                const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+                const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+                const aiResponse = await fetch(`${baseUrl}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+                    body: JSON.stringify({
+                        model,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: message }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 300
+                    })
+                });
+                if (aiResponse.ok) {
+                    const data = await aiResponse.json();
+                    reply = data.choices?.[0]?.message?.content || 'No response generated';
+                    source = 'openai';
+                } else {
+                    throw new Error('OpenAI returned non-OK status');
+                }
+            } catch (err) {
+                console.warn('[AI Chat] OpenAI call failed, using fallback:', err);
+                reply = generateFallbackResponse(message, storeContext, proactiveExplanation);
+                source = 'fallback';
             }
-        } catch {
-            console.log('Ollama not available, using fallback');
+        } else {
             reply = generateFallbackResponse(message, storeContext, proactiveExplanation);
             source = 'fallback';
         }
@@ -339,24 +350,12 @@ export const explain = async (req: Request, res: Response) => {
 
 // Health check for AI service
 export const healthCheck = async (_req: Request, res: Response) => {
-    try {
-        const ollamaCheck = await fetch('http://localhost:11434/api/tags', { method: 'GET' });
-
-        if (ollamaCheck.ok) {
-            const data = await ollamaCheck.json();
-            return res.json({
-                status: 'online',
-                provider: 'ollama',
-                models: data.models?.map((m: any) => m.name) || []
-            });
-        }
-    } catch {
-        // Ollama not available
-    }
-
+    const hasApiKey = !!process.env.OPENAI_API_KEY;
     res.json({
-        status: 'fallback',
-        provider: 'rule-based',
-        message: 'Ollama not detected. Using enhanced fallback with explanations.'
+        status: hasApiKey ? 'online' : 'fallback',
+        provider: hasApiKey ? 'openai' : 'rule-based',
+        message: hasApiKey
+            ? 'OpenAI API configured.'
+            : 'No OPENAI_API_KEY set. Using rule-based fallback for chat; invoice AI is disabled.'
     });
 };

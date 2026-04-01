@@ -11,14 +11,16 @@ datasource db {
 
 // Models
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String // Hashed
-  role      String   @default("STAFF") // OWNER, MANAGER, STAFF
-  
+  id                  String    @id @default(uuid())
+  name                String
+  email               String    @unique
+  password            String    // Hashed
+  role                String    @default("STAFF") // OWNER, MANAGER, STAFF
+  passwordResetToken  String?   // Hashed reset token
+  passwordResetExpiry DateTime? // Expiry timestamp for the reset token
+
   stores    StoreMembership[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

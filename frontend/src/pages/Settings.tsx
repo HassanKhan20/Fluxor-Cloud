@@ -8,12 +8,14 @@ import {
     Bell,
     User,
     Shield,
-    CreditCard,
     HelpCircle,
-    ChevronRight,
     Save,
     LogOut,
-    ChevronLeft
+    ChevronLeft,
+    Lock,
+    Mail,
+    CheckCircle2,
+    AlertCircle
 } from 'lucide-react';
 import { API_URL } from '@/lib/api';
 
@@ -33,6 +35,15 @@ export default function Settings() {
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
     const [saveSuccess, setSaveSuccess] = useState(false);
+
+    // Change password state
+    const [showChangePassword, setShowChangePassword] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [passwordSuccess, setPasswordSuccess] = useState(false);
+    const [changingPassword, setChangingPassword] = useState(false);
 
     useEffect(() => {
         const savedUser = localStorage.getItem('user');
@@ -65,7 +76,6 @@ export default function Settings() {
                 throw new Error(data.message || 'Failed to save');
             }
             const data = await res.json();
-            // Update stored user info
             const stored = localStorage.getItem('user');
             const parsed = stored ? JSON.parse(stored) : {};
             localStorage.setItem('user', JSON.stringify({ ...parsed, name: data.user.name }));
@@ -78,159 +88,52 @@ export default function Settings() {
         }
     };
 
+    const handleChangePassword = async () => {
+        setPasswordError('');
+        setPasswordSuccess(false);
+
+        if (newPassword.length < 8) {
+            setPasswordError('New password must be at least 8 characters');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setPasswordError('Passwords do not match');
+            return;
+        }
+
+        setChangingPassword(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/auth/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ currentPassword, newPassword })
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || 'Failed to change password');
+            }
+            setPasswordSuccess(true);
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            setShowChangePassword(false);
+            setTimeout(() => setPasswordSuccess(false), 3000);
+        } catch (err: any) {
+            setPasswordError(err.message || 'Failed to change password');
+        } finally {
+            setChangingPassword(false);
+        }
+    };
+
     const handleSignOut = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         navigate('/login');
     };
-
-    const settingsSections = [
-        {
-            title: 'Profile',
-            description: 'Manage your personal information',
-            icon: <User className="w-5 h-5" />,
-            content: (
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Display Name
-                        </label>
-                        <Input
-                            value={userInfo.name}
-                            onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
-                            placeholder="Your name"
-                            className="max-w-md"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email
-                        </label>
-                        <Input
-                            value={userInfo.email}
-                            onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
-                            placeholder="your@email.com"
-                            className="max-w-md"
-                            disabled
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
-                    </div>
-                    {saveError && (
-                        <p className="text-sm text-red-600">{saveError}</p>
-                    )}
-                    {saveSuccess && (
-                        <p className="text-sm text-green-600">Profile saved successfully.</p>
-                    )}
-                    <Button onClick={handleSaveProfile} disabled={saving}>
-                        <Save className="w-4 h-4 mr-2" />
-                        {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                </div>
-            )
-        },
-        {
-            title: 'Notifications',
-            description: 'Choose what alerts you receive',
-            icon: <Bell className="w-5 h-5" />,
-            content: (
-                <div className="space-y-3 max-w-md">
-                    {[
-                        { key: 'lowStock', label: 'Low Stock Alerts', desc: 'Get notified when products run low' },
-                        { key: 'salesSummary', label: 'Daily Sales Summary', desc: 'Receive daily sales overview' },
-                        { key: 'aiInsights', label: 'AI Insights', desc: 'Get AI-powered recommendations' },
-                    ].map((item) => (
-                        <div key={item.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                                <p className="font-medium">{item.label}</p>
-                                <p className="text-sm text-gray-500">{item.desc}</p>
-                            </div>
-                            <button
-                                onClick={() => setNotifications({
-                                    ...notifications,
-                                    [item.key]: !notifications[item.key as keyof typeof notifications]
-                                })}
-                                className={`relative w-11 h-6 rounded-full transition-colors ${notifications[item.key as keyof typeof notifications] ? 'bg-blue-600' : 'bg-gray-300'
-                                    }`}
-                            >
-                                <span
-                                    className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${notifications[item.key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-0'
-                                        }`}
-                                />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )
-        },
-        {
-            title: 'Security',
-            description: 'Password and authentication settings',
-            icon: <Shield className="w-5 h-5" />,
-            content: (
-                <div className="space-y-4 max-w-md">
-                    <Button variant="outline" className="w-full justify-between">
-                        Change Password
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" className="w-full justify-between">
-                        Two-Factor Authentication
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" className="w-full justify-between">
-                        Active Sessions
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                </div>
-            )
-        },
-        {
-            title: 'Billing',
-            description: 'Manage your subscription and payment',
-            icon: <CreditCard className="w-5 h-5" />,
-            content: (
-                <div className="space-y-4 max-w-md">
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="font-medium text-blue-700">Free Plan</p>
-                                <p className="text-sm text-blue-600">Basic features included</p>
-                            </div>
-                            <Button size="sm">Upgrade</Button>
-                        </div>
-                    </div>
-                    <Button variant="outline" className="w-full justify-between">
-                        Payment Methods
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" className="w-full justify-between">
-                        Billing History
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                </div>
-            )
-        },
-        {
-            title: 'Help & Support',
-            description: 'Get help with Fluxor Cloud',
-            icon: <HelpCircle className="w-5 h-5" />,
-            content: (
-                <div className="space-y-4 max-w-md">
-                    <Button variant="outline" className="w-full justify-between">
-                        Documentation
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" className="w-full justify-between">
-                        Contact Support
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" className="w-full justify-between">
-                        Report a Bug
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                </div>
-            )
-        }
-    ];
 
     return (
         <DashboardLayout>
@@ -250,25 +153,163 @@ export default function Settings() {
                         </div>
                     </div>
 
-                    {/* Settings Sections */}
-                    {settingsSections.map((section, index) => (
-                        <Card key={index} className="dark:bg-gray-800">
-                            <CardHeader>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                                        {section.icon}
-                                    </div>
-                                    <div>
-                                        <CardTitle className="dark:text-white">{section.title}</CardTitle>
-                                        <CardDescription className="dark:text-gray-400">{section.description}</CardDescription>
-                                    </div>
+                    {/* Profile */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <User className="w-5 h-5" />
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                {section.content}
-                            </CardContent>
-                        </Card>
-                    ))}
+                                <div>
+                                    <CardTitle>Profile</CardTitle>
+                                    <CardDescription>Manage your personal information</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+                                    <Input
+                                        value={userInfo.name}
+                                        onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
+                                        placeholder="Your name"
+                                        className="max-w-md"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <div className="flex items-center gap-2 max-w-md">
+                                        <Input value={userInfo.email} disabled className="flex-1" />
+                                        <Mail className="w-4 h-4 text-gray-400" />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                                </div>
+                                {saveError && <p className="text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-4 h-4" />{saveError}</p>}
+                                {saveSuccess && <p className="text-sm text-green-600 flex items-center gap-1"><CheckCircle2 className="w-4 h-4" />Profile saved successfully.</p>}
+                                <Button onClick={handleSaveProfile} disabled={saving}>
+                                    <Save className="w-4 h-4 mr-2" />
+                                    {saving ? 'Saving...' : 'Save Changes'}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Security — Change Password */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <Shield className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <CardTitle>Security</CardTitle>
+                                    <CardDescription>Password and authentication</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4 max-w-md">
+                                {passwordSuccess && (
+                                    <p className="text-sm text-green-600 flex items-center gap-1">
+                                        <CheckCircle2 className="w-4 h-4" />Password changed successfully.
+                                    </p>
+                                )}
+                                {!showChangePassword ? (
+                                    <Button variant="outline" onClick={() => setShowChangePassword(true)} className="w-full justify-between">
+                                        <span className="flex items-center gap-2"><Lock className="w-4 h-4" />Change Password</span>
+                                    </Button>
+                                ) : (
+                                    <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                                            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                                            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                                        </div>
+                                        {passwordError && <p className="text-sm text-red-600 flex items-center gap-1"><AlertCircle className="w-4 h-4" />{passwordError}</p>}
+                                        <div className="flex gap-2">
+                                            <Button onClick={handleChangePassword} disabled={changingPassword}>
+                                                {changingPassword ? 'Changing...' : 'Update Password'}
+                                            </Button>
+                                            <Button variant="outline" onClick={() => { setShowChangePassword(false); setPasswordError(''); }}>
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Notifications */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <Bell className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <CardTitle>Notifications</CardTitle>
+                                    <CardDescription>Choose what alerts you receive</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3 max-w-md">
+                                {[
+                                    { key: 'lowStock', label: 'Low Stock Alerts', desc: 'Get notified when products run low' },
+                                    { key: 'salesSummary', label: 'Daily Sales Summary', desc: 'Receive daily sales overview' },
+                                    { key: 'aiInsights', label: 'AI Insights', desc: 'Get AI-powered recommendations' },
+                                ].map((item) => (
+                                    <div key={item.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <p className="font-medium">{item.label}</p>
+                                            <p className="text-sm text-gray-500">{item.desc}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setNotifications({
+                                                ...notifications,
+                                                [item.key]: !notifications[item.key as keyof typeof notifications]
+                                            })}
+                                            className={`relative w-11 h-6 rounded-full transition-colors ${notifications[item.key as keyof typeof notifications] ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                        >
+                                            <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${notifications[item.key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Help */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <HelpCircle className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <CardTitle>Help & Support</CardTitle>
+                                    <CardDescription>Get help with Fluxor Cloud</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3 max-w-md">
+                                <a href="mailto:support@fluxorcloud.com" className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span className="font-medium">Contact Support</span>
+                                    <span className="text-sm text-gray-500">support@fluxorcloud.com</span>
+                                </a>
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {/* Sign Out */}
                     <Card className="border-red-200">

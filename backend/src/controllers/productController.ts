@@ -7,17 +7,37 @@ export const getProducts = async (req: Request, res: Response) => {
         const storeId = await getStoreId(req);
         if (!storeId) return res.status(403).json({ message: 'No active store found' });
 
-        const products = await prisma.product.findMany({
-            where: { storeId },
-            orderBy: { name: 'asc' },
-            include: {
-                inventorySnapshots: {
-                    orderBy: { snapshotDate: 'desc' },
-                    take: 1
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.min(200, Math.max(1, parseInt(req.query.limit as string) || 100));
+        const skip = (page - 1) * limit;
+        const search = req.query.search as string | undefined;
+
+        const where: any = { storeId };
+        if (search && search.trim()) {
+            where.OR = [
+                { name: { contains: search.trim(), mode: 'insensitive' } },
+                { barcode: { contains: search.trim() } },
+                { sku: { contains: search.trim() } },
+            ];
+        }
+
+        const [products, total] = await Promise.all([
+            prisma.product.findMany({
+                where,
+                orderBy: { name: 'asc' },
+                skip,
+                take: limit,
+                include: {
+                    inventorySnapshots: {
+                        orderBy: { snapshotDate: 'desc' },
+                        take: 1
+                    }
                 }
-            }
-        });
-        res.json(products);
+            }),
+            prisma.product.count({ where })
+        ]);
+
+        res.json({ products, total, page, limit, pages: Math.ceil(total / limit) });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching products' });
     }
@@ -30,15 +50,31 @@ export const createProduct = async (req: Request, res: Response) => {
 
         const { name, barcode, sellingPrice, costPrice, category } = req.body;
 
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            return res.status(400).json({ message: 'Product name is required' });
+        }
+        if (name.trim().length > 255) {
+            return res.status(400).json({ message: 'Product name must be under 255 characters' });
+        }
+
+        const parsedSelling = parseFloat(sellingPrice);
+        const parsedCost = parseFloat(costPrice);
+
+        if (isNaN(parsedSelling) || parsedSelling < 0) {
+            return res.status(400).json({ message: 'Selling price must be a non-negative number' });
+        }
+        if (isNaN(parsedCost) || parsedCost < 0) {
+            return res.status(400).json({ message: 'Cost price must be a non-negative number' });
+        }
+
         const product = await prisma.product.create({
             data: {
                 storeId,
-                name,
-                barcode,
-                sellingPrice: parseFloat(sellingPrice),
-                costPrice: parseFloat(costPrice),
-                category,
-                // Initialize inventory to 0 if not provided
+                name: name.trim(),
+                barcode: barcode?.trim() || undefined,
+                sellingPrice: parsedSelling,
+                costPrice: parsedCost,
+                category: category?.trim() || undefined,
                 inventorySnapshots: {
                     create: {
                         storeId,
@@ -55,16 +91,38 @@ export const createProduct = async (req: Request, res: Response) => {
 
 export const updateProduct = async (req: Request, res: Response) => {
     try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
         const { id } = req.params;
+
+        // Verify product belongs to this store
+        const existing = await prisma.product.findFirst({ where: { id, storeId } });
+        if (!existing) return res.status(404).json({ message: 'Product not found' });
+
         const { name, sellingPrice, costPrice, isActive } = req.body;
+
+        if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
+            return res.status(400).json({ message: 'Product name cannot be empty' });
+        }
+
+        const parsedSelling = sellingPrice !== undefined ? parseFloat(sellingPrice) : undefined;
+        const parsedCost = costPrice !== undefined ? parseFloat(costPrice) : undefined;
+
+        if (parsedSelling !== undefined && (isNaN(parsedSelling) || parsedSelling < 0)) {
+            return res.status(400).json({ message: 'Selling price must be a non-negative number' });
+        }
+        if (parsedCost !== undefined && (isNaN(parsedCost) || parsedCost < 0)) {
+            return res.status(400).json({ message: 'Cost price must be a non-negative number' });
+        }
 
         const product = await prisma.product.update({
             where: { id },
             data: {
-                name,
-                sellingPrice: parseFloat(sellingPrice),
-                costPrice: parseFloat(costPrice),
-                isActive
+                ...(name !== undefined && { name: name.trim() }),
+                ...(parsedSelling !== undefined && { sellingPrice: parsedSelling }),
+                ...(parsedCost !== undefined && { costPrice: parsedCost }),
+                ...(isActive !== undefined && { isActive: Boolean(isActive) })
             }
         });
         res.json(product);
@@ -75,20 +133,21 @@ export const updateProduct = async (req: Request, res: Response) => {
 
 export const deleteProduct = async (req: Request, res: Response) => {
     try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
         const { id } = req.params;
 
-        // First, delete related records to avoid foreign key constraints
-        // Delete sale items referencing this product
-        await prisma.saleItem.deleteMany({ where: { productId: id } });
+        // Verify product belongs to this store
+        const existing = await prisma.product.findFirst({ where: { id, storeId } });
+        if (!existing) return res.status(404).json({ message: 'Product not found' });
 
-        // Delete invoice items referencing this product
-        await prisma.invoiceItem.deleteMany({ where: { productId: id } });
-
-        // Delete inventory snapshots for this product
-        await prisma.inventorySnapshot.deleteMany({ where: { productId: id } });
-
-        // Now delete the product itself
-        await prisma.product.delete({ where: { id } });
+        await prisma.$transaction([
+            prisma.saleItem.deleteMany({ where: { productId: id } }),
+            prisma.invoiceItem.deleteMany({ where: { productId: id } }),
+            prisma.inventorySnapshot.deleteMany({ where: { productId: id } }),
+            prisma.product.delete({ where: { id } }),
+        ]);
 
         res.json({ message: 'Product deleted' });
     } catch (error) {
@@ -122,23 +181,30 @@ export const getUnmatchedProducts = async (req: Request, res: Response) => {
 // Set initial stock for a product
 export const setInitialStock = async (req: Request, res: Response) => {
     try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
         const { id } = req.params;
+
+        // Verify product belongs to this store
+        const existing = await prisma.product.findFirst({ where: { id, storeId } });
+        if (!existing) return res.status(404).json({ message: 'Product not found' });
+
         const { initialStock } = req.body;
 
-        if (initialStock === undefined || initialStock < 0) {
+        const parsedStock = parseInt(initialStock, 10);
+        if (isNaN(parsedStock) || parsedStock < 0) {
             return res.status(400).json({ message: 'Initial stock must be a non-negative number' });
         }
 
-        // Update the product's initial stock
         const product = await prisma.product.update({
             where: { id },
-            data: { initialStock: parseInt(initialStock) }
+            data: { initialStock: parsedStock }
         });
 
-        // Also update the latest inventory snapshot to match
         await prisma.inventorySnapshot.updateMany({
             where: { productId: id },
-            data: { quantityOnHand: parseInt(initialStock) }
+            data: { quantityOnHand: parsedStock }
         });
 
         res.json(product);
@@ -150,21 +216,34 @@ export const setInitialStock = async (req: Request, res: Response) => {
 // Bulk set initial stock for multiple products
 export const bulkSetInitialStock = async (req: Request, res: Response) => {
     try {
-        const { products } = req.body; // Array of { id, initialStock }
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
+        const { products } = req.body;
 
         if (!Array.isArray(products)) {
             return res.status(400).json({ message: 'Products must be an array' });
         }
 
+        // Verify all products belong to this store before modifying any
+        const ids = products.map((p: any) => p.id).filter(Boolean);
+        const owned = await prisma.product.findMany({
+            where: { id: { in: ids }, storeId },
+            select: { id: true }
+        });
+        const ownedIds = new Set(owned.map(p => p.id));
+
         for (const p of products) {
-            if (p.initialStock !== undefined && p.initialStock >= 0) {
+            if (!ownedIds.has(p.id)) continue; // Skip products not owned by this store
+            const parsedStock = parseInt(p.initialStock, 10);
+            if (!isNaN(parsedStock) && parsedStock >= 0) {
                 await prisma.product.update({
                     where: { id: p.id },
-                    data: { initialStock: parseInt(p.initialStock) }
+                    data: { initialStock: parsedStock }
                 });
                 await prisma.inventorySnapshot.updateMany({
                     where: { productId: p.id },
-                    data: { quantityOnHand: parseInt(p.initialStock) }
+                    data: { quantityOnHand: parsedStock }
                 });
             }
         }
@@ -178,18 +257,26 @@ export const bulkSetInitialStock = async (req: Request, res: Response) => {
 // Match an unmatched product to an existing product or mark as resolved
 export const matchProduct = async (req: Request, res: Response) => {
     try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
         const { id } = req.params;
         const { targetProductId, action, name, category, sellingPrice, barcode } = req.body;
 
+        // Verify product belongs to this store
+        const existing = await prisma.product.findFirst({ where: { id, storeId } });
+        if (!existing) return res.status(404).json({ message: 'Product not found' });
+
         if (action === 'keep') {
-            // Mark as reviewed AND persist any confirmed values
-            // This enables "learning" - the product will match on future imports
             const updates: any = { isUnmatched: false };
 
-            if (name) updates.name = name;
-            if (category) updates.category = category;
-            if (sellingPrice !== undefined) updates.sellingPrice = parseFloat(sellingPrice);
-            if (barcode) updates.barcode = barcode;
+            if (name) updates.name = String(name).trim();
+            if (category) updates.category = String(category).trim();
+            if (sellingPrice !== undefined) {
+                const parsed = parseFloat(sellingPrice);
+                if (!isNaN(parsed) && parsed >= 0) updates.sellingPrice = parsed;
+            }
+            if (barcode) updates.barcode = String(barcode).trim();
 
             const product = await prisma.product.update({
                 where: { id },
@@ -201,7 +288,10 @@ export const matchProduct = async (req: Request, res: Response) => {
         }
 
         if (action === 'merge' && targetProductId) {
-            // Transfer all sale items to target product, then delete unmatched
+            // Verify target product also belongs to this store
+            const target = await prisma.product.findFirst({ where: { id: targetProductId, storeId } });
+            if (!target) return res.status(404).json({ message: 'Target product not found' });
+
             await prisma.saleItem.updateMany({
                 where: { productId: id },
                 data: { productId: targetProductId }

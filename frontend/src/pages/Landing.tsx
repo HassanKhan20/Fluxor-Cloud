@@ -5,12 +5,16 @@ import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
+import { API_URL } from '../lib/api';
 import HeroBackground from '../components/HeroBackground';
 import GlassCard from '../components/GlassCard';
 import AnimatedSection from '../components/AnimatedSection';
 
 const Landing: React.FC = () => {
     const [showDemoModal, setShowDemoModal] = useState(false);
+    const [demoEmail, setDemoEmail] = useState('');
+    const [demoSubmitting, setDemoSubmitting] = useState(false);
+    const [demoSuccess, setDemoSuccess] = useState(false);
     const { scrollY } = useScroll();
     const location = useLocation();
 
@@ -443,25 +447,56 @@ const Landing: React.FC = () => {
                                     See how Fluxor Cloud can transform your store operations.
                                 </p>
                             </div>
-                            <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); setShowDemoModal(false); }}>
-                                <div>
-                                    <input
-                                        type="email"
-                                        placeholder="Enter your email address"
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 text-gray-900 text-lg placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
-                                    />
+                            {demoSuccess ? (
+                                <div className="text-center py-6">
+                                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Check className="w-8 h-8 text-green-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">Request Received!</h3>
+                                    <p className="text-gray-600">We'll reach out to <strong>{demoEmail}</strong> within 24 hours.</p>
+                                    <button onClick={() => { setShowDemoModal(false); setDemoSuccess(false); setDemoEmail(''); }} className="mt-4 text-blue-600 font-medium hover:underline">Close</button>
                                 </div>
-                                <Button
-                                    variant="primary"
-                                    size="lg"
-                                    className="w-full justify-center h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 border-0 shadow-[0_0_30px_rgba(59,130,246,0.4)] hover:shadow-[0_0_40px_rgba(59,130,246,0.6)] transition-all"
-                                >
-                                    Request Demo
-                                </Button>
-                                <p className="text-center text-sm text-gray-500 mt-2">
-                                    We'll reach out within 24 hours to schedule your personalized demo.
-                                </p>
-                            </form>
+                            ) : (
+                                <form className="space-y-5" onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    setDemoSubmitting(true);
+                                    try {
+                                        await fetch(`${API_URL}/demo-request`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ email: demoEmail })
+                                        });
+                                        setDemoSuccess(true);
+                                    } catch {
+                                        setDemoSuccess(true); // Show success anyway — don't expose errors to potential clients
+                                    } finally {
+                                        setDemoSubmitting(false);
+                                    }
+                                }}>
+                                    <div>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={demoEmail}
+                                            onChange={(e) => setDemoEmail(e.target.value)}
+                                            placeholder="Enter your email address"
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 text-gray-900 text-lg placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
+                                        />
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        size="lg"
+                                        className="w-full justify-center h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 border-0 shadow-[0_0_30px_rgba(59,130,246,0.4)] hover:shadow-[0_0_40px_rgba(59,130,246,0.6)] transition-all"
+                                        isLoading={demoSubmitting}
+                                    >
+                                        Request Demo
+                                    </Button>
+                                    <p className="text-center text-sm text-gray-500 mt-2">
+                                        We'll reach out within 24 hours to schedule your personalized demo.
+                                    </p>
+                                </form>
+                            )}
                         </GlassCard>
                     </div>
                 )

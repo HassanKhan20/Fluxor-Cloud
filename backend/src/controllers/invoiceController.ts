@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
 import { prisma } from '../lib/prisma';
 import {
     processInvoice,
@@ -7,6 +8,15 @@ import {
 } from '../services/invoiceAIService';
 
 import { getStoreId } from '../lib/storeContext';
+
+function cleanupFile(filePath?: string) {
+    if (!filePath) return;
+    fs.unlink(filePath, (err) => {
+        if (err && err.code !== 'ENOENT') {
+            console.error('[Invoice] Failed to delete temp file:', filePath, err);
+        }
+    });
+}
 
 // Upload and process invoice with AI
 export const uploadInvoice = async (req: Request, res: Response) => {
@@ -18,12 +28,12 @@ export const uploadInvoice = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'No file uploaded' });
         }
 
-        // 1. Create Invoice Record Initial State
+        // 1. Create Invoice Record — store the file path so reprocessing can find it
         const invoice = await prisma.invoice.create({
             data: {
                 storeId,
                 status: 'PROCESSING',
-                fileUrl: req.file.path
+                fileUrl: req.file.path   // Stable filename from diskStorage (not a random temp name)
             }
         });
 
@@ -35,6 +45,7 @@ export const uploadInvoice = async (req: Request, res: Response) => {
             parseResult = await processInvoice(req.file.path, storeId);
         } catch (error) {
             console.error('[Invoice] AI processing failed:', error);
+            cleanupFile(req.file.path);
             await prisma.invoice.update({
                 where: { id: invoice.id },
                 data: { status: 'ERROR' }
@@ -44,6 +55,8 @@ export const uploadInvoice = async (req: Request, res: Response) => {
                 invoiceId: invoice.id
             });
         }
+
+        // File is kept on disk so reprocessing can find it (fileUrl points to it)
 
         // 3. Update Invoice with Results
         const updatedInvoice = await prisma.invoice.update({
@@ -94,17 +107,27 @@ export const getInvoices = async (req: Request, res: Response) => {
         const storeId = await getStoreId(req);
         if (!storeId) return res.status(403).json({ message: 'No active store found' });
 
-        const invoices = await prisma.invoice.findMany({
-            where: { storeId },
-            orderBy: { createdAt: 'desc' },
-            include: {
-                items: {
-                    include: { product: { select: { id: true, name: true } } }
-                },
-                _count: { select: { items: true } }
-            }
-        });
-        res.json(invoices);
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+        const skip = (page - 1) * limit;
+
+        const [invoices, total] = await Promise.all([
+            prisma.invoice.findMany({
+                where: { storeId },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit,
+                include: {
+                    items: {
+                        include: { product: { select: { id: true, name: true } } }
+                    },
+                    _count: { select: { items: true } }
+                }
+            }),
+            prisma.invoice.count({ where: { storeId } })
+        ]);
+
+        res.json({ invoices, total, page, limit, pages: Math.ceil(total / limit) });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching invoices' });
     }

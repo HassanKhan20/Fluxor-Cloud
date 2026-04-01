@@ -61,33 +61,39 @@ export interface InvoiceParseResult {
     needs_review: boolean;
 }
 
-// Ollama API call helper
-async function callOllama(prompt: string): Promise<string> {
-    try {
-        const response = await fetch('http://localhost:11434/api/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'llama3.2',
-                prompt,
-                stream: false,
-                options: {
-                    temperature: 0.1,
-                    num_predict: 2000
-                }
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Ollama API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.response || '';
-    } catch (error) {
-        console.error('Ollama API call failed:', error);
-        throw error;
+// LLM API call — supports OpenAI-compatible endpoints.
+// Set OPENAI_API_KEY (and optionally OPENAI_BASE_URL) in .env to enable.
+// Falls back to OCR-only mode when no key is configured.
+async function callLLM(prompt: string): Promise<string> {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+        throw new Error('LLM_NOT_CONFIGURED');
     }
+
+    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.1,
+            max_tokens: 2000
+        })
+    });
+
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`LLM API error ${response.status}: ${err}`);
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
 }
 
 // Extract text from image using Tesseract OCR
@@ -157,7 +163,7 @@ Rules:
 - Return ONLY the JSON, nothing else`;
 
     try {
-        const response = await callOllama(prompt);
+        const response = await callLLM(prompt);
 
         // Extract JSON from response (handle potential markdown wrapping)
         let jsonStr = response.trim();
@@ -413,8 +419,24 @@ export async function processInvoice(
     // Step 1: OCR
     const { text: rawText, confidence: ocrConfidence } = await extractTextFromImage(filePath);
 
-    // Step 2: LLM Parsing
-    const { metadata, items } = await parseInvoiceWithLLM(rawText);
+    // Step 2: LLM Parsing (skipped when OPENAI_API_KEY is not set — OCR-only mode)
+    let metadata: InvoiceMetadata;
+    let items: Omit<LineItem, 'matched_product_id' | 'matched_product_name' | 'confidence'>[];
+    let llmAvailable = true;
+    try {
+        const parsed = await parseInvoiceWithLLM(rawText);
+        metadata = parsed.metadata;
+        items = parsed.items;
+    } catch (err: any) {
+        if (err?.message === 'LLM_NOT_CONFIGURED') {
+            console.log('[Invoice AI] No LLM API key set — running in OCR-only mode');
+            llmAvailable = false;
+            metadata = { supplier_name: null, invoice_number: null, invoice_date: null, due_date: null, subtotal: null, taxes: null, discounts: null, total: null };
+            items = [];
+        } else {
+            throw err;
+        }
+    }
 
     // Step 3: Product Matching
     const matchedItems = await matchProductsToInventory(items, storeId);
@@ -433,9 +455,9 @@ export async function processInvoice(
         ? matchedItems.reduce((sum, i) => sum + i.confidence, 0) / matchedItems.length
         : 0;
     const overallConfidence = (ocrConfidence * 0.4 + avgMatchConfidence * 0.6);
-    const needsReview = overallConfidence < 0.9 || anomalies.length > 0;
+    const needsReview = !llmAvailable || overallConfidence < 0.9 || anomalies.length > 0;
 
-    console.log(`[Invoice AI] Processing complete. Confidence: ${(overallConfidence * 100).toFixed(1)}%`);
+    console.log(`[Invoice AI] Processing complete. Confidence: ${(overallConfidence * 100).toFixed(1)}% | LLM: ${llmAvailable ? 'enabled' : 'disabled (OCR-only)'}`);
 
     return {
         invoice_metadata: metadata,
