@@ -1,5 +1,4 @@
 import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
 
 // Creates a Gmail SMTP transporter using an App Password.
 // User must set GMAIL_USER and GMAIL_APP_PASSWORD in .env.
