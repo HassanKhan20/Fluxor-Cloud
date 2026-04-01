@@ -72,11 +72,8 @@ const allowedOriginsRaw = [
 
 app.use(cors({
     origin: (origin, callback) => {
-        // In production: block requests with no origin header (non-browser clients should use API keys, not CORS)
-        if (!origin) {
-            if (isProduction) return callback(new Error('CORS: missing origin'), false);
-            return callback(null, true); // Allow in dev (Postman, curl, etc.)
-        }
+        // Allow requests with no origin (health checks, server-to-server, Render health pinger)
+        if (!origin) return callback(null, true);
         if (allowedOriginsRaw.includes(origin)) return callback(null, true);
         callback(new Error(`CORS blocked for origin: ${origin}`));
     },
