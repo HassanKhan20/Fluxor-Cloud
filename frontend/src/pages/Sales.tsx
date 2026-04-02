@@ -167,7 +167,7 @@ export default function Sales() {
                                             {file ? file.name : 'Drop your CSV file here'}
                                         </h3>
                                         <p className="text-gray-500 text-center max-w-md mb-6">
-                                            or click to browse. Upload CSV files from any POS system — we'll handle the rest.
+                                            or click to browse. Upload anything — CSV, Excel, PDF, or even a photo of your sales report.
                                         </p>
                                     </>
                                 )}
@@ -192,7 +192,7 @@ export default function Sales() {
                                         <label className="cursor-pointer">
                                             <Input
                                                 type="file"
-                                                accept=".csv,.tsv,.txt,.xls,.xlsx,.pdf,.jpg,.jpeg,.png"
+                                                accept=".csv,.tsv,.txt,.xls,.xlsx,.pdf,.jpg,.jpeg,.png,.webp,.bmp"
                                                 onChange={handleFileChange}
                                                 className="hidden"
                                             />
@@ -295,16 +295,26 @@ export default function Sales() {
                     {/* Format Guide */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">CSV Format Guide</CardTitle>
-                            <CardDescription>Ensure your CSV has these columns for best results</CardDescription>
+                            <CardTitle className="text-lg">Supported Formats</CardTitle>
+                            <CardDescription>We accept almost anything — just upload and we'll figure it out</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto">
-                                <code>receiptId, date, productName, barcode, quantity, unitPrice</code>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                                {[
+                                    { ext: 'CSV / TSV', desc: 'Best format' },
+                                    { ext: 'Excel (.xlsx)', desc: 'Spreadsheets' },
+                                    { ext: 'PDF', desc: 'Reports & receipts' },
+                                    { ext: 'Photo (JPG/PNG)', desc: 'Receipt photos' },
+                                ].map(f => (
+                                    <div key={f.ext} className="p-3 bg-gray-50 rounded-lg text-center">
+                                        <p className="font-medium text-sm">{f.ext}</p>
+                                        <p className="text-xs text-gray-500">{f.desc}</p>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
                                 <ArrowRight className="w-4 h-4" />
-                                <span>We'll automatically match products and calculate totals</span>
+                                <span>We auto-detect columns, clean prices, and skip bad rows — just upload and go</span>
                             </div>
                         </CardContent>
                     </Card>

@@ -37,25 +37,13 @@ export const invoiceUpload = multer({
     }
 });
 
-// Sales CSV upload: accept common file types, 10 MB max
-// We accept broadly and let the parser handle detection/conversion
+// Sales upload: accept all common file types, 10 MB max
+// Parser auto-detects format (CSV, Excel, PDF, image)
 export const csvUpload = multer({
     dest: UPLOADS_DIR,
     limits: { fileSize: 10 * 1024 * 1024, files: 1 },
-    fileFilter: (_req, file, cb) => {
-        const ext = path.extname(file.originalname).toLowerCase();
-        const allowed = ['.csv', '.tsv', '.txt', '.xls', '.xlsx', '.pdf', '.jpg', '.jpeg', '.png'];
-        const allowedMimes = [
-            ...ALLOWED_CSV_TYPES,
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/pdf',
-            'image/jpeg', 'image/png', 'image/jpg',
-            'application/octet-stream' // catch-all for unknown types
-        ];
-        if (!allowed.includes(ext) && !allowedMimes.includes(file.mimetype)) {
-            return cb(new Error('Unsupported file type. Please upload a CSV, Excel, PDF, or image file.'));
-        }
+    fileFilter: (_req, _file, cb) => {
+        // Accept everything — the parser handles format detection
         cb(null, true);
     }
 });

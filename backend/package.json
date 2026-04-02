@@ -35,7 +35,8 @@
     "nodemailer": "^6.9.16",
     "tesseract.js": "^7.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "prisma": "^5.10.2"

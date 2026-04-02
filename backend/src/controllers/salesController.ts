@@ -3,6 +3,9 @@ import { prisma } from '../lib/prisma';
 import fs from 'fs';
 import csv from 'csv-parser';
 import crypto from 'crypto';
+import * as XLSX from 'xlsx';
+import Tesseract from 'tesseract.js';
+import { getStoreId } from '../lib/storeContext';
 
 interface SaleRow {
     receiptId: string;
@@ -24,47 +27,72 @@ interface ValidationError {
     message: string;
 }
 
-interface ValidationResult {
-    isValid: boolean;
-    errors: ValidationError[];
-    warnings: string[];
-    validRows: SaleRow[];
-    totalRows: number;
-}
-
-// Column name mappings (support multiple CSV formats)
+// Column name mappings — very broad to catch any POS export
 const COLUMN_MAPPINGS: Record<string, string[]> = {
-    receiptId: ['receiptId', 'receipt', 'Receipt', 'Receipt ID', 'receipt_id', 'ReceiptID', 'Transaction ID', 'Order ID', 'order_id', 'Invoice', 'invoice'],
-    date: ['date', 'Date', 'DateTime', 'datetime', 'Transaction Date', 'Sale Date', 'Time', 'Timestamp', 'timestamp', 'Created', 'created_at', 'order_date'],
-    productName: ['productName', 'product', 'Product', 'Description', 'description', 'Item', 'item', 'Product Name', 'Item Name', 'item_name', 'product_name', 'name', 'Name', 'Menu Item', 'LineItem'],
-    barcode: ['barcode', 'Barcode', 'UPC', 'upc', 'Product Code', 'EAN', 'ean', 'GTIN', 'gtin'],
-    sku: ['sku', 'SKU', 'Item Code', 'item_code', 'ItemCode', 'Product ID', 'product_id', 'Item Number', 'item_number'],
-    category: ['category', 'Category', 'Department', 'department', 'Type', 'type', 'Group', 'group', 'Class', 'class'],
-    quantity: ['quantity', 'Quantity', 'Qty', 'qty', 'Amount', 'Count', 'count', 'Units', 'units', 'Qty Sold', 'qty_sold'],
-    unitPrice: ['unitPrice', 'Unit Price', 'unit_price', 'Price', 'price', 'Unit Cost', 'Rate', 'rate', 'Sell Price', 'sell_price', 'Amount', 'Total', 'total', 'Gross Sales', 'Net Sales'],
-    paymentMethod: ['paymentMethod', 'Payment Method', 'payment', 'Payment', 'Method', 'Payment Type', 'payment_type', 'Tender'],
-    vendor: ['vendor', 'Vendor', 'Supplier', 'supplier', 'Brand', 'brand', 'Manufacturer', 'manufacturer', 'Distributor', 'distributor']
+    receiptId: ['receiptId', 'receipt', 'Receipt', 'Receipt ID', 'receipt_id', 'ReceiptID', 'Transaction ID', 'transaction_id', 'Order ID', 'order_id', 'Invoice', 'invoice', 'Ref', 'ref', 'Reference', 'Bill', 'bill', 'Check', 'check', 'Ticket', 'ticket'],
+    date: ['date', 'Date', 'DateTime', 'datetime', 'Transaction Date', 'Sale Date', 'Time', 'Timestamp', 'timestamp', 'Created', 'created_at', 'order_date', 'Order Date', 'Sold On', 'sold_on', 'Purchase Date', 'Trans Date'],
+    productName: ['productName', 'product', 'Product', 'Description', 'description', 'Item', 'item', 'Product Name', 'Item Name', 'item_name', 'product_name', 'name', 'Name', 'Menu Item', 'LineItem', 'Line Item', 'line_item', 'Article', 'article', 'Goods', 'goods', 'Product Description', 'Item Description', 'Desc'],
+    barcode: ['barcode', 'Barcode', 'UPC', 'upc', 'Product Code', 'EAN', 'ean', 'GTIN', 'gtin', 'Bar Code', 'bar_code', 'Code'],
+    sku: ['sku', 'SKU', 'Item Code', 'item_code', 'ItemCode', 'Product ID', 'product_id', 'Item Number', 'item_number', 'Item No', 'PLU', 'plu', 'Stock Code', 'Part Number', 'part_number'],
+    category: ['category', 'Category', 'Department', 'department', 'Type', 'type', 'Group', 'group', 'Class', 'class', 'Section', 'section', 'Family', 'family', 'Sub Category', 'subcategory'],
+    quantity: ['quantity', 'Quantity', 'Qty', 'qty', 'Amount', 'Count', 'count', 'Units', 'units', 'Qty Sold', 'qty_sold', 'Qty.', 'No.', 'Pieces', 'pieces', 'Num', 'num', '#'],
+    unitPrice: ['unitPrice', 'Unit Price', 'unit_price', 'Price', 'price', 'Unit Cost', 'Rate', 'rate', 'Sell Price', 'sell_price', 'Sale Price', 'sale_price', 'Each', 'each', 'Cost', 'cost', 'Retail', 'retail', 'MRP', 'mrp'],
+    paymentMethod: ['paymentMethod', 'Payment Method', 'payment', 'Payment', 'Method', 'Payment Type', 'payment_type', 'Tender', 'tender', 'Pay Type', 'pay_type'],
+    vendor: ['vendor', 'Vendor', 'Supplier', 'supplier', 'Brand', 'brand', 'Manufacturer', 'manufacturer', 'Distributor', 'distributor', 'Source', 'Maker']
 };
 
-// Required fields
-const REQUIRED_FIELDS = ['productName', 'quantity', 'unitPrice'];
+// These are the only truly required fields
+const REQUIRED_FIELDS = ['productName'];
 
-import { getStoreId } from '../lib/storeContext';
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// Helper: Generate hash for idempotency
 function generateImportHash(receiptId: string, date: string, items: string): string {
-    const content = `${receiptId}|${date}|${items}`;
-    return crypto.createHash('sha256').update(content).digest('hex').substring(0, 32);
+    return crypto.createHash('sha256').update(`${receiptId}|${date}|${items}`).digest('hex').substring(0, 32);
 }
 
-// Helper: Normalize column names
+function cleanPrice(val: string): number {
+    if (!val || val.trim() === '') return 0;
+    let s = val.trim();
+    const isNeg = s.startsWith('(') && s.endsWith(')');
+    s = s.replace(/[()]/g, '');
+    s = s.replace(/[$€£¥₹,\s]/g, '');
+    // Handle European format: 1.234,56 → 1234.56
+    if (s.includes(',') && s.indexOf(',') > s.lastIndexOf('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+    }
+    const num = parseFloat(s);
+    if (isNaN(num)) return 0;
+    return isNeg ? -Math.abs(num) : Math.abs(num);
+}
+
+function cleanQuantity(val: string): number {
+    if (!val || val.trim() === '') return 1;
+    const num = parseFloat(val.trim().replace(/[,\s]/g, ''));
+    return isNaN(num) || num <= 0 ? 1 : Math.round(num * 100) / 100;
+}
+
+function parseDateTime(dateStr: string): Date | null {
+    if (!dateStr || dateStr.trim() === '') return null;
+    const trimmed = dateStr.trim();
+
+    const formats = [
+        /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/,  // MM/DD/YYYY HH:mm
+        /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,                                     // MM/DD/YYYY
+        /^(\d{4})-(\d{2})-(\d{2})/,                                             // YYYY-MM-DD
+        /^(\d{1,2})-(\d{1,2})-(\d{4})$/,                                        // DD-MM-YYYY
+    ];
+
+    const parsed = new Date(trimmed);
+    return !isNaN(parsed.getTime()) ? parsed : null;
+}
+
 function normalizeHeaders(headers: string[]): { mapping: Record<string, string>, missing: string[] } {
     const mapping: Record<string, string> = {};
     const foundFields: string[] = [];
 
     for (const [standardName, aliases] of Object.entries(COLUMN_MAPPINGS)) {
         for (const header of headers) {
-            const trimmedHeader = header.trim();
+            const trimmedHeader = header.trim().replace(/^["']|["']$/g, '');
             if (aliases.some(alias => alias.toLowerCase() === trimmedHeader.toLowerCase())) {
                 mapping[trimmedHeader] = standardName;
                 foundFields.push(standardName);
@@ -73,198 +101,315 @@ function normalizeHeaders(headers: string[]): { mapping: Record<string, string>,
         }
     }
 
+    // If productName not found, try to guess — use the first text-looking column
+    if (!foundFields.includes('productName')) {
+        for (const header of headers) {
+            const h = header.trim().toLowerCase();
+            if (!Object.values(mapping).length || !mapping[header]) {
+                // Skip obviously numeric/date columns
+                if (!h.match(/^(id|#|no|num|total|tax|discount|subtotal|vat)/)) {
+                    mapping[header] = 'productName';
+                    foundFields.push('productName');
+                    break;
+                }
+            }
+        }
+    }
+
     const missing = REQUIRED_FIELDS.filter(f => !foundFields.includes(f));
     return { mapping, missing };
 }
 
-// Helper: Parse DateTime
-function parseDateTime(dateStr: string): Date | null {
-    if (!dateStr || dateStr.trim() === '') return null;
-    const trimmed = dateStr.trim();
+// Auto-detect: if quantity/price columns not found, look for numeric columns
+function autoDetectNumericColumns(headers: string[], sampleRows: any[]): Record<string, string> {
+    const extra: Record<string, string> = {};
+    if (sampleRows.length === 0) return extra;
 
-    // MM/DD/YYYY HH:mm
-    const mmddyyyyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/);
-    if (mmddyyyyMatch) {
-        const [, month, day, year, hours, minutes] = mmddyyyyMatch;
-        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+    const numericCols: { header: string; avg: number; allInts: boolean }[] = [];
+
+    for (const header of headers) {
+        const values = sampleRows.map(r => r[header]).filter(v => v && v.trim());
+        const nums = values.map(v => parseFloat(String(v).replace(/[$€£¥₹,\s]/g, ''))).filter(n => !isNaN(n));
+
+        if (nums.length >= values.length * 0.5 && nums.length > 0) {
+            const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+            const allInts = nums.every(n => Number.isInteger(n));
+            numericCols.push({ header, avg, allInts });
+        }
     }
 
-    // MM/DD/YYYY
-    const mmddyyyyOnlyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (mmddyyyyOnlyMatch) {
-        const [, month, day, year] = mmddyyyyOnlyMatch;
-        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    // Guess: column with small integers is likely quantity, column with decimals is likely price
+    const qtyCol = numericCols.find(c => c.allInts && c.avg < 100 && c.avg > 0);
+    const priceCol = numericCols.find(c => c !== qtyCol && c.avg > 0);
+
+    if (qtyCol) extra[qtyCol.header] = 'quantity';
+    if (priceCol) extra[priceCol.header] = 'unitPrice';
+
+    return extra;
+}
+
+// ─── File type handlers ──────────────────────────────────────────────────────
+
+async function parseCSV(filePath: string): Promise<{ headers: string[]; rows: any[] }> {
+    const headers: string[] = [];
+    const rows: any[] = [];
+
+    await new Promise<void>((resolve) => {
+        fs.createReadStream(filePath, { encoding: 'utf8' })
+            .on('error', () => resolve())
+            .pipe(csv())
+            .on('headers', (h: string[]) => headers.push(...h))
+            .on('data', (row: any) => rows.push(row))
+            .on('end', () => resolve())
+            .on('error', () => resolve());
+    });
+
+    return { headers, rows };
+}
+
+function parseExcel(filePath: string): { headers: string[]; rows: any[] } {
+    const workbook = XLSX.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) return { headers: [], rows: [] };
+
+    const sheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+    if (jsonData.length === 0) return { headers: [], rows: [] };
+
+    const headers = Object.keys(jsonData[0] as object);
+    return { headers, rows: jsonData as any[] };
+}
+
+async function parseImageOrPdf(filePath: string): Promise<{ headers: string[]; rows: any[] }> {
+    // Use Tesseract OCR to extract text
+    const result = await Tesseract.recognize(filePath, 'eng');
+    const text = result.data.text;
+
+    if (!text || text.trim().length < 10) {
+        return { headers: [], rows: [] };
     }
 
-    // YYYY-MM-DD
-    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (isoMatch) {
-        const [, year, month, day] = isoMatch;
-        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    // Try to parse the OCR text as tabular data
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    if (lines.length < 2) return { headers: [], rows: [] };
+
+    // Strategy 1: Try to find lines that look like "Product Qty Price"
+    const parsedRows: any[] = [];
+
+    for (const line of lines) {
+        // Try to extract: product name, quantity, price from each line
+        // Common patterns on receipts:
+        // "Coca Cola 2L    2    $3.99"
+        // "Chips Doritos   1    2.50"
+        // "ITEM NAME         QTY   PRICE"
+
+        // Match: text followed by numbers
+        const match = line.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s+\$?([\d,.]+)$/);
+        if (match) {
+            const [, name, qty, price] = match;
+            // Skip if it looks like a header
+            if (name.toLowerCase().match(/^(item|product|description|name|qty|quantity|price|total|amount)$/)) continue;
+            parsedRows.push({
+                productName: name.trim(),
+                quantity: qty,
+                unitPrice: price.replace(/,/g, '')
+            });
+            continue;
+        }
+
+        // Match: text followed by price only (quantity = 1)
+        const priceOnlyMatch = line.match(/^(.+?)\s+\$?([\d,.]+)$/);
+        if (priceOnlyMatch) {
+            const [, name, price] = priceOnlyMatch;
+            const priceNum = parseFloat(price.replace(/,/g, ''));
+            if (priceNum > 0 && priceNum < 10000 && name.length > 2) {
+                // Skip totals, tax lines, etc
+                if (name.toLowerCase().match(/(total|subtotal|tax|change|cash|card|visa|master|amex|balance|discount|tip)/)) continue;
+                parsedRows.push({
+                    productName: name.trim(),
+                    quantity: '1',
+                    unitPrice: price.replace(/,/g, '')
+                });
+            }
+        }
     }
 
-    // DD/MM/YYYY
-    const ddmmyyyyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (ddmmyyyyMatch) {
-        const [, day, month, year] = ddmmyyyyMatch;
-        const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        if (!isNaN(d.getTime())) return d;
+    if (parsedRows.length > 0) {
+        return {
+            headers: ['productName', 'quantity', 'unitPrice'],
+            rows: parsedRows
+        };
     }
 
-    const parsed = new Date(trimmed);
-    return !isNaN(parsed.getTime()) ? parsed : null;
+    return { headers: [], rows: [] };
 }
 
-// Helper: Clean price string — handles "$1,234.56", "(1.50)", "1.234,56" etc
-function cleanPrice(val: string): number {
-    if (!val || val.trim() === '') return 0;
-    let s = val.trim();
-    // Handle negative in parentheses: (5.00) → -5.00
-    const isNeg = s.startsWith('(') && s.endsWith(')');
-    s = s.replace(/[()]/g, '');
-    // Remove currency symbols and spaces
-    s = s.replace(/[$€£¥₹,\s]/g, '');
-    const num = parseFloat(s);
-    if (isNaN(num)) return 0;
-    return isNeg ? -num : num;
+// ─── Main: detect file type and parse ────────────────────────────────────────
+
+async function parseAnyFile(filePath: string, originalName: string): Promise<{ headers: string[]; rows: any[]; fileType: string }> {
+    const ext = (originalName.toLowerCase().split('.').pop() || '').trim();
+
+    // Excel files
+    if (['xls', 'xlsx'].includes(ext)) {
+        try {
+            const result = parseExcel(filePath);
+            return { ...result, fileType: 'excel' };
+        } catch {
+            return { headers: [], rows: [], fileType: 'excel' };
+        }
+    }
+
+    // Images and PDFs — OCR
+    if (['jpg', 'jpeg', 'png', 'pdf', 'webp', 'bmp', 'tiff', 'tif'].includes(ext)) {
+        try {
+            const result = await parseImageOrPdf(filePath);
+            return { ...result, fileType: 'ocr' };
+        } catch {
+            return { headers: [], rows: [], fileType: 'ocr' };
+        }
+    }
+
+    // CSV / TSV / TXT — try CSV parser first
+    try {
+        // Check if file is readable text
+        const content = fs.readFileSync(filePath, 'utf8');
+        const firstLines = content.split('\n').slice(0, 3).join('\n');
+
+        // If it looks like CSV (has commas/tabs/pipes)
+        if (firstLines.includes(',') || firstLines.includes('\t') || firstLines.includes('|')) {
+            const result = await parseCSV(filePath);
+            if (result.rows.length > 0) return { ...result, fileType: 'csv' };
+        }
+
+        // Try Excel anyway (some .txt/.csv are actually Excel)
+        try {
+            const result = parseExcel(filePath);
+            if (result.rows.length > 0) return { ...result, fileType: 'excel' };
+        } catch { /* not excel */ }
+
+        // Last resort: try OCR
+        try {
+            const result = await parseImageOrPdf(filePath);
+            if (result.rows.length > 0) return { ...result, fileType: 'ocr' };
+        } catch { /* not an image */ }
+
+        return { headers: [], rows: [], fileType: 'unknown' };
+    } catch {
+        return { headers: [], rows: [], fileType: 'unknown' };
+    }
 }
 
-// Helper: Clean quantity string
-function cleanQuantity(val: string): number {
-    if (!val || val.trim() === '') return 1;
-    const num = parseFloat(val.trim().replace(/[,\s]/g, ''));
-    return isNaN(num) || num <= 0 ? 1 : num;
-}
+// ─── Normalize a raw row into a SaleRow ──────────────────────────────────────
 
-// Helper: Detect if file content looks like CSV
-function looksLikeCsv(content: string): boolean {
-    const lines = content.split('\n').filter(l => l.trim().length > 0);
-    if (lines.length < 2) return false;
-    // Check if first line has comma/tab/pipe separators
-    const firstLine = lines[0];
-    return firstLine.includes(',') || firstLine.includes('\t') || firstLine.includes('|');
-}
-
-// Helper: Validate row — lenient, skips bad rows instead of failing
-function validateRow(row: any, rowNumber: number, headerMapping: Record<string, string>): { errors: ValidationError[], normalized: SaleRow | null } {
-    const errors: ValidationError[] = [];
+function normalizeRow(row: any, headerMapping: Record<string, string>): SaleRow | null {
     const normalized: any = {};
 
     for (const [csvColumn, standardName] of Object.entries(headerMapping)) {
-        normalized[standardName] = row[csvColumn] || '';
+        normalized[standardName] = String(row[csvColumn] ?? '').trim();
     }
 
-    // Product name is truly required — skip row if missing
-    if (!normalized.productName || normalized.productName.trim() === '') {
-        errors.push({ row: rowNumber, field: 'productName', value: normalized.productName || '', message: 'Product name is required' });
+    // Also grab unmapped fields directly if keys match standard names
+    for (const key of Object.keys(row)) {
+        const lower = key.toLowerCase().trim();
+        if (lower === 'productname' || lower === 'product' || lower === 'item' || lower === 'description' || lower === 'name') {
+            if (!normalized.productName) normalized.productName = String(row[key]).trim();
+        }
+        if (lower === 'quantity' || lower === 'qty') {
+            if (!normalized.quantity) normalized.quantity = String(row[key]).trim();
+        }
+        if (lower === 'price' || lower === 'unitprice' || lower === 'unit price' || lower === 'amount' || lower === 'total') {
+            if (!normalized.unitPrice) normalized.unitPrice = String(row[key]).trim();
+        }
     }
 
-    // Quantity defaults to 1 if missing/invalid
-    normalized.quantity = String(cleanQuantity(normalized.quantity));
+    // Must have a product name
+    if (!normalized.productName || normalized.productName === '' || normalized.productName === 'undefined') {
+        return null;
+    }
 
-    // Price defaults to 0 if missing/invalid
-    normalized.unitPrice = String(cleanPrice(normalized.unitPrice));
+    // Clean quantity and price
+    normalized.quantity = String(cleanQuantity(normalized.quantity || '1'));
+    normalized.unitPrice = String(cleanPrice(normalized.unitPrice || '0'));
 
-    return {
-        errors,
-        normalized: errors.length === 0 ? normalized : null
-    };
+    // Fill defaults
+    normalized.receiptId = normalized.receiptId || '';
+    normalized.date = normalized.date || '';
+    normalized.barcode = normalized.barcode || '';
+    normalized.sku = normalized.sku || '';
+    normalized.category = normalized.category || '';
+    normalized.paymentMethod = normalized.paymentMethod || '';
+    normalized.vendor = normalized.vendor || '';
+
+    return normalized as SaleRow;
 }
 
-// Validate CSV endpoint
+// ─── Validate CSV endpoint ───────────────────────────────────────────────────
+
 export const validateSalesCsv = async (req: Request, res: Response) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No file uploaded', errors: [] });
         }
 
-        const ext = req.file.originalname.toLowerCase().split('.').pop() || '';
+        const { headers, rows, fileType } = await parseAnyFile(req.file.path, req.file.originalname);
 
-        // For non-CSV files, give a helpful message
-        if (!['csv', 'tsv', 'txt'].includes(ext)) {
-            fs.unlinkSync(req.file.path);
-            return res.status(400).json({
-                success: false,
-                message: `We received a .${ext} file. Please export your data as CSV from your POS system and upload that instead. Most POS systems have an "Export to CSV" option in their reports section.`,
-                errors: []
-            });
-        }
-
-        // Try to read the file and check if it's valid CSV
-        let fileContent: string;
-        try {
-            fileContent = fs.readFileSync(req.file.path, 'utf8');
-        } catch {
-            fs.unlinkSync(req.file.path);
-            return res.status(400).json({ success: false, message: 'Could not read file. It may be corrupted.', errors: [] });
-        }
-
-        if (!looksLikeCsv(fileContent)) {
-            fs.unlinkSync(req.file.path);
-            return res.status(400).json({
-                success: false,
-                message: 'This file does not appear to be a valid CSV. Make sure your file has column headers in the first row and comma-separated values.',
-                errors: []
-            });
-        }
-
-        const result: ValidationResult = { isValid: true, errors: [], warnings: [], validRows: [], totalRows: 0 };
-        let headerMapping: Record<string, string> = {};
-        let rowNumber = 0;
-
-        await new Promise<void>((resolve) => {
-            fs.createReadStream(req.file!.path, { encoding: 'utf8' })
-                .on('error', () => resolve())
-                .pipe(csv())
-                .on('headers', (csvHeaders: string[]) => {
-                    const { mapping, missing } = normalizeHeaders(csvHeaders);
-                    headerMapping = mapping;
-                    if (missing.length > 0) {
-                        result.isValid = false;
-                        missing.forEach(field => {
-                            const suggestions = COLUMN_MAPPINGS[field]?.slice(0, 4).join(', ') || field;
-                            result.errors.push({ row: 0, field, value: '', message: `Required column "${field}" not found. Expected one of: ${suggestions}` });
-                        });
-                    }
-                })
-                .on('data', (row: any) => {
-                    rowNumber++;
-                    result.totalRows = rowNumber;
-                    if (Object.keys(headerMapping).length >= REQUIRED_FIELDS.length) {
-                        const { errors, normalized } = validateRow(row, rowNumber, headerMapping);
-                        if (errors.length > 0) {
-                            result.errors.push(...errors);
-                        }
-                        if (normalized) result.validRows.push(normalized);
-                    }
-                })
-                .on('end', () => resolve())
-                .on('error', () => resolve());
-        });
-
-        // If we got some valid rows despite errors, it's still partially valid
-        if (result.validRows.length > 0 && result.errors.length > 0) {
-            result.isValid = true;
-            result.warnings.push(`${result.errors.length} row(s) had issues and will be skipped. ${result.validRows.length} row(s) are valid and will be imported.`);
-        }
-
-        if (result.totalRows === 0 && result.errors.length === 0) {
-            result.isValid = false;
-            result.errors.push({ row: 0, field: 'file', value: '', message: 'CSV file is empty or has no data rows' });
-        }
-
+        // Cleanup
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
+        if (rows.length === 0) {
+            return res.json({
+                success: false,
+                message: fileType === 'ocr'
+                    ? 'Could not read any sales data from this image/PDF. Try a clearer photo or export as CSV from your POS system.'
+                    : fileType === 'unknown'
+                        ? 'Could not read this file. Please upload a CSV, Excel file, or a clear photo/PDF of your sales report.'
+                        : 'The file appears to be empty. Make sure it contains sales data.',
+                errors: [],
+                totalRows: 0,
+                validRows: 0
+            });
+        }
+
+        // Map columns
+        let headerMapping = headers.length > 0 ? normalizeHeaders(headers).mapping : {};
+
+        // Auto-detect numeric columns if quantity/price not found
+        const mappedFields = Object.values(headerMapping);
+        if (!mappedFields.includes('quantity') || !mappedFields.includes('unitPrice')) {
+            const extra = autoDetectNumericColumns(headers, rows.slice(0, 10));
+            for (const [h, field] of Object.entries(extra)) {
+                if (!mappedFields.includes(field)) {
+                    headerMapping[h] = field;
+                }
+            }
+        }
+
+        // Normalize all rows
+        const validRows: SaleRow[] = [];
+        const errors: ValidationError[] = [];
+
+        for (let i = 0; i < rows.length; i++) {
+            const normalized = normalizeRow(rows[i], headerMapping);
+            if (normalized) {
+                validRows.push(normalized);
+            } else {
+                errors.push({ row: i + 1, field: 'productName', value: '', message: 'No product name found in this row' });
+            }
+        }
+
         res.json({
-            success: result.isValid,
-            message: result.isValid
-                ? `${result.validRows.length} rows ready to import${result.warnings.length > 0 ? ' (with some warnings)' : ''}`
-                : `${result.errors.length} error(s) found`,
-            totalRows: result.totalRows,
-            validRows: result.validRows.length,
-            errors: result.errors.slice(0, 20),
-            warnings: result.warnings,
-            preview: result.validRows.slice(0, 5)
+            success: validRows.length > 0,
+            message: validRows.length > 0
+                ? `${validRows.length} rows ready to import${errors.length > 0 ? ` (${errors.length} rows skipped)` : ''}`
+                : 'No valid sales data found in the file',
+            fileType,
+            totalRows: rows.length,
+            validRows: validRows.length,
+            skippedRows: errors.length,
+            errors: errors.slice(0, 10),
+            preview: validRows.slice(0, 5)
         });
     } catch (error: any) {
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -272,7 +417,8 @@ export const validateSalesCsv = async (req: Request, res: Response) => {
     }
 };
 
-// Upload and process CSV
+// ─── Upload and process endpoint ─────────────────────────────────────────────
+
 export const uploadSalesCsv = async (req: Request, res: Response) => {
     try {
         const storeId = await getStoreId(req);
@@ -282,90 +428,65 @@ export const uploadSalesCsv = async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
         }
 
-        const ext = req.file.originalname.toLowerCase().split('.').pop() || '';
+        const { headers, rows, fileType } = await parseAnyFile(req.file.path, req.file.originalname);
 
-        if (!['csv', 'tsv', 'txt'].includes(ext)) {
-            fs.unlinkSync(req.file.path);
+        if (rows.length === 0) {
+            if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
             return res.status(400).json({
                 success: false,
-                message: `We received a .${ext} file. Please export your data as CSV from your POS system. Most POS systems have an "Export to CSV" or "Download Report" option.`
+                message: fileType === 'ocr'
+                    ? 'Could not read sales data from this file. Try a clearer image or export as CSV.'
+                    : 'No data found in the file. Make sure it contains sales data.'
             });
         }
 
-        // Check if file is readable and looks like CSV
-        let fileContent: string;
-        try {
-            fileContent = fs.readFileSync(req.file.path, 'utf8');
-        } catch {
-            fs.unlinkSync(req.file.path);
-            return res.status(400).json({ success: false, message: 'Could not read file. It may be corrupted.' });
+        // Map columns
+        let headerMapping = headers.length > 0 ? normalizeHeaders(headers).mapping : {};
+
+        const mappedFields = Object.values(headerMapping);
+        if (!mappedFields.includes('quantity') || !mappedFields.includes('unitPrice')) {
+            const extra = autoDetectNumericColumns(headers, rows.slice(0, 10));
+            for (const [h, field] of Object.entries(extra)) {
+                if (!mappedFields.includes(field)) {
+                    headerMapping[h] = field;
+                }
+            }
         }
 
-        if (!looksLikeCsv(fileContent)) {
-            fs.unlinkSync(req.file.path);
+        // Normalize rows — skip bad ones silently
+        const validRows: SaleRow[] = [];
+        let skippedCount = 0;
+
+        for (const row of rows) {
+            const normalized = normalizeRow(row, headerMapping);
+            if (normalized) {
+                validRows.push(normalized);
+            } else {
+                skippedCount++;
+            }
+        }
+
+        if (validRows.length === 0) {
+            if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
             return res.status(400).json({
                 success: false,
-                message: 'This file does not appear to be valid CSV data. Make sure it has column headers and comma-separated values.'
+                message: `Found ${rows.length} rows but none had valid product names. Check your file format.`
             });
         }
 
-        const results: SaleRow[] = [];
-        const skippedRows: number[] = [];
-        let headerMapping: Record<string, string> = {};
-        let rowNumber = 0;
-        let headerError: string | null = null;
+        const importResult = await processSalesData(storeId, validRows);
 
-        await new Promise<void>((resolve) => {
-            fs.createReadStream(req.file!.path, { encoding: 'utf8' })
-                .on('error', () => resolve())
-                .pipe(csv())
-                .on('headers', (csvHeaders: string[]) => {
-                    const { mapping, missing } = normalizeHeaders(csvHeaders);
-                    headerMapping = mapping;
-                    if (missing.length > 0) {
-                        headerError = `Missing required columns: ${missing.join(', ')}. Your CSV needs at least: productName (or Product/Item/Description), quantity (or Qty), unitPrice (or Price).`;
-                    }
-                })
-                .on('data', (row: any) => {
-                    rowNumber++;
-                    if (!headerError) {
-                        const { normalized } = validateRow(row, rowNumber, headerMapping);
-                        if (normalized) {
-                            results.push(normalized);
-                        } else {
-                            skippedRows.push(rowNumber);
-                        }
-                    }
-                })
-                .on('end', () => resolve())
-                .on('error', () => resolve());
-        });
-
-        if (headerError) {
-            fs.unlinkSync(req.file.path);
-            return res.status(400).json({ success: false, message: headerError });
-        }
-
-        if (results.length === 0) {
-            fs.unlinkSync(req.file.path);
-            return res.status(400).json({
-                success: false,
-                message: `No valid data found in ${rowNumber} rows. Make sure your CSV has product names, quantities, and prices.`
-            });
-        }
-
-        const importResult = await processSalesData(storeId, results);
-
-        fs.unlinkSync(req.file.path);
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
         res.json({
             success: true,
-            message: `Sales data imported successfully`,
+            message: 'Sales data imported successfully',
+            fileType,
             imported: importResult.imported,
-            skipped: importResult.skipped + skippedRows.length,
+            skipped: importResult.skipped + skippedCount,
             duplicates: importResult.duplicates,
-            totalRows: rowNumber,
-            validRows: results.length
+            totalRows: rows.length,
+            validRows: validRows.length
         });
     } catch (error: any) {
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
@@ -373,15 +494,13 @@ export const uploadSalesCsv = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * processSalesData with idempotency, proper identity resolution, and learning mode
- */
+// ─── Process sales data into DB ──────────────────────────────────────────────
+
 async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imported: number; skipped: number; duplicates: number }> {
     let imported = 0;
     let skipped = 0;
     let duplicates = 0;
 
-    // Group by Receipt ID
     const salesMap = new Map<string, SaleRow[]>();
     for (const row of rows) {
         const key = row.receiptId || `GEN-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -393,14 +512,8 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
         const itemsString = items.map(i => `${i.productName}|${i.quantity}|${i.unitPrice}`).sort().join(';');
         const importHash = generateImportHash(receiptId, items[0].date || '', itemsString);
 
-        const existingSale = await prisma.sale.findFirst({
-            where: { storeId, importHash }
-        });
-
-        if (existingSale) {
-            duplicates++;
-            continue;
-        }
+        const existingSale = await prisma.sale.findFirst({ where: { storeId, importHash } });
+        if (existingSale) { duplicates++; continue; }
 
         let totalAmount = 0;
         const validItems: Array<{ product: any; qty: number; price: number }> = [];
@@ -414,31 +527,22 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
             const normalizedSku = item.sku?.trim() || null;
             const normalizedName = item.productName?.trim() || null;
             const normalizedCategory = item.category?.trim() || null;
+            const normalizedVendor = item.vendor?.trim() || null;
 
             let product = null;
 
-            // PRODUCT IDENTITY RESOLUTION
-            if (normalizedBarcode && normalizedBarcode !== '') {
-                product = await prisma.product.findFirst({
-                    where: { storeId, barcode: normalizedBarcode }
-                });
+            if (normalizedBarcode) {
+                product = await prisma.product.findFirst({ where: { storeId, barcode: normalizedBarcode } });
             }
-
-            if (!product && normalizedSku && normalizedSku !== '') {
-                product = await prisma.product.findFirst({
-                    where: { storeId, sku: normalizedSku }
-                });
+            if (!product && normalizedSku) {
+                product = await prisma.product.findFirst({ where: { storeId, sku: normalizedSku } });
             }
-
-            if (!product && normalizedName && normalizedName !== '') {
-                const existingProducts = await prisma.product.findMany({ where: { storeId } });
-                product = existingProducts.find(p =>
-                    p.name.toLowerCase().trim() === normalizedName.toLowerCase()
-                );
+            if (!product && normalizedName) {
+                const existing = await prisma.product.findMany({ where: { storeId } });
+                product = existing.find(p => p.name.toLowerCase().trim() === normalizedName.toLowerCase());
             }
 
             if (!product) {
-                const normalizedVendor = (item as any).vendor?.trim() || null;
                 product = await prisma.product.create({
                     data: {
                         storeId,
@@ -458,7 +562,6 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
                 });
             } else {
                 if (!product.isConfirmed) {
-                    const normalizedVendor = (item as any).vendor?.trim() || null;
                     await prisma.product.update({
                         where: { id: product.id },
                         data: {
@@ -481,8 +584,7 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
             validItems.push({ product, qty, price });
         }
 
-        const firstItem = items[0];
-        const date = parseDateTime(firstItem.date) || new Date();
+        const date = parseDateTime(items[0].date) || new Date();
 
         await prisma.sale.create({
             data: {
@@ -510,7 +612,6 @@ async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imp
                     where: { productId: vi.product.id },
                     orderBy: { snapshotDate: 'desc' }
                 });
-
                 if (latestSnapshot) {
                     const newQuantity = Math.max(0, latestSnapshot.quantityOnHand - vi.qty);
                     await prisma.inventorySnapshot.update({
