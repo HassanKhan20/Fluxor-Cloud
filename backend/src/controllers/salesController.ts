@@ -33,10 +33,10 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
     date: ['date', 'Date', 'DateTime', 'datetime', 'Transaction Date', 'Sale Date', 'Time', 'Timestamp', 'timestamp', 'Created', 'created_at', 'order_date', 'Order Date', 'Sold On', 'sold_on', 'Purchase Date', 'Trans Date'],
     productName: ['productName', 'product', 'Product', 'Description', 'description', 'Item', 'item', 'Product Name', 'Item Name', 'item_name', 'product_name', 'name', 'Name', 'Menu Item', 'LineItem', 'Line Item', 'line_item', 'Article', 'article', 'Goods', 'goods', 'Product Description', 'Item Description', 'Desc'],
     barcode: ['barcode', 'Barcode', 'UPC', 'upc', 'Product Code', 'EAN', 'ean', 'GTIN', 'gtin', 'Bar Code', 'bar_code', 'Code'],
-    sku: ['sku', 'SKU', 'Item Code', 'item_code', 'ItemCode', 'Product ID', 'product_id', 'Item Number', 'item_number', 'Item No', 'PLU', 'plu', 'Stock Code', 'Part Number', 'part_number'],
+    sku: ['sku', 'SKU', 'Item Code', 'item_code', 'ItemCode', 'Product ID', 'product_id', 'Item Number', 'item_number', 'Item No', 'PLU', 'plu', 'Stock Code', 'Part Number', 'part_number', 'Product ID'],
     category: ['category', 'Category', 'Department', 'department', 'Type', 'type', 'Group', 'group', 'Class', 'class', 'Section', 'section', 'Family', 'family', 'Sub Category', 'subcategory'],
-    quantity: ['quantity', 'Quantity', 'Qty', 'qty', 'Amount', 'Count', 'count', 'Units', 'units', 'Qty Sold', 'qty_sold', 'Qty.', 'No.', 'Pieces', 'pieces', 'Num', 'num', '#'],
-    unitPrice: ['unitPrice', 'Unit Price', 'unit_price', 'Price', 'price', 'Unit Cost', 'Rate', 'rate', 'Sell Price', 'sell_price', 'Sale Price', 'sale_price', 'Each', 'each', 'Cost', 'cost', 'Retail', 'retail', 'MRP', 'mrp'],
+    quantity: ['quantity', 'Quantity', 'Qty', 'qty', 'Amount', 'Count', 'count', 'Units', 'units', 'Qty Sold', 'qty_sold', 'Qty.', 'No.', 'Pieces', 'pieces', 'Num', 'num', '#', 'Quantity In Stock', 'quantity_in_stock', 'Stock', 'stock', 'On Hand', 'on_hand', 'In Stock'],
+    unitPrice: ['unitPrice', 'Unit Price', 'unit_price', 'Price', 'price', 'Unit Cost', 'Rate', 'rate', 'Sell Price', 'sell_price', 'Sale Price', 'sale_price', 'Each', 'each', 'Cost', 'cost', 'Retail', 'retail', 'MRP', 'mrp', 'Selling Price ($)', 'Selling Price', 'selling_price', 'Cost Price ($)', 'Cost Price', 'cost_price', 'Retail Price'],
     paymentMethod: ['paymentMethod', 'Payment Method', 'payment', 'Payment', 'Method', 'Payment Type', 'payment_type', 'Tender', 'tender', 'Pay Type', 'pay_type'],
     vendor: ['vendor', 'Vendor', 'Supplier', 'supplier', 'Brand', 'brand', 'Manufacturer', 'manufacturer', 'Distributor', 'distributor', 'Source', 'Maker']
 };

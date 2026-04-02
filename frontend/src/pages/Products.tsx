@@ -37,9 +37,10 @@ export default function Products() {
     const fetchProducts = async () => {
         try {
             const token = localStorage.getItem('token');
-            const data = await api.get('/products', token || '');
-            // Enrich with AI suggestions
-            const enriched = enrichProductsWithAI(data);
+            const data = await api.get('/products?limit=200', token || '');
+            // Handle both paginated { products: [...] } and legacy array response
+            const productList = Array.isArray(data) ? data : (data.products || []);
+            const enriched = enrichProductsWithAI(productList);
             setProducts(enriched);
         } catch (error) {
             console.error('Failed to fetch products', error);

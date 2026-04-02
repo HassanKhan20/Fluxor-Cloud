@@ -25,7 +25,8 @@ export default function Invoices() {
         try {
             const token = localStorage.getItem('token');
             const data = await api.get('/invoices', token || '');
-            setInvoices(data);
+            // Handle both paginated { invoices: [...] } and legacy array response
+            setInvoices(Array.isArray(data) ? data : (data.invoices || []));
         } catch (error) {
             console.error(error);
         }
@@ -93,7 +94,20 @@ export default function Invoices() {
                 });
             } else {
                 const error = await response.json();
-                alert(error.message || 'Upload failed');
+                // Show a user-friendly message
+                setExtractedData({
+                    supplier: 'Upload Error',
+                    date: new Date().toLocaleDateString(),
+                    total: 0,
+                    items: [],
+                    alerts: [],
+                    anomalies: [],
+                    insights: [],
+                    confidence: 0,
+                    needsReview: true,
+                    invoiceId: error.invoiceId || null,
+                    errorMessage: error.message || 'Upload failed. Please try again with a clearer image.'
+                });
             }
             fetchInvoices();
         } catch (error) {
@@ -234,18 +248,27 @@ export default function Invoices() {
                             <CardContent>
                                 {extractedData ? (
                                     <div className="space-y-4">
+                                        {/* Error Message */}
+                                        {extractedData.errorMessage && (
+                                            <div className="p-3 rounded-lg bg-red-100 text-red-800 text-sm">
+                                                {extractedData.errorMessage}
+                                            </div>
+                                        )}
+
                                         {/* Confidence Banner */}
-                                        <div className={`p-3 rounded-lg flex items-center justify-between ${extractedData.confidence >= 0.9 ? 'bg-green-100 text-green-800' :
-                                                extractedData.confidence >= 0.7 ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-red-100 text-red-800'
-                                            }`}>
-                                            <span className="text-sm font-medium">
-                                                AI Confidence: {(extractedData.confidence * 100).toFixed(0)}%
-                                            </span>
-                                            {extractedData.needsReview && (
-                                                <span className="text-xs bg-white/50 px-2 py-1 rounded">Needs Review</span>
-                                            )}
-                                        </div>
+                                        {!extractedData.errorMessage && (
+                                            <div className={`p-3 rounded-lg flex items-center justify-between ${extractedData.confidence >= 0.9 ? 'bg-green-100 text-green-800' :
+                                                    extractedData.confidence >= 0.7 ? 'bg-yellow-100 text-yellow-800' :
+                                                        'bg-red-100 text-red-800'
+                                                }`}>
+                                                <span className="text-sm font-medium">
+                                                    AI Confidence: {(extractedData.confidence * 100).toFixed(0)}%
+                                                </span>
+                                                {extractedData.needsReview && (
+                                                    <span className="text-xs bg-white/50 px-2 py-1 rounded">Needs Review</span>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Summary */}
                                         <div className="grid grid-cols-2 gap-4">
