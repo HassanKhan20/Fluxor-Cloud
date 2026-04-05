@@ -7,7 +7,8 @@ import {
     getUnmatchedProducts,
     setInitialStock,
     bulkSetInitialStock,
-    matchProduct
+    matchProduct,
+    exportProducts
 } from '../controllers/productController';
 import { authenticateToken } from '../middleware/auth';
 
@@ -16,6 +17,7 @@ const router = Router();
 router.use(authenticateToken);
 
 router.get('/', getProducts);
+router.get('/export', exportProducts);
 router.get('/unmatched', getUnmatchedProducts);
 router.post('/', createProduct);
 router.put('/:id', updateProduct);

@@ -26,10 +26,10 @@ interface UserInfo {
 
 export default function Settings() {
     const navigate = useNavigate();
-    const [notifications, setNotifications] = useState({
-        lowStock: true,
-        salesSummary: true,
-        aiInsights: true,
+    const [notifications, setNotifications] = useState(() => {
+        const saved = localStorage.getItem('notificationSettings');
+        if (saved) { try { return JSON.parse(saved); } catch {} }
+        return { lowStock: true, salesSummary: true, aiInsights: true };
     });
     const [userInfo, setUserInfo] = useState<UserInfo>({ name: '', email: '' });
     const [saving, setSaving] = useState(false);
@@ -274,10 +274,11 @@ export default function Settings() {
                                             <p className="text-sm text-gray-500">{item.desc}</p>
                                         </div>
                                         <button
-                                            onClick={() => setNotifications({
-                                                ...notifications,
-                                                [item.key]: !notifications[item.key as keyof typeof notifications]
-                                            })}
+                                            onClick={() => {
+                                                const updated = { ...notifications, [item.key]: !notifications[item.key as keyof typeof notifications] };
+                                                setNotifications(updated);
+                                                localStorage.setItem('notificationSettings', JSON.stringify(updated));
+                                            }}
                                             className={`relative w-11 h-6 rounded-full transition-colors ${notifications[item.key as keyof typeof notifications] ? 'bg-blue-600' : 'bg-gray-300'}`}
                                         >
                                             <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${notifications[item.key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-0'}`} />

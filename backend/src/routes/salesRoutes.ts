@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
-import { uploadSalesCsv, validateSalesCsv } from '../controllers/salesController';
+import { uploadSalesCsv, validateSalesCsv, exportSales } from '../controllers/salesController';
 import { authenticateToken } from '../middleware/auth';
 import { csvUpload } from '../middleware/upload';
 
@@ -19,6 +19,9 @@ function handleCsvUpload(req: Request, res: Response, next: NextFunction) {
         next();
     });
 }
+
+// Export sales as CSV
+router.get('/export', exportSales);
 
 // Validate CSV before import (preview)
 router.post('/validate', handleCsvUpload, validateSalesCsv);

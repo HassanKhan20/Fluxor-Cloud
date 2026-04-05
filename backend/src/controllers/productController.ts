@@ -254,6 +254,42 @@ export const bulkSetInitialStock = async (req: Request, res: Response) => {
     }
 };
 
+// Export products as CSV
+export const exportProducts = async (req: Request, res: Response) => {
+    try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
+        const products = await prisma.product.findMany({
+            where: { storeId },
+            orderBy: { name: 'asc' },
+            include: { inventorySnapshots: { orderBy: { snapshotDate: 'desc' }, take: 1 } }
+        });
+
+        const headers = 'Product Name,SKU,Barcode,Category,Vendor,Cost Price,Selling Price,Stock,Status\n';
+        const rows = products.map(p => {
+            const stock = p.inventorySnapshots[0]?.quantityOnHand ?? 'N/A';
+            return [
+                `"${(p.name || '').replace(/"/g, '""')}"`,
+                p.sku || '',
+                p.barcode || '',
+                `"${(p.category || '').replace(/"/g, '""')}"`,
+                `"${(p.vendor || '').replace(/"/g, '""')}"`,
+                p.costPrice.toFixed(2),
+                p.sellingPrice.toFixed(2),
+                stock,
+                p.isActive ? 'Active' : 'Inactive'
+            ].join(',');
+        }).join('\n');
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=products_export.csv');
+        res.send(headers + rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Error exporting products' });
+    }
+};
+
 // Match an unmatched product to an existing product or mark as resolved
 export const matchProduct = async (req: Request, res: Response) => {
     try {

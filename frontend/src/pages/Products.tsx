@@ -12,8 +12,9 @@ import { BulkReviewModal } from '@/components/BulkReviewModal';
 import DashboardLayout from '@/components/DashboardLayout';
 import {
     Plus, Search, Edit, Trash2, AlertTriangle, Package, Check, ChevronLeft, ChevronDown, ChevronUp,
-    Sparkles, DollarSign, TrendingDown, AlertCircle
+    Sparkles, DollarSign, TrendingDown, AlertCircle, Download
 } from 'lucide-react';
+import { API_URL } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Product } from '@/types';
 
@@ -203,9 +204,21 @@ export default function Products() {
                                 </p>
                             </div>
                         </div>
-                        <Button onClick={openNew}>
-                            <Plus className="mr-2 h-4 w-4" /> Add Product
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={async () => {
+                                const token = localStorage.getItem('token');
+                                const res = await fetch(`${API_URL}/products/export`, { headers: { 'Authorization': `Bearer ${token}` } });
+                                const blob = await res.blob();
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a'); a.href = url; a.download = 'products_export.csv'; a.click();
+                                URL.revokeObjectURL(url);
+                            }}>
+                                <Download className="mr-2 h-4 w-4" /> Export CSV
+                            </Button>
+                            <Button onClick={openNew}>
+                                <Plus className="mr-2 h-4 w-4" /> Add Product
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Action Summary Card */}

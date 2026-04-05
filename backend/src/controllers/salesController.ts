@@ -494,6 +494,48 @@ export const uploadSalesCsv = async (req: Request, res: Response) => {
     }
 };
 
+// ─── Export sales as CSV ─────────────────────────────────────────────────────
+
+export const exportSales = async (req: Request, res: Response) => {
+    try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
+        const sales = await prisma.sale.findMany({
+            where: { storeId },
+            orderBy: { dateTime: 'desc' },
+            take: 5000,
+            include: {
+                items: {
+                    include: { product: { select: { name: true, barcode: true, sku: true, category: true } } }
+                }
+            }
+        });
+
+        const headers = 'Date,Receipt ID,Product,Barcode,SKU,Category,Quantity,Unit Price,Line Total,Source\n';
+        const rows = sales.flatMap(sale =>
+            sale.items.map(item => [
+                new Date(sale.dateTime).toISOString().split('T')[0],
+                sale.importHash?.substring(0, 8) || sale.id.substring(0, 8),
+                `"${(item.product.name || '').replace(/"/g, '""')}"`,
+                item.product.barcode || '',
+                item.product.sku || '',
+                `"${(item.product.category || '').replace(/"/g, '""')}"`,
+                item.quantity,
+                item.unitPrice.toFixed(2),
+                item.lineTotal.toFixed(2),
+                sale.source
+            ].join(','))
+        ).join('\n');
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=sales_export.csv');
+        res.send(headers + rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Error exporting sales' });
+    }
+};
+
 // ─── Process sales data into DB ──────────────────────────────────────────────
 
 async function processSalesData(storeId: string, rows: SaleRow[]): Promise<{ imported: number; skipped: number; duplicates: number }> {

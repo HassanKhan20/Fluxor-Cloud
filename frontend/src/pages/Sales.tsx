@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { FileText, Upload, CheckCircle2, AlertCircle, FileSpreadsheet, ArrowRight, ChevronLeft, XCircle } from 'lucide-react';
+import { FileText, Upload, CheckCircle2, AlertCircle, FileSpreadsheet, ArrowRight, ChevronLeft, XCircle, Download } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { API_URL } from '@/lib/api';
 
@@ -118,10 +118,20 @@ export default function Sales() {
                         >
                             <ChevronLeft className="h-5 w-5 text-gray-600" />
                         </button>
-                        <div>
+                        <div className="flex-1">
                             <h1 className="text-3xl font-bold tracking-tight">Sales Data Import</h1>
                             <p className="text-gray-500 mt-1">Import your POS data to start tracking sales and inventory</p>
                         </div>
+                        <Button variant="outline" onClick={async () => {
+                            const token = localStorage.getItem('token');
+                            const res = await fetch(`${API_URL}/sales/export`, { headers: { 'Authorization': `Bearer ${token}` } });
+                            const blob = await res.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a'); a.href = url; a.download = 'sales_export.csv'; a.click();
+                            URL.revokeObjectURL(url);
+                        }}>
+                            <Download className="mr-2 h-4 w-4" /> Export Sales
+                        </Button>
                     </div>
 
                     {/* Main Upload Card */}
