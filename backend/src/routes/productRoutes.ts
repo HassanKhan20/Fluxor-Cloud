@@ -8,7 +8,8 @@ import {
     setInitialStock,
     bulkSetInitialStock,
     matchProduct,
-    exportProducts
+    exportProducts,
+    cleanupGarbageProducts
 } from '../controllers/productController';
 import { authenticateToken } from '../middleware/auth';
 
@@ -18,6 +19,7 @@ router.use(authenticateToken);
 
 router.get('/', getProducts);
 router.get('/export', exportProducts);
+router.post('/cleanup', cleanupGarbageProducts);
 router.get('/unmatched', getUnmatchedProducts);
 router.post('/', createProduct);
 router.put('/:id', updateProduct);

@@ -254,6 +254,50 @@ export const bulkSetInitialStock = async (req: Request, res: Response) => {
     }
 };
 
+// Cleanup garbage products (PDF artifacts, binary strings, etc)
+export const cleanupGarbageProducts = async (req: Request, res: Response) => {
+    try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
+        const products = await prisma.product.findMany({ where: { storeId }, select: { id: true, name: true } });
+
+        const garbageIds: string[] = [];
+        for (const p of products) {
+            const name = p.name;
+            if (!name || name.length < 2) { garbageIds.push(p.id); continue; }
+            // PDF object markers
+            if (/\d{5,}\s+\d{5}\s+[nf]/.test(name)) { garbageIds.push(p.id); continue; }
+            // PDF metadata
+            if (/reportlab|generated|pdf\s*document|opensource|endobj|startxref|xref|trailer|stream/i.test(name)) { garbageIds.push(p.id); continue; }
+            // Binary / control characters
+            if (/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(name)) { garbageIds.push(p.id); continue; }
+            // >30% special characters
+            const nonAlpha = name.replace(/[a-zA-Z0-9\s\-'&.,/()]/g, '').length;
+            if (name.length > 3 && nonAlpha / name.length > 0.3) { garbageIds.push(p.id); continue; }
+            // All hex
+            if (/^[0-9A-Fa-f\s]+$/.test(name) && name.length > 6) { garbageIds.push(p.id); continue; }
+        }
+
+        if (garbageIds.length === 0) {
+            return res.json({ message: 'No garbage products found', deleted: 0 });
+        }
+
+        // Delete related records first, then the products
+        await prisma.$transaction([
+            prisma.saleItem.deleteMany({ where: { productId: { in: garbageIds } } }),
+            prisma.invoiceItem.deleteMany({ where: { productId: { in: garbageIds } } }),
+            prisma.inventorySnapshot.deleteMany({ where: { productId: { in: garbageIds } } }),
+            prisma.product.deleteMany({ where: { id: { in: garbageIds } } }),
+        ]);
+
+        res.json({ message: `Cleaned up ${garbageIds.length} garbage product(s)`, deleted: garbageIds.length });
+    } catch (error) {
+        console.error('Cleanup error:', error);
+        res.status(500).json({ message: 'Error cleaning up products' });
+    }
+};
+
 // Export products as CSV
 export const exportProducts = async (req: Request, res: Response) => {
     try {
