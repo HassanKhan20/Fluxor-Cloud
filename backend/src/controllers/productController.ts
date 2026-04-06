@@ -254,6 +254,39 @@ export const bulkSetInitialStock = async (req: Request, res: Response) => {
     }
 };
 
+// Delete ALL products for the store (demo account only)
+export const deleteAllProducts = async (req: Request, res: Response) => {
+    try {
+        const storeId = await getStoreId(req);
+        if (!storeId) return res.status(403).json({ message: 'No active store found' });
+
+        // Only allow for demo account
+        // @ts-ignore
+        const userId = req.user?.userId;
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || user.email !== (process.env.DEMO_EMAIL || 'demo@fluxor.cloud')) {
+            return res.status(403).json({ message: 'This action is only available for the demo account' });
+        }
+
+        // Delete everything for this store
+        await prisma.$transaction([
+            prisma.saleItem.deleteMany({ where: { sale: { storeId } } }),
+            prisma.sale.deleteMany({ where: { storeId } }),
+            prisma.invoiceItem.deleteMany({ where: { invoice: { storeId } } }),
+            prisma.invoice.deleteMany({ where: { storeId } }),
+            prisma.inventorySnapshot.deleteMany({ where: { product: { storeId } } }),
+            prisma.product.deleteMany({ where: { storeId } }),
+            prisma.alert.deleteMany({ where: { storeId } }),
+            prisma.chatMessage.deleteMany({ where: { storeId } }),
+        ]);
+
+        res.json({ message: 'All data deleted for this store' });
+    } catch (error) {
+        console.error('Delete all error:', error);
+        res.status(500).json({ message: 'Error deleting data' });
+    }
+};
+
 // Cleanup garbage products (PDF artifacts, binary strings, etc)
 export const cleanupGarbageProducts = async (req: Request, res: Response) => {
     try {

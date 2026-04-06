@@ -30,6 +30,7 @@ export default function Products() {
     const [stockValue, setStockValue] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [showAllProducts, setShowAllProducts] = useState(false);
+    const isDemoAccount = (() => { try { const u = JSON.parse(localStorage.getItem('user') || '{}'); return u.email === 'demo@fluxor.cloud'; } catch { return false; } })();
 
     useEffect(() => {
         fetchProducts();
@@ -205,16 +206,18 @@ export default function Products() {
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={async () => {
-                                if (!confirm('This will delete all invalid/garbage products (PDF artifacts, broken names, etc). Continue?')) return;
-                                const token = localStorage.getItem('token');
-                                const res = await fetch(`${API_URL}/products/cleanup`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
-                                const data = await res.json();
-                                alert(data.message);
-                                fetchProducts();
-                            }}>
-                                <Trash2 className="mr-2 h-4 w-4" /> Clean Up
-                            </Button>
+                            {isDemoAccount && (
+                                <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={async () => {
+                                    if (!confirm('DELETE ALL products, sales, and invoices? This cannot be undone.')) return;
+                                    const token = localStorage.getItem('token');
+                                    const res = await fetch(`${API_URL}/products/delete-all`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
+                                    const data = await res.json();
+                                    alert(data.message);
+                                    fetchProducts();
+                                }}>
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete All
+                                </Button>
+                            )}
                             <Button variant="outline" onClick={async () => {
                                 const token = localStorage.getItem('token');
                                 const res = await fetch(`${API_URL}/products/export`, { headers: { 'Authorization': `Bearer ${token}` } });
