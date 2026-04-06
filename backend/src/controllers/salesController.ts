@@ -195,8 +195,25 @@ async function parseImageOrPdf(filePath: string): Promise<{ headers: string[]; r
     const parsedRows: any[] = [];
     let currentCategory = 'Uncategorized';
 
-    // Skip lines — headers, footers, metadata
+    // Skip lines — headers, footers, metadata, PDF internals
     const skipPatterns = /^(sales\s+summary|report|date|time|period|from|to|page|printed|generated|payment|tender|net\s+sales|gross\s+sales|total\s+sales|total\s+revenue|total\s+tax|total\s+discount|grand\s+total|cash|credit|debit|visa|master|amex|check|gift\s+card|refund|void|employee|server|terminal|register|table|guest|cover|dine.in|take.out|delivery|order\s+type|payment\s+method|tips?\b|gratuity|service\s+charge|opening|closing|balance|deposit|drawer|variance|over.short|comp|promo)/i;
+
+    // Reject garbage strings — PDF internals, hex, control chars, binary
+    function isGarbageName(name: string): boolean {
+        if (!name || name.length < 2 || name.length > 100) return true;
+        // Has PDF object markers
+        if (/\d{5,}\s+\d{5}\s+[nf]/.test(name)) return true;
+        // Has binary/control characters
+        if (/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(name)) return true;
+        // More than 30% non-alphanumeric (likely garbage)
+        const nonAlpha = name.replace(/[a-zA-Z0-9\s\-'&.,/()]/g, '').length;
+        if (nonAlpha / name.length > 0.3) return true;
+        // Known PDF metadata
+        if (/reportlab|generated|pdf\s*document|opensource|endobj|startxref|xref|trailer|stream/i.test(name)) return true;
+        // All uppercase hex-like strings
+        if (/^[0-9A-Fa-f\s]+$/.test(name) && name.length > 6) return true;
+        return false;
+    }
 
     // Category/section headers — lines that are just text, no numbers
     const categoryPattern = /^([A-Z][A-Za-z\s&\/\-]+)$/;
@@ -223,7 +240,7 @@ async function parseImageOrPdf(filePath: string): Promise<{ headers: string[]; r
         if (fullMatch) {
             const [, name, qty, price] = fullMatch;
             const cleanName = name.replace(/[.\-_]{3,}/g, '').trim();
-            if (cleanName.length < 2) continue;
+            if (isGarbageName(cleanName)) continue;
             if (skipPatterns.test(cleanName)) continue;
             parsedRows.push({
                 productName: cleanName,
@@ -241,7 +258,7 @@ async function parseImageOrPdf(filePath: string): Promise<{ headers: string[]; r
             const [, name, amount] = summaryMatch;
             const cleanName = name.replace(/[.\-_]{3,}/g, '').trim();
             const amountNum = parseFloat(amount.replace(/,/g, ''));
-            if (cleanName.length < 2 || amountNum <= 0) continue;
+            if (isGarbageName(cleanName) || amountNum <= 0) continue;
             if (skipPatterns.test(cleanName)) continue;
             parsedRows.push({
                 productName: cleanName,
@@ -258,7 +275,7 @@ async function parseImageOrPdf(filePath: string): Promise<{ headers: string[]; r
         if (fourColMatch) {
             const [, name, qty, unitPrice] = fourColMatch;
             const cleanName = name.replace(/[.\-_]{3,}/g, '').trim();
-            if (cleanName.length < 2) continue;
+            if (isGarbageName(cleanName)) continue;
             if (skipPatterns.test(cleanName)) continue;
             parsedRows.push({
                 productName: cleanName,
@@ -330,29 +347,13 @@ async function parseAnyFile(filePath: string, originalName: string): Promise<{ h
         }
     }
 
-    // PDF — try Excel first (some POS exports are xlsx disguised as pdf), then OCR
+    // PDF — try Excel first, then OCR (skip raw text extraction — produces garbage)
     if (ext === 'pdf') {
-        // Try reading as Excel (some systems export xlsx with .pdf extension)
         try {
             const excelResult = parseExcel(filePath);
             if (excelResult.rows.length > 0) return { ...excelResult, fileType: 'excel' };
         } catch { /* not excel */ }
 
-        // Try reading raw text from the PDF file (text-based PDFs)
-        try {
-            const rawContent = fs.readFileSync(filePath, 'utf8');
-            // Extract readable text between stream markers or just use raw text
-            const textChunks = rawContent.match(/\(([^)]+)\)/g)?.map(s => s.slice(1, -1)).join(' ') || '';
-            if (textChunks.length > 20) {
-                const fakeLines = textChunks.split(/\s{2,}/).join('\n');
-                fs.writeFileSync(filePath + '.txt', fakeLines);
-                const ocrResult = await parseImageOrPdf(filePath);
-                try { fs.unlinkSync(filePath + '.txt'); } catch {}
-                if (ocrResult.rows.length > 0) return { ...ocrResult, fileType: 'pdf' };
-            }
-        } catch { /* not text-based */ }
-
-        // Last resort: OCR the PDF as an image
         try {
             const result = await parseImageOrPdf(filePath);
             return { ...result, fileType: 'ocr' };
@@ -424,10 +425,16 @@ function normalizeRow(row: any, headerMapping: Record<string, string>): SaleRow 
         }
     }
 
-    // Must have a product name
+    // Must have a valid product name — reject garbage
     if (!normalized.productName || normalized.productName === '' || normalized.productName === 'undefined') {
         return null;
     }
+    // Reject PDF internals, hex strings, binary garbage
+    const pn = normalized.productName;
+    if (/\d{5,}\s+\d{5}\s+[nf]/.test(pn)) return null;
+    if (/reportlab|generated|pdf\s*document|opensource|endobj|startxref|xref/i.test(pn)) return null;
+    const nonAlpha = pn.replace(/[a-zA-Z0-9\s\-'&.,/()]/g, '').length;
+    if (pn.length > 3 && nonAlpha / pn.length > 0.3) return null;
 
     // Clean quantity and price
     normalized.quantity = String(cleanQuantity(normalized.quantity || '1'));
