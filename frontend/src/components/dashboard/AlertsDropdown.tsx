@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, Package, TrendingDown, DollarSign, X, Check, RefreshCw, AlertCircle, Info } from 'lucide-react';
+import { Bell, Package, TrendingDown, DollarSign, X, Check, RefreshCw, Info } from 'lucide-react';
 import type { Alert } from '@/types';
 import { api } from '@/lib/api';
 

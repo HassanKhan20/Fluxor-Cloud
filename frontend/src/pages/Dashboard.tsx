@@ -12,9 +12,6 @@ import {
     Upload,
     BarChart3,
     CheckCircle2,
-    Bot,
-    X,
-    Send,
     DollarSign,
     Flag,
     Bell,
@@ -33,8 +30,6 @@ import WeeklySummaryCard from '@/components/dashboard/WeeklySummaryCard';
 export default function Dashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
-    const [aiPanelOpen, setAiPanelOpen] = useState(false);
-    const [aiTooltipVisible, setAiTooltipVisible] = useState(true);
     const [userName, setUserName] = useState('');
     const [inventoryHealth, setInventoryHealth] = useState<{
         slowMovers: Array<{ id: string; name: string; category: string | null; salesLast7Days: number; daysSinceLastSale: number | null }>;
@@ -63,11 +58,6 @@ export default function Dashboard() {
     const [showCashFlow, setShowCashFlow] = useState(false);
     const [showInventory, setShowInventory] = useState(false);
 
-    // AI Chat state
-    const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
-    const [chatInput, setChatInput] = useState('');
-    const [chatLoading, setChatLoading] = useState(false);
-
     useEffect(() => {
         fetchStats();
         fetchInventoryHealth();
@@ -76,40 +66,6 @@ export default function Dashboard() {
         fetchBriefing();
         loadUserInfo();
     }, []);
-
-    const sendMessage = async () => {
-        if (!chatInput.trim() || chatLoading) return;
-        const userMessage = chatInput.trim();
-        setChatInput('');
-        setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-        setChatLoading(true);
-        try {
-            const token = localStorage.getItem('token') || '';
-            const data = await api.post('/ai/chat', { message: userMessage }, token);
-            setChatMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
-        } catch {
-            setChatMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I couldn't process that request." }]);
-        } finally { setChatLoading(false); }
-    };
-
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-    };
-
-    const formatAIMessage = (content: string) => {
-        return content.split('\n').map((line, i) => {
-            if (line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().match(/^\d+\./)) {
-                return (
-                    <div key={i} className="flex gap-2 mt-1">
-                        <span className="text-blue-500">•</span>
-                        <span dangerouslySetInnerHTML={{ __html: line.replace(/^[\s•\-\d.]+/, '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>') }} />
-                    </div>
-                );
-            }
-            const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
-            return <p key={i} className={i > 0 ? 'mt-2' : ''} dangerouslySetInnerHTML={{ __html: formatted }} />;
-        });
-    };
 
     const loadUserInfo = () => {
         try {
