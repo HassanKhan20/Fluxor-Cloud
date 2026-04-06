@@ -182,7 +182,6 @@ function parseExcel(filePath: string): { headers: string[]; rows: any[] } {
 }
 
 async function parseImageOrPdf(filePath: string): Promise<{ headers: string[]; rows: any[] }> {
-    // Use Tesseract OCR to extract text
     const result = await Tesseract.recognize(filePath, 'eng');
     const text = result.data.text;
 
@@ -190,47 +189,117 @@ async function parseImageOrPdf(filePath: string): Promise<{ headers: string[]; r
         return { headers: [], rows: [] };
     }
 
-    // Try to parse the OCR text as tabular data
     const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
     if (lines.length < 2) return { headers: [], rows: [] };
 
-    // Strategy 1: Try to find lines that look like "Product Qty Price"
     const parsedRows: any[] = [];
+    let currentCategory = 'Uncategorized';
+
+    // Skip lines — headers, footers, metadata
+    const skipPatterns = /^(sales\s+summary|report|date|time|period|from|to|page|printed|generated|payment|tender|net\s+sales|gross\s+sales|total\s+sales|total\s+revenue|total\s+tax|total\s+discount|grand\s+total|cash|credit|debit|visa|master|amex|check|gift\s+card|refund|void|employee|server|terminal|register|table|guest|cover|dine.in|take.out|delivery|order\s+type|payment\s+method|tips?\b|gratuity|service\s+charge|opening|closing|balance|deposit|drawer|variance|over.short|comp|promo)/i;
+
+    // Category/section headers — lines that are just text, no numbers
+    const categoryPattern = /^([A-Z][A-Za-z\s&\/\-]+)$/;
 
     for (const line of lines) {
-        // Try to extract: product name, quantity, price from each line
-        // Common patterns on receipts:
-        // "Coca Cola 2L    2    $3.99"
-        // "Chips Doritos   1    2.50"
-        // "ITEM NAME         QTY   PRICE"
+        // Skip known non-data lines
+        if (skipPatterns.test(line)) continue;
+        if (line.length < 3) continue;
 
-        // Match: text followed by numbers
-        const match = line.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s+\$?([\d,.]+)$/);
-        if (match) {
-            const [, name, qty, price] = match;
-            // Skip if it looks like a header
-            if (name.toLowerCase().match(/^(item|product|description|name|qty|quantity|price|total|amount)$/)) continue;
+        // Detect section/category headers: "BEVERAGES", "Food Items", "Appetizers"
+        const catMatch = line.match(categoryPattern);
+        if (catMatch && !line.match(/\d/)) {
+            const candidate = catMatch[1].trim();
+            // Must be 2+ chars, not a skip pattern, and look like a category
+            if (candidate.length >= 2 && candidate.length <= 40) {
+                currentCategory = candidate;
+                continue;
+            }
+        }
+
+        // Strategy 1: "Item Name    Qty    Amount" (3+ numbers at end)
+        // e.g. "Cheeseburger    45    $562.50"  or  "Coca Cola 2L  120  3.99  478.80"
+        const fullMatch = line.match(/^(.+?)\s{2,}(\d+(?:\.\d+)?)\s+\$?([\d,]+(?:\.\d{2})?)\s*(?:\$?[\d,]+(?:\.\d{2})?)?$/);
+        if (fullMatch) {
+            const [, name, qty, price] = fullMatch;
+            const cleanName = name.replace(/[.\-_]{3,}/g, '').trim();
+            if (cleanName.length < 2) continue;
+            if (skipPatterns.test(cleanName)) continue;
             parsedRows.push({
-                productName: name.trim(),
+                productName: cleanName,
                 quantity: qty,
-                unitPrice: price.replace(/,/g, '')
+                unitPrice: price.replace(/,/g, ''),
+                category: currentCategory
             });
             continue;
         }
 
-        // Match: text followed by price only (quantity = 1)
-        const priceOnlyMatch = line.match(/^(.+?)\s+\$?([\d,.]+)$/);
-        if (priceOnlyMatch) {
-            const [, name, price] = priceOnlyMatch;
-            const priceNum = parseFloat(price.replace(/,/g, ''));
-            if (priceNum > 0 && priceNum < 10000 && name.length > 2) {
-                // Skip totals, tax lines, etc
-                if (name.toLowerCase().match(/(total|subtotal|tax|change|cash|card|visa|master|amex|balance|discount|tip)/)) continue;
+        // Strategy 2: "Item Name    $Amount" (summary line — qty=1, amount is total)
+        // e.g. "Draft Beer    $1,245.00"
+        const summaryMatch = line.match(/^(.+?)\s{2,}\$?([\d,]+\.\d{2})$/);
+        if (summaryMatch) {
+            const [, name, amount] = summaryMatch;
+            const cleanName = name.replace(/[.\-_]{3,}/g, '').trim();
+            const amountNum = parseFloat(amount.replace(/,/g, ''));
+            if (cleanName.length < 2 || amountNum <= 0) continue;
+            if (skipPatterns.test(cleanName)) continue;
+            parsedRows.push({
+                productName: cleanName,
+                quantity: '1',
+                unitPrice: amount.replace(/,/g, ''),
+                category: currentCategory
+            });
+            continue;
+        }
+
+        // Strategy 3: "Item Name  Qty  UnitPrice  Total" (4 columns)
+        // e.g. "Wings 12pc    8    12.99    103.92"
+        const fourColMatch = line.match(/^(.+?)\s{2,}(\d+)\s+\$?([\d,]+\.\d{2})\s+\$?([\d,]+\.\d{2})$/);
+        if (fourColMatch) {
+            const [, name, qty, unitPrice] = fourColMatch;
+            const cleanName = name.replace(/[.\-_]{3,}/g, '').trim();
+            if (cleanName.length < 2) continue;
+            if (skipPatterns.test(cleanName)) continue;
+            parsedRows.push({
+                productName: cleanName,
+                quantity: qty,
+                unitPrice: unitPrice.replace(/,/g, ''),
+                category: currentCategory
+            });
+            continue;
+        }
+
+        // Strategy 4: "Qty x Item Name  Price" — receipt style
+        // e.g. "2 x Large Coffee  $8.50"
+        const qtyFirstMatch = line.match(/^(\d+)\s*[xX×]\s+(.+?)\s+\$?([\d,]+\.\d{2})$/);
+        if (qtyFirstMatch) {
+            const [, qty, name, price] = qtyFirstMatch;
+            const cleanName = name.trim();
+            if (cleanName.length < 2) continue;
+            parsedRows.push({
+                productName: cleanName,
+                quantity: qty,
+                unitPrice: price.replace(/,/g, ''),
+                category: currentCategory
+            });
+            continue;
+        }
+
+        // Strategy 5: Simple "Name  Number" — could be qty sold or revenue
+        const simpleMatch = line.match(/^(.+?)\s{2,}(\d+)$/);
+        if (simpleMatch) {
+            const [, name, num] = simpleMatch;
+            const cleanName = name.replace(/[.\-_]{3,}/g, '').trim();
+            const numVal = parseInt(num);
+            if (cleanName.length < 2 || numVal <= 0) continue;
+            if (skipPatterns.test(cleanName)) continue;
+            // If number looks like a count (< 1000), treat as quantity sold at unknown price
+            if (numVal < 1000) {
                 parsedRows.push({
-                    productName: name.trim(),
-                    quantity: '1',
-                    unitPrice: price.replace(/,/g, '')
+                    productName: cleanName,
+                    quantity: num,
+                    unitPrice: '0',
+                    category: currentCategory
                 });
             }
         }
@@ -238,7 +307,7 @@ async function parseImageOrPdf(filePath: string): Promise<{ headers: string[]; r
 
     if (parsedRows.length > 0) {
         return {
-            headers: ['productName', 'quantity', 'unitPrice'],
+            headers: ['productName', 'quantity', 'unitPrice', 'category'],
             rows: parsedRows
         };
     }
@@ -261,8 +330,39 @@ async function parseAnyFile(filePath: string, originalName: string): Promise<{ h
         }
     }
 
-    // Images and PDFs — OCR
-    if (['jpg', 'jpeg', 'png', 'pdf', 'webp', 'bmp', 'tiff', 'tif'].includes(ext)) {
+    // PDF — try Excel first (some POS exports are xlsx disguised as pdf), then OCR
+    if (ext === 'pdf') {
+        // Try reading as Excel (some systems export xlsx with .pdf extension)
+        try {
+            const excelResult = parseExcel(filePath);
+            if (excelResult.rows.length > 0) return { ...excelResult, fileType: 'excel' };
+        } catch { /* not excel */ }
+
+        // Try reading raw text from the PDF file (text-based PDFs)
+        try {
+            const rawContent = fs.readFileSync(filePath, 'utf8');
+            // Extract readable text between stream markers or just use raw text
+            const textChunks = rawContent.match(/\(([^)]+)\)/g)?.map(s => s.slice(1, -1)).join(' ') || '';
+            if (textChunks.length > 20) {
+                const fakeLines = textChunks.split(/\s{2,}/).join('\n');
+                fs.writeFileSync(filePath + '.txt', fakeLines);
+                const ocrResult = await parseImageOrPdf(filePath);
+                try { fs.unlinkSync(filePath + '.txt'); } catch {}
+                if (ocrResult.rows.length > 0) return { ...ocrResult, fileType: 'pdf' };
+            }
+        } catch { /* not text-based */ }
+
+        // Last resort: OCR the PDF as an image
+        try {
+            const result = await parseImageOrPdf(filePath);
+            return { ...result, fileType: 'ocr' };
+        } catch {
+            return { headers: [], rows: [], fileType: 'pdf' };
+        }
+    }
+
+    // Images — OCR
+    if (['jpg', 'jpeg', 'png', 'webp', 'bmp', 'tiff', 'tif'].includes(ext)) {
         try {
             const result = await parseImageOrPdf(filePath);
             return { ...result, fileType: 'ocr' };
