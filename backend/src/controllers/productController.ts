@@ -299,17 +299,21 @@ export const cleanupGarbageProducts = async (req: Request, res: Response) => {
         for (const p of products) {
             const name = p.name;
             if (!name || name.length < 2) { garbageIds.push(p.id); continue; }
-            // PDF object markers
+            // Must contain at least one letter
+            if (!/[a-zA-Z]/.test(name)) { garbageIds.push(p.id); continue; }
+            // PDF object markers: "10 0 obj", "0 17"
+            if (/^\d+\s+\d+(\s+obj)?$/.test(name.trim())) { garbageIds.push(p.id); continue; }
             if (/\d{5,}\s+\d{5}\s+[nf]/.test(name)) { garbageIds.push(p.id); continue; }
             // PDF metadata
-            if (/reportlab|generated|pdf\s*document|opensource|endobj|startxref|xref|trailer|stream/i.test(name)) { garbageIds.push(p.id); continue; }
+            if (/reportlab|generated|pdf\s*document|opensource|endobj|startxref|xref|trailer|stream|obj\b/i.test(name)) { garbageIds.push(p.id); continue; }
             // Binary / control characters
             if (/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(name)) { garbageIds.push(p.id); continue; }
             // >30% special characters
             const nonAlpha = name.replace(/[a-zA-Z0-9\s\-'&.,/()]/g, '').length;
             if (name.length > 3 && nonAlpha / name.length > 0.3) { garbageIds.push(p.id); continue; }
-            // All hex
-            if (/^[0-9A-Fa-f\s]+$/.test(name) && name.length > 6) { garbageIds.push(p.id); continue; }
+            // Pure numbers/hex
+            if (/^[\d\s.]+$/.test(name.trim())) { garbageIds.push(p.id); continue; }
+            if (/^[0-9A-Fa-f\s]+$/.test(name) && name.length > 4) { garbageIds.push(p.id); continue; }
         }
 
         if (garbageIds.length === 0) {

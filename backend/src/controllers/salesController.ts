@@ -201,17 +201,22 @@ async function parseImageOrPdf(filePath: string): Promise<{ headers: string[]; r
     // Reject garbage strings — PDF internals, hex, control chars, binary
     function isGarbageName(name: string): boolean {
         if (!name || name.length < 2 || name.length > 100) return true;
-        // Has PDF object markers
+        // PDF object markers: "10 0 obj", "0 17", "0000000061 00000 n"
+        if (/^\d+\s+\d+(\s+obj)?$/.test(name.trim())) return true;
         if (/\d{5,}\s+\d{5}\s+[nf]/.test(name)) return true;
+        // Pure numbers or numbers with spaces
+        if (/^[\d\s.]+$/.test(name.trim())) return true;
         // Has binary/control characters
         if (/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(name)) return true;
         // More than 30% non-alphanumeric (likely garbage)
         const nonAlpha = name.replace(/[a-zA-Z0-9\s\-'&.,/()]/g, '').length;
         if (nonAlpha / name.length > 0.3) return true;
         // Known PDF metadata
-        if (/reportlab|generated|pdf\s*document|opensource|endobj|startxref|xref|trailer|stream/i.test(name)) return true;
+        if (/reportlab|generated|pdf\s*document|opensource|endobj|startxref|xref|trailer|stream|obj\b/i.test(name)) return true;
         // All uppercase hex-like strings
-        if (/^[0-9A-Fa-f\s]+$/.test(name) && name.length > 6) return true;
+        if (/^[0-9A-Fa-f\s]+$/.test(name) && name.length > 4) return true;
+        // Must contain at least one letter
+        if (!/[a-zA-Z]/.test(name)) return true;
         return false;
     }
 
@@ -431,8 +436,10 @@ function normalizeRow(row: any, headerMapping: Record<string, string>): SaleRow 
     }
     // Reject PDF internals, hex strings, binary garbage
     const pn = normalized.productName;
+    if (!/[a-zA-Z]/.test(pn)) return null;
+    if (/^\d+\s+\d+(\s+obj)?$/.test(pn.trim())) return null;
     if (/\d{5,}\s+\d{5}\s+[nf]/.test(pn)) return null;
-    if (/reportlab|generated|pdf\s*document|opensource|endobj|startxref|xref/i.test(pn)) return null;
+    if (/reportlab|generated|pdf\s*document|opensource|endobj|startxref|xref|obj\b/i.test(pn)) return null;
     const nonAlpha = pn.replace(/[a-zA-Z0-9\s\-'&.,/()]/g, '').length;
     if (pn.length > 3 && nonAlpha / pn.length > 0.3) return null;
 
