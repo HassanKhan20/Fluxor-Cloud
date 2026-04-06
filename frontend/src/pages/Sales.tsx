@@ -64,12 +64,9 @@ export default function Sales() {
 
         const token = localStorage.getItem('token');
 
-        // Simulate progress — slower for PDF/images since OCR takes time
-        const ext = file.name.split('.').pop()?.toLowerCase() || '';
-        const isPdfOrImage = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(ext);
         const progressInterval = setInterval(() => {
-            setUploadProgress(prev => Math.min(prev + (isPdfOrImage ? 3 : 10), 90));
-        }, isPdfOrImage ? 500 : 200);
+            setUploadProgress(prev => Math.min(prev + 10, 90));
+        }, 200);
 
         try {
             const res = await fetch(`${API_URL}/sales/upload`, {
@@ -96,12 +93,7 @@ export default function Sales() {
         } catch (error) {
             clearInterval(progressInterval);
             setStatus('error');
-            const ext = file.name.split('.').pop()?.toLowerCase() || '';
-            const isPdfOrImage = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(ext);
-            setErrors([{ row: 0, field: 'file', value: '', message: isPdfOrImage
-                ? `Could not process this ${ext.toUpperCase()} file. PDF and image processing can take a while. For best results, export your sales data as CSV from your POS system (e.g. Toast → Reports → Export as CSV).`
-                : 'Upload failed — the server may be busy. Please try again in a moment.'
-            }]);
+            setErrors([{ row: 0, field: 'file', value: '', message: 'Upload failed — the server may be busy. Please try again in a moment.' }]);
         } finally {
             setUploading(false);
         }
@@ -184,7 +176,7 @@ export default function Sales() {
                                             {file ? file.name : 'Drop your CSV file here'}
                                         </h3>
                                         <p className="text-gray-500 text-center max-w-md mb-6">
-                                            or click to browse. Upload anything — CSV, Excel, PDF, or even a photo of your sales report.
+                                            or click to browse. Upload a CSV or Excel file exported from your POS system.
                                         </p>
                                     </>
                                 )}
@@ -209,7 +201,7 @@ export default function Sales() {
                                         <label className="cursor-pointer">
                                             <Input
                                                 type="file"
-                                                accept=".csv,.tsv,.txt,.xls,.xlsx,.pdf,.jpg,.jpeg,.png,.webp,.bmp"
+                                                accept=".csv,.tsv,.txt,.xls,.xlsx"
                                                 onChange={handleFileChange}
                                                 className="hidden"
                                             />
@@ -316,12 +308,10 @@ export default function Sales() {
                             <CardDescription>We accept almost anything — just upload and we'll figure it out</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                            <div className="grid grid-cols-2 gap-3 mb-4">
                                 {[
-                                    { ext: 'CSV / TSV', desc: 'Best format' },
-                                    { ext: 'Excel (.xlsx)', desc: 'Spreadsheets' },
-                                    { ext: 'PDF', desc: 'Reports & receipts' },
-                                    { ext: 'Photo (JPG/PNG)', desc: 'Receipt photos' },
+                                    { ext: 'CSV / TSV', desc: 'Best format — works with all POS systems' },
+                                    { ext: 'Excel (.xlsx)', desc: 'Spreadsheets and exported reports' },
                                 ].map(f => (
                                     <div key={f.ext} className="p-3 bg-gray-50 rounded-lg text-center">
                                         <p className="font-medium text-sm">{f.ext}</p>

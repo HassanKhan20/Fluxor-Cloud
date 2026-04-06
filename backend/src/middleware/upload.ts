@@ -37,13 +37,16 @@ export const invoiceUpload = multer({
     }
 });
 
-// Sales upload: accept all common file types, 10 MB max
-// Parser auto-detects format (CSV, Excel, PDF, image)
+// Sales upload: CSV and Excel only, 10 MB max
 export const csvUpload = multer({
     dest: UPLOADS_DIR,
     limits: { fileSize: 10 * 1024 * 1024, files: 1 },
-    fileFilter: (_req, _file, cb) => {
-        // Accept everything — the parser handles format detection
+    fileFilter: (_req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        const allowed = ['.csv', '.tsv', '.txt', '.xls', '.xlsx'];
+        if (!allowed.includes(ext)) {
+            return cb(new Error('Only CSV and Excel files are supported. Please export your sales data from your POS system.'));
+        }
         cb(null, true);
     }
 });
