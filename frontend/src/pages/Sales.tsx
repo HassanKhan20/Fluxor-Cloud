@@ -64,10 +64,12 @@ export default function Sales() {
 
         const token = localStorage.getItem('token');
 
-        // Simulate progress
+        // Simulate progress — slower for PDF/images since OCR takes time
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        const isPdfOrImage = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(ext);
         const progressInterval = setInterval(() => {
-            setUploadProgress(prev => Math.min(prev + 10, 90));
-        }, 200);
+            setUploadProgress(prev => Math.min(prev + (isPdfOrImage ? 3 : 10), 90));
+        }, isPdfOrImage ? 500 : 200);
 
         try {
             const res = await fetch(`${API_URL}/sales/upload`, {
@@ -94,7 +96,12 @@ export default function Sales() {
         } catch (error) {
             clearInterval(progressInterval);
             setStatus('error');
-            setErrors([{ row: 0, field: 'file', value: '', message: 'Network error. Please try again.' }]);
+            const ext = file.name.split('.').pop()?.toLowerCase() || '';
+            const isPdfOrImage = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(ext);
+            setErrors([{ row: 0, field: 'file', value: '', message: isPdfOrImage
+                ? `Could not process this ${ext.toUpperCase()} file. PDF and image processing can take a while. For best results, export your sales data as CSV from your POS system (e.g. Toast → Reports → Export as CSV).`
+                : 'Upload failed — the server may be busy. Please try again in a moment.'
+            }]);
         } finally {
             setUploading(false);
         }
