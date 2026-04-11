@@ -138,6 +138,90 @@ app.post('/api/demo-request', authLimiter, async (req, res) => {
     res.json({ message: 'Demo request received. We will reach out within 24 hours.' });
 });
 
+// ── Demo seed: populate demo account with fake data for demo video ───────────
+app.post('/api/demo-seed', async (req, res) => {
+    const { email, password } = req.body;
+    const demoEmail = process.env.DEMO_EMAIL || 'demo@fluxor.cloud';
+    if (email !== demoEmail) return res.status(403).json({ message: 'Only demo account can be seeded' });
+
+    try {
+        // Find or create demo user
+        let user = await prisma.user.findUnique({ where: { email: demoEmail } });
+        if (!user) {
+            const hashedPassword = await bcrypt.hash(password || 'FluxorDemo2024!', 12);
+            user = await prisma.user.create({ data: { name: 'Demo User', email: demoEmail, password: hashedPassword, role: 'OWNER' } });
+        }
+        let membership = await prisma.storeMembership.findFirst({ where: { userId: user.id } });
+        let storeId: string;
+        if (!membership) {
+            const store = await prisma.store.create({ data: { name: 'Quick Stop Market', address: '4605 Main St, Dallas TX 75201', timezone: 'America/Chicago', defaultCurrency: 'USD' } });
+            await prisma.storeMembership.create({ data: { userId: user.id, storeId: store.id, role: 'OWNER' } });
+            storeId = store.id;
+        } else {
+            storeId = membership.storeId;
+        }
+
+        // Seed staff
+        const staffData = [
+            { name: 'Maria Garcia', role: 'SUPERVISOR', phone: '214-555-0101', email: 'maria@quickstop.com' },
+            { name: 'James Wilson', role: 'CASHIER', phone: '214-555-0102', email: 'james@quickstop.com' },
+            { name: 'Aisha Patel', role: 'CASHIER', phone: '214-555-0103', email: 'aisha@quickstop.com' },
+            { name: 'Carlos Rivera', role: 'CASHIER', phone: '214-555-0104', email: 'carlos@quickstop.com' },
+        ];
+        for (const s of staffData) {
+            const exists = await prisma.staff.findFirst({ where: { storeId, name: s.name } });
+            if (!exists) {
+                const staff = await prisma.staff.create({ data: { storeId, ...s, isActive: true, hireDate: new Date('2025-06-15') } });
+                // Create shifts for last 7 days
+                for (let d = 0; d < 7; d++) {
+                    const day = new Date(); day.setDate(day.getDate() - d);
+                    const start = new Date(day); start.setHours(8 + Math.floor(Math.random() * 4), 0, 0);
+                    const end = new Date(start); end.setHours(start.getHours() + 8);
+                    await prisma.shift.create({ data: { storeId, staffId: staff.id, startTime: start, endTime: end, salesTotal: 200 + Math.random() * 500 } });
+                }
+            }
+        }
+
+        // Seed weekly summary
+        const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 7);
+        const weekEnd = new Date();
+        const existingSummary = await prisma.weeklySummary.findFirst({ where: { storeId, weekStart: { gte: weekStart } } });
+        if (!existingSummary) {
+            await prisma.weeklySummary.create({
+                data: {
+                    storeId,
+                    weekStart,
+                    weekEnd,
+                    revenue: 4285.50,
+                    revenueChange: 12.3,
+                    totalWasted: 340.00,
+                    wastedDeadStock: 120.00,
+                    wastedOverstock: 85.00,
+                    wastedSlowMovers: 95.00,
+                    wastedShrinkage: 40.00,
+                    primaryWasteReason: 'Dead stock in Candy category',
+                    topProductName: 'Red Bull 12oz',
+                    topProductRevenue: 478.50,
+                    worstPerformerName: 'Swedish Fish',
+                    worstPerformerType: 'product',
+                    worstPerformerReason: 'Only 3 units sold this week',
+                    recommendations: JSON.stringify([
+                        'Red Bull and Monster are your top sellers — consider a bulk deal with your distributor.',
+                        'Swedish Fish and Mike and Ike are slow movers — try a 2-for-1 promo or move to checkout counter.',
+                        'Tobacco sales are steady — maintain current stock levels.',
+                        'Weekend alcohol sales spiked 25% — increase Saturday stock for Corona and Bud Light.'
+                    ])
+                }
+            });
+        }
+
+        res.json({ message: 'Demo data seeded successfully', storeId });
+    } catch (error) {
+        console.error('Demo seed error:', error);
+        res.status(500).json({ message: 'Failed to seed demo data' });
+    }
+});
+
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', async (_req, res) => {
     try {
