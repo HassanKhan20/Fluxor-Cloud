@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Check, LayoutDashboard, Brain, X, Shield, Lock, Database, Activity } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Check, LayoutDashboard, Brain, Shield, Lock, Database, Activity } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
-import { API_URL } from '../lib/api';
 import HeroBackground from '../components/HeroBackground';
 import GlassCard from '../components/GlassCard';
 import AnimatedSection from '../components/AnimatedSection';
 
 const Landing: React.FC = () => {
-    const [showDemoModal, setShowDemoModal] = useState(false);
-    const [demoEmail, setDemoEmail] = useState('');
-    const [demoSubmitting, setDemoSubmitting] = useState(false);
-    const [demoSuccess, setDemoSuccess] = useState(false);
     const { scrollY } = useScroll();
     const location = useLocation();
+    const navigate = useNavigate();
+    const goToDemo = () => navigate('/demo');
 
     useEffect(() => {
         if (location.hash) {
@@ -71,7 +68,7 @@ const Landing: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#EEF4FF] via-white to-white text-gray-900">
-            <Navbar onBookDemo={() => setShowDemoModal(true)} />
+            <Navbar />
 
             {/* Background Layer */}
             <div className="fixed inset-0 z-0">
@@ -159,9 +156,9 @@ const Landing: React.FC = () => {
                                 size="lg"
                                 className="bg-blue-600 hover:bg-blue-500 shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] border-0 h-14 px-8 text-lg"
                                 rightIcon={<ArrowRight />}
-                                onClick={() => setShowDemoModal(true)}
+                                onClick={goToDemo}
                             >
-                                Book a Demo
+                                View the Demo
                             </Button>
                             <Button
                                 variant="secondary"
@@ -279,73 +276,35 @@ const Landing: React.FC = () => {
                     </div>
                 </section >
 
-                {/* PRICING */}
-                < section id="pricing" className="py-32 relative" >
+                {/* DEMO CTA */}
+                < section id="demo" className="py-32 relative" >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <AnimatedSection className="text-center mb-16">
-                            <h2 className="text-3xl md:text-5xl font-bold mb-6 text-gray-900">Simple Pricing</h2>
-                            <p className="text-gray-600 max-w-2xl mx-auto">Start small, upgrade as you grow.</p>
+                        <AnimatedSection className="text-center mb-12">
+                            <h2 className="text-3xl md:text-5xl font-bold mb-6 text-gray-900">See it in action</h2>
+                            <p className="text-gray-600 max-w-2xl mx-auto">An interactive walkthrough of the entire platform — dashboard, analytics, AI insights, inventory, vendors, and more.</p>
                         </AnimatedSection>
 
-                        <div className="max-w-5xl mx-auto">
+                        <div className="max-w-3xl mx-auto">
                             <AnimatedSection>
-                                <div className="relative group">
-                                    <div className="absolute inset-0 bg-[#00BFFF]/20 blur-[100px] rounded-full opacity-50 pointer-events-none" />
-                                    <GlassCard className="relative p-12 border-[#00BFFF]/30 bg-[#00BFFF]/5 overflow-hidden">
-                                        <div className="flex flex-col lg:flex-row gap-12 items-center">
-                                            {/* LEFT SIDE: Hook & CTA */}
-                                            <div className="flex-1 text-center lg:text-left space-y-8">
-                                                <div>
-                                                    <span className="inline-block px-4 py-1.5 rounded-full bg-[#00BFFF] text-white font-bold text-sm tracking-wide mb-6 shadow-[0_0_15px_rgba(0,191,255,0.5)]">
-                                                        First Month Free
-                                                    </span>
-                                                    <h3 className="text-3xl font-bold text-gray-900 mb-2">One Plan. Complete Control.</h3>
-                                                </div>
-
-                                                <div className="flex items-baseline justify-center lg:justify-start gap-2">
-                                                    <span className="text-6xl md:text-7xl font-bold text-gray-900 tracking-tighter">$45</span>
-                                                    <span className="text-xl text-gray-500">/mo</span>
-                                                </div>
-
-                                                <div className="space-y-3">
-                                                    <Button
-                                                        variant="primary"
-                                                        size="lg"
-                                                        className="w-full bg-gradient-to-r from-[#00BFFF] to-blue-600 hover:from-[#00ACE6] hover:to-blue-500 border-0 h-16 text-xl font-bold shadow-[0_0_30px_rgba(0,191,255,0.4)]"
-                                                        onClick={() => setShowDemoModal(true)}
-                                                    >
-                                                        Start 30-Day Trial
-                                                    </Button>
-                                                    <p className="text-sm text-gray-500 text-center">Cancel anytime. No credit card required.</p>
-                                                </div>
-                                            </div>
-
-                                            {/* RIGHT SIDE: Feature Stack */}
-                                            <div className="flex-1 lg:border-l border-gray-200 lg:pl-12 w-full">
-                                                <h4 className="text-xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
-                                                    Everything included:
-                                                </h4>
-                                                <ul className="grid sm:grid-cols-2 gap-y-4 gap-x-8">
-                                                    {[
-                                                        'Unlimited Products',
-                                                        'Demand Forecasting',
-                                                        'AI Insights & Reordering',
-                                                        'Multi-store Support',
-                                                        'API Access',
-                                                        '24/7 Priority Support'
-                                                    ].map((feature) => (
-                                                        <li key={feature} className="flex items-center gap-3 text-gray-700">
-                                                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                                                <Check size={14} className="text-blue-600" />
-                                                            </div>
-                                                            <span className="font-medium">{feature}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
+                                <GlassCard className="relative p-12 border-blue-200 bg-blue-50/40 text-center">
+                                    <div className="flex flex-col items-center gap-6">
+                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 border border-blue-200">
+                                            <Zap size={14} className="text-blue-600" />
+                                            <span className="text-xs font-medium text-blue-700 uppercase tracking-wider">Live Product Tour</span>
                                         </div>
-                                    </GlassCard>
-                                </div>
+                                        <h3 className="text-3xl font-bold text-gray-900">Watch Fluxor Cloud run an entire store.</h3>
+                                        <p className="text-gray-600 max-w-lg">Auto-paced walkthrough of every feature. No signup, no email — just press play.</p>
+                                        <Button
+                                            variant="primary"
+                                            size="lg"
+                                            className="bg-blue-600 hover:bg-blue-500 shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] border-0 h-14 px-8 text-lg"
+                                            rightIcon={<ArrowRight />}
+                                            onClick={goToDemo}
+                                        >
+                                            Launch Demo
+                                        </Button>
+                                    </div>
+                                </GlassCard>
                             </AnimatedSection>
                         </div>
                     </div >
@@ -413,7 +372,7 @@ const Landing: React.FC = () => {
                                 variant="primary"
                                 size="lg"
                                 className="h-16 px-12 text-lg bg-blue-600 text-white hover:bg-blue-700 border-0 shadow-[0_0_30px_rgba(59,130,246,0.3)]"
-                                onClick={() => setShowDemoModal(true)}
+                                onClick={goToDemo}
                             >
                                 Get Early Access
                             </Button>
@@ -423,84 +382,6 @@ const Landing: React.FC = () => {
 
                 <Footer />
             </main >
-
-            {/* DEMO MODAL */}
-            {
-                showDemoModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                        <GlassCard className="max-w-lg w-full mx-4 p-10 relative border-blue-100 bg-white shadow-[0_0_60px_rgba(59,130,246,0.15)]">
-                            <button
-                                onClick={() => setShowDemoModal(false)}
-                                className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 transition-colors"
-                            >
-                                <X size={28} width={28} />
-                            </button>
-                            <div className="text-center mb-8">
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 mb-4">
-                                    <Zap size={14} className="text-blue-600" />
-                                    <span className="text-xs font-medium text-blue-700 uppercase tracking-wider">Free Demo</span>
-                                </div>
-                                <h2 className="text-3xl md:text-4xl font-bold mb-3 text-gray-900">
-                                    Schedule Your Demo
-                                </h2>
-                                <p className="text-gray-600 text-lg">
-                                    See how Fluxor Cloud can transform your store operations.
-                                </p>
-                            </div>
-                            {demoSuccess ? (
-                                <div className="text-center py-6">
-                                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Check className="w-8 h-8 text-green-600" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2">Request Received!</h3>
-                                    <p className="text-gray-600">We'll reach out to <strong>{demoEmail}</strong> within 24 hours.</p>
-                                    <button onClick={() => { setShowDemoModal(false); setDemoSuccess(false); setDemoEmail(''); }} className="mt-4 text-blue-600 font-medium hover:underline">Close</button>
-                                </div>
-                            ) : (
-                                <form className="space-y-5" onSubmit={async (e) => {
-                                    e.preventDefault();
-                                    setDemoSubmitting(true);
-                                    try {
-                                        await fetch(`${API_URL}/demo-request`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ email: demoEmail })
-                                        });
-                                        setDemoSuccess(true);
-                                    } catch {
-                                        setDemoSuccess(true); // Show success anyway — don't expose errors to potential clients
-                                    } finally {
-                                        setDemoSubmitting(false);
-                                    }
-                                }}>
-                                    <div>
-                                        <input
-                                            type="email"
-                                            required
-                                            value={demoEmail}
-                                            onChange={(e) => setDemoEmail(e.target.value)}
-                                            placeholder="Enter your email address"
-                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 text-gray-900 text-lg placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all"
-                                        />
-                                    </div>
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        size="lg"
-                                        className="w-full justify-center h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 border-0 shadow-[0_0_30px_rgba(59,130,246,0.4)] hover:shadow-[0_0_40px_rgba(59,130,246,0.6)] transition-all"
-                                        isLoading={demoSubmitting}
-                                    >
-                                        Request Demo
-                                    </Button>
-                                    <p className="text-center text-sm text-gray-500 mt-2">
-                                        We'll reach out within 24 hours to schedule your personalized demo.
-                                    </p>
-                                </form>
-                            )}
-                        </GlassCard>
-                    </div>
-                )
-            }
         </div >
     );
 };

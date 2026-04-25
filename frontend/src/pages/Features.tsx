@@ -1,14 +1,12 @@
-import { useState } from 'react';
-
-import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Shield, Clock, Users, X } from 'lucide-react';
+import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Shield, Clock, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
 
 const Features: React.FC = () => {
-    const [showDemoModal, setShowDemoModal] = useState(false);
-    const [formSubmitted, setFormSubmitted] = useState(false);
-    const [formLoading, setFormLoading] = useState(false);
+    const navigate = useNavigate();
+    const goToDemo = () => navigate('/demo');
 
     const mainFeatures = [
         {
@@ -67,103 +65,9 @@ const Features: React.FC = () => {
         { icon: <Users size={24} />, title: 'Multi-User Access', desc: 'Add your team with role-based permissions' },
     ];
 
-    const handleDemoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setFormLoading(true);
-
-        const form = e.currentTarget;
-        const formData = new FormData(form);
-
-        try {
-            const response = await fetch('https://formspree.io/f/mojjraqw', {
-                method: 'POST',
-                body: formData,
-                headers: { 'Accept': 'application/json' }
-            });
-
-            if (response.ok) {
-                setFormSubmitted(true);
-            }
-        } catch (error) {
-            console.error('Form submission error:', error);
-        } finally {
-            setFormLoading(false);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-[#0f172a] text-white">
-            <Navbar onBookDemo={() => setShowDemoModal(true)} />
-
-            {/* Demo Request Modal */}
-            {showDemoModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                    <div className="bg-[#1e293b] rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 relative border border-white/10">
-                        <button
-                            onClick={() => { setShowDemoModal(false); setFormSubmitted(false); }}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-white"
-                        >
-                            <X size={24} />
-                        </button>
-
-                        {!formSubmitted ? (
-                            <>
-                                <h2 className="text-2xl font-bold text-white mb-2">Book a Demo</h2>
-                                <p className="text-gray-400 mb-6">Get early access to Fluxor Cloud. We'll reach out within 24 hours.</p>
-
-                                <form onSubmit={handleDemoSubmit} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            required
-                                            className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-                                            placeholder="Your name"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            required
-                                            className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-                                            placeholder="you@example.com"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Store Name (optional)</label>
-                                        <input
-                                            type="text"
-                                            name="store"
-                                            className="w-full px-4 py-3 bg-[#0f172a] border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
-                                            placeholder="Your store name"
-                                        />
-                                    </div>
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        size="lg"
-                                        className="w-full"
-                                        disabled={formLoading}
-                                    >
-                                        {formLoading ? 'Sending...' : 'Request Demo'}
-                                    </Button>
-                                </form>
-                            </>
-                        ) : (
-                            <div className="text-center py-8">
-                                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="text-3xl text-green-500">✓</span>
-                                </div>
-                                <h2 className="text-2xl font-bold text-white mb-2">Request Received!</h2>
-                                <p className="text-gray-400">We'll be in touch within 24 hours to schedule your demo.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
+            <Navbar />
 
             {/* Hero */}
             <section className="pt-32 pb-16 bg-gradient-to-b from-[#0f172a] to-[#1e293b]">
@@ -178,9 +82,9 @@ const Features: React.FC = () => {
                         variant="primary"
                         size="lg"
                         rightIcon={<ArrowRight size={20} />}
-                        onClick={() => setShowDemoModal(true)}
+                        onClick={goToDemo}
                     >
-                        Book a Demo
+                        View Demo
                     </Button>
                 </div>
             </section>
@@ -264,9 +168,9 @@ const Features: React.FC = () => {
                     </p>
                     <button
                         className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors text-lg"
-                        onClick={() => setShowDemoModal(true)}
+                        onClick={goToDemo}
                     >
-                        Book a Demo
+                        View Demo
                     </button>
                 </div>
             </section>

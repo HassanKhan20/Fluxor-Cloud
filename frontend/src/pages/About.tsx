@@ -122,12 +122,12 @@ const About: React.FC = () => {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link to="/signup">
                             <Button variant="primary" size="lg" rightIcon={<ArrowRight size={20} />}>
-                                Start Free Trial
+                                Get Started
                             </Button>
                         </Link>
-                        <Link to="/pricing">
+                        <Link to="/demo">
                             <Button variant="secondary" size="lg">
-                                View Pricing
+                                Watch Demo
                             </Button>
                         </Link>
                     </div>

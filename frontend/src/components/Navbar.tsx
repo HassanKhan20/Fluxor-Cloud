@@ -4,42 +4,15 @@ import { Menu, X } from 'lucide-react';
 import Button from './Button';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface NavbarProps {
-    onBookDemo?: () => void;
-}
-
-const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
+const Navbar: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeHash, setActiveHash] = useState('');
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Scroll Spy Logic
     useEffect(() => {
-        const handleScroll = () => {
-            const sections = [
-                { id: 'pricing', hash: '#pricing' }
-            ];
-
-            let found = false;
-            // Check in reverse order so we match the bottom-most section first
-            for (const section of [...sections].reverse()) {
-                const element = document.getElementById(section.id);
-                if (element) {
-                    const rect = element.getBoundingClientRect();
-                    // If near top of viewport (allowing for some offset)
-                    if (rect.top <= 150) {
-                        setActiveHash(section.hash);
-                        found = true;
-                        break;
-                    }
-                }
-            }
-            if (!found) setActiveHash('');
-        };
-
+        const handleScroll = () => setActiveHash('');
         window.addEventListener('scroll', handleScroll);
-        // Initial check
         handleScroll();
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
@@ -47,7 +20,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
     const navLinks = [
         { name: 'Home', path: '/', hash: '' },
         { name: 'Features', path: '/', hash: '#features' },
-        { name: 'Pricing', path: '/', hash: '#pricing' },
+        { name: 'Demo', path: '/demo', hash: '' },
         { name: 'About', path: '/', hash: '#about' },
     ];
 
@@ -102,11 +75,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
 
     const handleBookDemo = () => {
         setIsOpen(false);
-        if (onBookDemo) {
-            onBookDemo();
-        } else {
-            navigate('/?demo=true');
-        }
+        navigate('/demo');
     };
 
     return (
@@ -157,7 +126,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                             onClick={handleBookDemo}
                             className="bg-blue-600 hover:bg-blue-500 text-white border-0 shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all"
                         >
-                            Book Demo
+                            View Demo
                         </Button>
                     </div>
 
@@ -197,7 +166,7 @@ const Navbar: React.FC<NavbarProps> = ({ onBookDemo }) => {
                                     Sign In
                                 </Link>
                                 <Button variant="primary" size="md" className="w-full bg-blue-600 border-0" onClick={handleBookDemo}>
-                                    Book a Demo
+                                    View Demo
                                 </Button>
                             </div>
                         </div>

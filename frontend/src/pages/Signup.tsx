@@ -90,7 +90,7 @@ const Signup: React.FC = () => {
                         {/* Features List */}
                         <div className="space-y-4">
                             {[
-                                'Free 14-day trial, no credit card',
+                                'Free to get started',
                                 'Setup in under 5 minutes',
                                 'Import your existing data easily',
                             ].map((feature, i) => (
