@@ -140,22 +140,22 @@ export default function Dashboard() {
     const briefingIcon = (icon: string) => {
         const cls = 'flex-shrink-0';
         if (icon === 'trending-up') return <TrendingUp size={14} className={`${cls} text-emerald-500`} />;
-        if (icon === 'trending-down') return <TrendingDown size={14} className={`${cls} text-red-500`} />;
+        if (icon === 'trending-down') return <TrendingDown size={14} className={`${cls} text-rose-500`} />;
         if (icon === 'package') return <Package size={14} className={`${cls} text-amber-500`} />;
         if (icon === 'flag') return <Flag size={14} className={`${cls} text-amber-500`} />;
-        if (icon === 'bell') return <Bell size={14} className={`${cls} text-blue-500`} />;
-        if (icon === 'file-text') return <FileText size={14} className={`${cls} text-blue-500`} />;
+        if (icon === 'bell') return <Bell size={14} className={`${cls} text-indigo-500`} />;
+        if (icon === 'file-text') return <FileText size={14} className={`${cls} text-indigo-500`} />;
         if (icon === 'check') return <CheckCircle2 size={14} className={`${cls} text-emerald-500`} />;
-        return <Info size={14} className={`${cls} text-gray-400`} />;
+        return <Info size={14} className={`${cls} text-ink-400`} />;
     };
 
     if (loading) {
         return (
             <DashboardLayout>
-                <div className="min-h-screen flex items-center justify-center">
+                <div className="min-h-screen bg-ink-50 flex items-center justify-center">
                     <div className="text-center">
-                        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-gray-500">Loading your dashboard...</p>
+                        <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                        <p className="text-ink-500 text-[13px]">Loading your dashboard...</p>
                     </div>
                 </div>
             </DashboardLayout>
@@ -243,36 +243,36 @@ export default function Dashboard() {
                     </div>
 
                     {/* ── KPIs ── */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-white rounded-xl p-5 border border-ink-200 hover:border-ink-300 transition-colors">
-                            <p className="text-[11px] uppercase tracking-[0.12em] text-ink-500 font-semibold mb-2">Today's Revenue</p>
-                            <p className="font-display text-3xl font-semibold text-ink-900 tracking-tight tabular-nums">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="bg-white rounded-2xl px-5 py-4 border border-ink-200 hover:border-ink-300 transition-colors">
+                            <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-500 font-semibold">Today's Revenue</p>
+                            <p className="font-display text-[28px] font-semibold text-ink-900 tracking-tightest tabular-nums leading-none mt-2">
                                 ${stats?.totalRevenue?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                             </p>
-                            {stats?.revenueChange !== null && stats?.revenueChange !== undefined && (
-                                <div className={`flex items-center gap-1 mt-2 text-[12px] font-medium tabular-nums ${stats.revenueChange >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                    {stats.revenueChange >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+                            {stats?.revenueChange !== null && stats?.revenueChange !== undefined ? (
+                                <div className={`flex items-center gap-1 mt-2 text-[11.5px] font-medium tabular-nums ${stats.revenueChange >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                    {stats.revenueChange >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                                     <span>{Math.abs(stats.revenueChange).toFixed(1)}%</span>
                                     <span className="text-ink-400 font-normal ml-1">vs yesterday</span>
                                 </div>
-                            )}
+                            ) : <p className="text-[11.5px] text-ink-500 mt-2">No prior day data</p>}
                         </div>
-                        <div className="bg-white rounded-xl p-5 border border-ink-200 hover:border-ink-300 transition-colors">
-                            <p className="text-[11px] uppercase tracking-[0.12em] text-ink-500 font-semibold mb-2">Transactions</p>
-                            <p className="font-display text-3xl font-semibold text-ink-900 tracking-tight tabular-nums">{stats?.salesCount || 0}</p>
-                            <p className="text-[12px] text-ink-500 mt-2 tabular-nums">Avg <span className="text-ink-700 font-medium">${stats?.avgTransaction?.toFixed(2) || '0.00'}</span></p>
+                        <div className="bg-white rounded-2xl px-5 py-4 border border-ink-200 hover:border-ink-300 transition-colors">
+                            <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-500 font-semibold">Transactions</p>
+                            <p className="font-display text-[28px] font-semibold text-ink-900 tracking-tightest tabular-nums leading-none mt-2">{stats?.salesCount || 0}</p>
+                            <p className="text-[11.5px] text-ink-500 mt-2 tabular-nums">Avg <span className="text-ink-700 font-medium">${stats?.avgTransaction?.toFixed(2) || '0.00'}</span></p>
                         </div>
-                        <div className="bg-white rounded-xl p-5 border border-ink-200 hover:border-ink-300 transition-colors">
-                            <p className="text-[11px] uppercase tracking-[0.12em] text-ink-500 font-semibold mb-2">Net Cash Flow</p>
+                        <div className="bg-white rounded-2xl px-5 py-4 border border-ink-200 hover:border-ink-300 transition-colors">
+                            <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-500 font-semibold">Net Cash Flow</p>
                             {cashFlow ? (
                                 <>
-                                    <p className={`font-display text-3xl font-semibold tracking-tight tabular-nums ${cashFlow.netCashFlow >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                    <p className={`font-display text-[28px] font-semibold tracking-tightest tabular-nums leading-none mt-2 ${cashFlow.netCashFlow >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                                         {cashFlow.netCashFlow >= 0 ? '+' : '−'}${Math.abs(cashFlow.netCashFlow).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                                     </p>
-                                    <div className="flex items-center gap-1 mt-2 text-[12px] font-medium tabular-nums">
+                                    <div className="flex items-center gap-1 mt-2 text-[11.5px] font-medium tabular-nums">
                                         {cashFlow.trendPercent >= 0
-                                            ? <ArrowUpRight size={13} className="text-emerald-600" />
-                                            : <ArrowDownRight size={13} className="text-rose-600" />
+                                            ? <ArrowUpRight size={12} className="text-emerald-600" />
+                                            : <ArrowDownRight size={12} className="text-rose-600" />
                                         }
                                         <span className={cashFlow.trendPercent >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
                                             {Math.abs(cashFlow.trendPercent)}%
@@ -280,138 +280,143 @@ export default function Dashboard() {
                                         <span className="text-ink-400 font-normal ml-1">14-day</span>
                                     </div>
                                 </>
-                            ) : <p className="font-display text-3xl font-semibold text-ink-300 tabular-nums">—</p>}
+                            ) : <p className="font-display text-[28px] font-semibold text-ink-300 tabular-nums mt-2">—</p>}
                         </div>
                     </div>
 
-                    {/* ── ROW 2: Today's Briefing (collapsible) ── */}
-                    <div className="bg-white rounded-xl border border-blue-100 shadow-sm">
+                    {/* ── Today's Briefing ── */}
+                    <div className="bg-white rounded-2xl border border-ink-200">
                         <button
                             onClick={() => setShowBriefing(!showBriefing)}
-                            className="w-full flex items-center justify-between px-5 py-3.5 text-left"
+                            className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-ink-50/60 transition-colors rounded-t-2xl"
                         >
                             <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
-                                    <BarChart3 size={15} className="text-blue-600" />
-                                </div>
-                                <span className="font-bold text-blue-900 text-sm tracking-tight">Today's Briefing</span>
+                                <span className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                                    <BarChart3 size={14} />
+                                </span>
+                                <span className="font-display text-[14px] font-semibold text-ink-900 tracking-tight">Today's Briefing</span>
                                 {(actionItems.length > 0 || (briefing && briefing.bullets.length > 0)) && (
-                                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-600 text-xs rounded-full font-medium">
+                                    <span className="font-mono text-[10.5px] font-semibold text-ink-700 bg-ink-100 px-1.5 py-0.5 rounded-full tabular-nums">
                                         {actionItems.length + (briefing?.bullets.length || 0)}
                                     </span>
                                 )}
                             </div>
-                            <ChevronDown size={16} className={`text-gray-400 transition-transform ${showBriefing ? 'rotate-180' : ''}`} />
+                            <ChevronDown size={15} className={`text-ink-400 transition-transform ${showBriefing ? 'rotate-180' : ''}`} />
                         </button>
                         {showBriefing && (
-                            <div className="px-5 pb-4 space-y-2">
+                            <div className="px-5 pb-4 space-y-1.5 border-t border-ink-100 pt-3">
                                 {briefing?.bullets.map((b, i) => (
-                                    <div key={`b-${i}`} className="flex items-center gap-2.5 py-1.5">
+                                    <div key={`b-${i}`} className="flex items-center gap-2.5 py-1">
                                         {briefingIcon(b.icon)}
-                                        <span className="text-sm text-gray-700">{b.text}</span>
+                                        <span className="text-[13px] text-ink-700">{b.text}</span>
                                     </div>
                                 ))}
                                 {actionItems.map((item, i) => (
-                                    <Link key={`a-${i}`} to={item.link} className="flex items-center gap-2.5 py-1.5 group">
-                                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
-                                        <span className="text-sm text-gray-700 group-hover:text-blue-600 transition-colors">{item.text}</span>
-                                        <ChevronRight size={14} className="text-gray-300 group-hover:text-blue-500 ml-auto" />
+                                    <Link key={`a-${i}`} to={item.link} className="flex items-center gap-2.5 py-1.5 group rounded-lg px-1 -mx-1 hover:bg-ink-50/80 transition-colors">
+                                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.type === 'warning' ? 'bg-amber-500' : 'bg-indigo-500'}`} />
+                                        <span className="text-[13px] text-ink-700 group-hover:text-ink-900 transition-colors">{item.text}</span>
+                                        <ChevronRight size={13} className="text-ink-300 group-hover:text-indigo-600 ml-auto" />
                                     </Link>
                                 ))}
                                 {actionItems.length === 0 && (!briefing || briefing.bullets.length === 0) && (
                                     <div className="flex items-center gap-2 py-2">
-                                        <CheckCircle2 size={15} className="text-emerald-500" />
-                                        <span className="text-sm text-gray-600">All caught up — Fluxor is monitoring your store.</span>
+                                        <CheckCircle2 size={14} className="text-emerald-500" />
+                                        <span className="text-[13px] text-ink-600">All caught up — Fluxor is monitoring your store.</span>
                                     </div>
                                 )}
-                                <div className="flex gap-2 pt-2">
+                                <div className="flex flex-wrap gap-2 pt-3">
                                     <Link to="/sales">
-                                        <Button variant="secondary" size="sm"><Upload size={14} /> Import Sales</Button>
+                                        <Button variant="secondary" size="sm" className="bg-white border-ink-200 hover:border-ink-300 hover:bg-ink-50 text-ink-700"><Upload size={13} /> Import Sales</Button>
                                     </Link>
                                     <Link to="/products">
-                                        <Button variant="secondary" size="sm"><Package size={14} /> Inventory</Button>
+                                        <Button variant="secondary" size="sm" className="bg-white border-ink-200 hover:border-ink-300 hover:bg-ink-50 text-ink-700"><Package size={13} /> Inventory</Button>
                                     </Link>
                                     <Link to="/reorder">
-                                        <Button variant="secondary" size="sm"><DollarSign size={14} /> Reorder</Button>
+                                        <Button variant="secondary" size="sm" className="bg-white border-ink-200 hover:border-ink-300 hover:bg-ink-50 text-ink-700"><DollarSign size={13} /> Reorder</Button>
                                     </Link>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* ── ROW 3: Charts side by side ── */}
+                    {/* ── Charts side by side ── */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {/* Revenue Chart */}
-                        <div className="bg-white rounded-xl p-5 border border-blue-100 shadow-sm">
-                            <h3 className="text-sm font-bold text-blue-900 tracking-tight mb-3">Revenue This Week</h3>
+                        <div className="bg-white rounded-2xl p-5 border border-ink-200">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-500">Revenue · 7 days</p>
+                                    <h3 className="font-display text-[14px] font-semibold text-ink-900 tracking-tight mt-0.5">This Week</h3>
+                                </div>
+                            </div>
                             {hasData ? (
                                 <div className="h-48">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={stats?.chartData}>
                                             <defs>
                                                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.15} />
-                                                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                                                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.18} />
+                                                    <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: '#9CA3AF' }} />
-                                            <YAxis fontSize={11} tickLine={false} axisLine={false} tick={{ fill: '#9CA3AF' }} tickFormatter={(v) => `$${v}`} />
+                                            <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: '#A1A1AA' }} />
+                                            <YAxis fontSize={11} tickLine={false} axisLine={false} tick={{ fill: '#A1A1AA' }} tickFormatter={(v) => `$${v}`} />
                                             <Tooltip
-                                                contentStyle={{ backgroundColor: '#fff', border: '1px solid #DBEAFE', borderRadius: '8px', boxShadow: '0 2px 8px rgb(0 0 0 / 0.06)' }}
+                                                contentStyle={{ backgroundColor: '#fff', border: '1px solid #E4E4E7', borderRadius: '10px', boxShadow: '0 4px 16px -4px rgba(15,23,42,0.08)', fontSize: 12 }}
                                                 formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
                                             />
-                                            <Area type="monotone" dataKey="amount" stroke="#3B82F6" strokeWidth={2} fill="url(#colorRevenue)" />
+                                            <Area type="monotone" dataKey="amount" stroke="#4F46E5" strokeWidth={2} fill="url(#colorRevenue)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
                             ) : (
-                                <div className="h-48 flex flex-col items-center justify-center bg-blue-50/50 rounded-lg">
-                                    <BarChart3 size={28} className="text-blue-200 mb-2" />
-                                    <p className="text-sm text-gray-500">Import sales to see trends</p>
-                                    <Link to="/sales" className="mt-2 text-xs text-blue-600 hover:underline">Import Sales Data</Link>
+                                <div className="h-48 flex flex-col items-center justify-center bg-ink-50/60 rounded-xl border border-dashed border-ink-200">
+                                    <BarChart3 size={26} className="text-ink-300 mb-2" />
+                                    <p className="text-[12.5px] text-ink-600">Import sales to see trends</p>
+                                    <Link to="/sales" className="mt-2 text-[11.5px] font-medium text-indigo-600 hover:text-indigo-700 hover:underline">Import Sales Data</Link>
                                 </div>
                             )}
                         </div>
 
-                        {/* Cash Flow Chart (collapsible) */}
-                        <div className="bg-white rounded-xl border border-blue-100 shadow-sm">
+                        {/* Cash Flow Chart */}
+                        <div className="bg-white rounded-2xl border border-ink-200">
                             <button
                                 onClick={() => setShowCashFlow(!showCashFlow)}
-                                className="w-full flex items-center justify-between px-5 py-4 text-left"
+                                className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-ink-50/60 transition-colors rounded-t-2xl"
                             >
                                 <div>
-                                    <h3 className="text-sm font-bold text-blue-900 tracking-tight">Cash Flow</h3>
-                                    <p className="text-xs text-gray-400">Sales vs supplier costs (14 days)</p>
+                                    <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-500">Cash Flow · 14d</p>
+                                    <h3 className="font-display text-[14px] font-semibold text-ink-900 tracking-tight mt-0.5">Sales vs Costs</h3>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {cashFlow && (
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-1 tabular-nums">
                                             {cashFlow.trendPercent >= 0
-                                                ? <ArrowUpRight size={13} className="text-emerald-500" />
-                                                : <ArrowDownRight size={13} className="text-red-500" />
+                                                ? <ArrowUpRight size={12} className="text-emerald-600" />
+                                                : <ArrowDownRight size={12} className="text-rose-600" />
                                             }
-                                            <span className={`text-xs font-medium ${cashFlow.trendPercent >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                            <span className={`text-[11.5px] font-medium ${cashFlow.trendPercent >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                 {Math.abs(cashFlow.trendPercent)}%
                                             </span>
                                         </div>
                                     )}
-                                    <ChevronDown size={16} className={`text-gray-400 transition-transform ${showCashFlow ? 'rotate-180' : ''}`} />
+                                    <ChevronDown size={15} className={`text-ink-400 transition-transform ${showCashFlow ? 'rotate-180' : ''}`} />
                                 </div>
                             </button>
                             {showCashFlow && cashFlow && (
-                                <div className="px-5 pb-5">
-                                    <div className="grid grid-cols-3 gap-3 mb-4">
-                                        <div className="bg-blue-50 rounded-lg p-2.5">
-                                            <p className="text-[10px] text-blue-400 uppercase font-medium">Inflow</p>
-                                            <p className="text-sm font-bold text-gray-900">${cashFlow.totalInflow.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
+                                <div className="px-5 pb-5 border-t border-ink-100 pt-4">
+                                    <div className="grid grid-cols-3 gap-2.5 mb-4">
+                                        <div className="bg-ink-50 border border-ink-200 rounded-xl p-2.5">
+                                            <p className="font-mono text-[9.5px] text-ink-500 uppercase font-semibold tracking-[0.12em]">Inflow</p>
+                                            <p className="text-[13.5px] font-semibold text-ink-900 tabular-nums mt-0.5">${cashFlow.totalInflow.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
                                         </div>
-                                        <div className="bg-blue-50 rounded-lg p-2.5">
-                                            <p className="text-[10px] text-blue-400 uppercase font-medium">Outflow</p>
-                                            <p className="text-sm font-bold text-gray-900">${cashFlow.totalOutflow.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
+                                        <div className="bg-ink-50 border border-ink-200 rounded-xl p-2.5">
+                                            <p className="font-mono text-[9.5px] text-ink-500 uppercase font-semibold tracking-[0.12em]">Outflow</p>
+                                            <p className="text-[13.5px] font-semibold text-ink-900 tabular-nums mt-0.5">${cashFlow.totalOutflow.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
                                         </div>
-                                        <div className="bg-blue-50 rounded-lg p-2.5">
-                                            <p className="text-[10px] text-blue-400 uppercase font-medium">7-Day Net</p>
-                                            <p className={`text-sm font-bold ${cashFlow.last7DaysNet >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                        <div className="bg-ink-50 border border-ink-200 rounded-xl p-2.5">
+                                            <p className="font-mono text-[9.5px] text-ink-500 uppercase font-semibold tracking-[0.12em]">7-Day Net</p>
+                                            <p className={`text-[13.5px] font-semibold tabular-nums mt-0.5 ${cashFlow.last7DaysNet >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                                                 {cashFlow.last7DaysNet >= 0 ? '+' : ''}${cashFlow.last7DaysNet.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                                             </p>
                                         </div>
@@ -419,16 +424,16 @@ export default function Dashboard() {
                                     <div className="h-40">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={cashFlow.daily.slice(-14)} barGap={1}>
-                                                <XAxis dataKey="date" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: '#9CA3AF' }}
+                                                <XAxis dataKey="date" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: '#A1A1AA' }}
                                                     tickFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('en-US', { day: 'numeric' })} />
-                                                <YAxis fontSize={10} tickLine={false} axisLine={false} tick={{ fill: '#9CA3AF' }} tickFormatter={(v) => `$${v}`} />
+                                                <YAxis fontSize={10} tickLine={false} axisLine={false} tick={{ fill: '#A1A1AA' }} tickFormatter={(v) => `$${v}`} />
                                                 <Tooltip
-                                                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #DBEAFE', borderRadius: '8px', fontSize: 12 }}
+                                                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #E4E4E7', borderRadius: '10px', fontSize: 12 }}
                                                     formatter={(value: number, name: string) => [`$${value.toFixed(0)}`, name === 'inflow' ? 'Sales' : 'Costs']}
                                                     labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                                 />
-                                                <Bar dataKey="inflow" fill="#3B82F6" radius={[2, 2, 0, 0]} name="inflow" />
-                                                <Bar dataKey="outflow" fill="#93C5FD" radius={[2, 2, 0, 0]} name="outflow" />
+                                                <Bar dataKey="inflow" fill="#4F46E5" radius={[3, 3, 0, 0]} name="inflow" />
+                                                <Bar dataKey="outflow" fill="#C7D2FE" radius={[3, 3, 0, 0]} name="outflow" />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -437,44 +442,44 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* ── ROW 4: Money Wasted + Inventory Health (collapsible) ── */}
+                    {/* ── Inventory Insights ── */}
                     {(moneyWasted?.summary.totalWasted || inventoryHealth) && (
-                        <div className="bg-white rounded-xl border border-blue-100 shadow-sm">
+                        <div className="bg-white rounded-2xl border border-ink-200">
                             <button
                                 onClick={() => setShowInventory(!showInventory)}
-                                className="w-full flex items-center justify-between px-5 py-3.5 text-left"
+                                className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-ink-50/60 transition-colors rounded-t-2xl"
                             >
                                 <div className="flex items-center gap-2.5">
-                                    <div className="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center">
-                                        <AlertCircle size={15} className="text-amber-500" />
-                                    </div>
-                                    <span className="font-bold text-blue-900 text-sm tracking-tight">Inventory Insights</span>
+                                    <span className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                                        <AlertCircle size={14} />
+                                    </span>
+                                    <span className="font-display text-[14px] font-semibold text-ink-900 tracking-tight">Inventory Insights</span>
                                     {moneyWasted && moneyWasted.summary.totalWasted > 0 && (
-                                        <span className="text-xs text-red-500 font-medium">
+                                        <span className="font-mono text-[11px] text-rose-600 font-semibold tabular-nums">
                                             ${moneyWasted.summary.totalWasted.toLocaleString('en-US', { maximumFractionDigits: 0 })} at risk
                                         </span>
                                     )}
                                 </div>
-                                <ChevronDown size={16} className={`text-gray-400 transition-transform ${showInventory ? 'rotate-180' : ''}`} />
+                                <ChevronDown size={15} className={`text-ink-400 transition-transform ${showInventory ? 'rotate-180' : ''}`} />
                             </button>
                             {showInventory && (
-                                <div className="px-5 pb-5 space-y-4">
+                                <div className="px-5 pb-5 space-y-4 border-t border-ink-100 pt-4">
                                     {moneyWasted && moneyWasted.summary.totalWasted > 0 && (
-                                        <div className="grid grid-cols-3 gap-3">
-                                            <div className="bg-red-50 rounded-lg p-3">
-                                                <p className="text-[10px] text-gray-500 uppercase">Dead Stock</p>
-                                                <p className="text-base font-bold text-gray-900">${moneyWasted.summary.deadStockValue.toFixed(0)}</p>
-                                                <p className="text-[10px] text-gray-400">No sales 30+ days</p>
+                                        <div className="grid grid-cols-3 gap-2.5">
+                                            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3">
+                                                <p className="font-mono text-[9.5px] text-rose-700 uppercase font-semibold tracking-[0.12em]">Dead Stock</p>
+                                                <p className="font-display text-[16px] font-semibold text-ink-900 tabular-nums mt-1">${moneyWasted.summary.deadStockValue.toFixed(0)}</p>
+                                                <p className="text-[10.5px] text-ink-500 mt-0.5">No sales 30+ days</p>
                                             </div>
-                                            <div className="bg-amber-50 rounded-lg p-3">
-                                                <p className="text-[10px] text-gray-500 uppercase">Overstock</p>
-                                                <p className="text-base font-bold text-gray-900">${moneyWasted.summary.overstockValue.toFixed(0)}</p>
-                                                <p className="text-[10px] text-gray-400">Excess inventory</p>
+                                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                                                <p className="font-mono text-[9.5px] text-amber-700 uppercase font-semibold tracking-[0.12em]">Overstock</p>
+                                                <p className="font-display text-[16px] font-semibold text-ink-900 tabular-nums mt-1">${moneyWasted.summary.overstockValue.toFixed(0)}</p>
+                                                <p className="text-[10.5px] text-ink-500 mt-0.5">Excess inventory</p>
                                             </div>
-                                            <div className="bg-blue-50 rounded-lg p-3">
-                                                <p className="text-[10px] text-gray-500 uppercase">Missed Sales</p>
-                                                <p className="text-base font-bold text-gray-900">${moneyWasted.summary.missedSalesValue.toFixed(0)}</p>
-                                                <p className="text-[10px] text-gray-400">From stockouts</p>
+                                            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
+                                                <p className="font-mono text-[9.5px] text-indigo-700 uppercase font-semibold tracking-[0.12em]">Missed Sales</p>
+                                                <p className="font-display text-[16px] font-semibold text-ink-900 tabular-nums mt-1">${moneyWasted.summary.missedSalesValue.toFixed(0)}</p>
+                                                <p className="text-[10.5px] text-ink-500 mt-0.5">From stockouts</p>
                                             </div>
                                         </div>
                                     )}
@@ -482,46 +487,46 @@ export default function Dashboard() {
                                     {inventoryHealth && (inventoryHealth.restockAlerts.length > 0 || inventoryHealth.slowMovers.length > 0) && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {inventoryHealth.restockAlerts.length > 0 && (
-                                                <div>
-                                                    <div className="flex items-center gap-1.5 mb-2">
-                                                        <AlertCircle size={13} className="text-amber-500" />
-                                                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Restock Soon</h4>
-                                                        <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full ml-auto">{inventoryHealth.summary.restockAlertsCount}</span>
+                                                <div className="bg-ink-50/60 border border-ink-200 rounded-xl p-4">
+                                                    <div className="flex items-center gap-1.5 mb-2.5">
+                                                        <AlertCircle size={12} className="text-amber-500" />
+                                                        <h4 className="font-mono text-[10.5px] font-semibold text-ink-700 uppercase tracking-[0.12em]">Restock Soon</h4>
+                                                        <span className="font-mono text-[9.5px] font-semibold tabular-nums bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full ml-auto">{inventoryHealth.summary.restockAlertsCount}</span>
                                                     </div>
                                                     <ul className="space-y-1.5">
                                                         {inventoryHealth.restockAlerts.slice(0, 4).map(item => (
-                                                            <li key={item.id} className="flex items-center justify-between text-sm">
-                                                                <span className="text-gray-700 truncate max-w-[65%]">{item.name}</span>
-                                                                <span className={`text-xs font-medium ${item.urgency === 'critical' ? 'text-red-600' : 'text-gray-500'}`}>
+                                                            <li key={item.id} className="flex items-center justify-between text-[12.5px]">
+                                                                <span className="text-ink-700 truncate max-w-[65%]">{item.name}</span>
+                                                                <span className={`text-[11px] font-medium tabular-nums ${item.urgency === 'critical' ? 'text-rose-600' : 'text-ink-500'}`}>
                                                                     {item.daysUntilStockout}d left
                                                                 </span>
                                                             </li>
                                                         ))}
                                                     </ul>
-                                                    <Link to="/products" className="text-xs text-blue-600 hover:underline mt-2 inline-flex items-center gap-0.5">
-                                                        View all <ChevronRight size={12} />
+                                                    <Link to="/products" className="text-[11.5px] font-medium text-indigo-600 hover:text-indigo-700 mt-2.5 inline-flex items-center gap-0.5">
+                                                        View all <ChevronRight size={11} />
                                                     </Link>
                                                 </div>
                                             )}
                                             {inventoryHealth.slowMovers.length > 0 && (
-                                                <div>
-                                                    <div className="flex items-center gap-1.5 mb-2">
-                                                        <Package size={13} className="text-gray-400" />
-                                                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Slow Movers</h4>
-                                                        <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full ml-auto">{inventoryHealth.summary.slowMoversCount}</span>
+                                                <div className="bg-ink-50/60 border border-ink-200 rounded-xl p-4">
+                                                    <div className="flex items-center gap-1.5 mb-2.5">
+                                                        <Package size={12} className="text-ink-400" />
+                                                        <h4 className="font-mono text-[10.5px] font-semibold text-ink-700 uppercase tracking-[0.12em]">Slow Movers</h4>
+                                                        <span className="font-mono text-[9.5px] font-semibold tabular-nums bg-ink-100 text-ink-700 px-1.5 py-0.5 rounded-full ml-auto">{inventoryHealth.summary.slowMoversCount}</span>
                                                     </div>
                                                     <ul className="space-y-1.5">
                                                         {inventoryHealth.slowMovers.slice(0, 4).map(item => (
-                                                            <li key={item.id} className="flex items-center justify-between text-sm">
-                                                                <span className="text-gray-700 truncate max-w-[65%]">{item.name}</span>
-                                                                <span className="text-xs text-gray-400">
+                                                            <li key={item.id} className="flex items-center justify-between text-[12.5px]">
+                                                                <span className="text-ink-700 truncate max-w-[65%]">{item.name}</span>
+                                                                <span className="text-[11px] text-ink-500 tabular-nums">
                                                                     {item.daysSinceLastSale ? `${item.daysSinceLastSale}d` : 'No sales'}
                                                                 </span>
                                                             </li>
                                                         ))}
                                                     </ul>
-                                                    <Link to="/products" className="text-xs text-blue-600 hover:underline mt-2 inline-flex items-center gap-0.5">
-                                                        View all <ChevronRight size={12} />
+                                                    <Link to="/products" className="text-[11.5px] font-medium text-indigo-600 hover:text-indigo-700 mt-2.5 inline-flex items-center gap-0.5">
+                                                        View all <ChevronRight size={11} />
                                                     </Link>
                                                 </div>
                                             )}
@@ -529,7 +534,7 @@ export default function Dashboard() {
                                     )}
 
                                     {moneyWasted && moneyWasted.insights.length > 0 && (
-                                        <p className="text-xs text-gray-500 border-t border-blue-50 pt-3">{moneyWasted.insights[0]}</p>
+                                        <p className="text-[11.5px] text-ink-500 border-t border-ink-100 pt-3 italic">{moneyWasted.insights[0]}</p>
                                     )}
                                 </div>
                             )}
