@@ -111,9 +111,11 @@ export default function Kitchen() {
         finally { setBusy(false); }
     }
 
-    // Pre-empt the rest of the page with an onboarding CTA when kitchen mode
-    // is off OR when there are no menu items yet.
-    const needsOnboarding = !loading && (config?.kitchenMode === false || (config?.kitchenMode && menuItems.length === 0));
+    // Show the onboarding banner whenever the catalog looks empty OR kitchen
+    // mode is explicitly off. Robust to a missing /config response.
+    const isEmpty = menuItems.length === 0 && vendors.length === 0;
+    const kitchenOff = config?.kitchenMode === false;
+    const needsOnboarding = !loading && (isEmpty || kitchenOff);
 
     return (
         <DashboardLayout>
@@ -129,7 +131,14 @@ export default function Kitchen() {
                                 Define menu items once, plan the week, log meals served. Fluxor turns recipes × meal plans into draft purchase orders and emails them to your vendors automatically.
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                                onClick={loadPack}
+                                disabled={busy}
+                                className="flex items-center gap-1.5 text-[12.5px] font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3 py-2 rounded-lg transition-colors disabled:opacity-60"
+                            >
+                                <Zap className="w-3.5 h-3.5" /> Load starter pack
+                            </button>
                             <Link
                                 to="/kitchen/log"
                                 className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-700 bg-white border border-ink-200 hover:border-ink-300 px-3 py-2 rounded-lg transition-colors"
@@ -230,7 +239,7 @@ export default function Kitchen() {
                                 <OverviewTab forecast={forecast} pos={pos} weekStart={weekStart} setWeekStart={setWeekStart} menuItems={menuItems} plans={plans} />
                             )}
                             {tab === 'menu' && (
-                                <MenuTab menuItems={menuItems} products={products} onRefresh={refresh} showToast={showToast} />
+                                <MenuTab menuItems={menuItems} products={products} onRefresh={refresh} showToast={showToast} onLoadPack={loadPack} busy={busy} />
                             )}
                             {tab === 'plan' && (
                                 <PlanTab weekStart={weekStart} setWeekStart={setWeekStart} menuItems={menuItems} plans={plans} onRefresh={refresh} showToast={showToast} />
@@ -356,11 +365,13 @@ function Metric({ label, value, sublabel, tone = 'default' }: { label: string; v
 // ============================================================================
 // MENU TAB
 // ============================================================================
-function MenuTab({ menuItems, products, onRefresh, showToast }: {
+function MenuTab({ menuItems, products, onRefresh, showToast, onLoadPack, busy }: {
     menuItems: MenuItem[];
     products: Array<{ id: string; name: string; unit?: string | null; costPrice?: number }>;
     onRefresh: () => void;
     showToast: (s: string) => void;
+    onLoadPack: () => void;
+    busy: boolean;
 }) {
     const [editing, setEditing] = useState<Partial<MenuItem> | null>(null);
 
@@ -401,8 +412,20 @@ function MenuTab({ menuItems, products, onRefresh, showToast }: {
             {menuItems.length === 0 && !editing ? (
                 <div className="bg-white border border-ink-200 rounded-2xl p-12 text-center">
                     <ChefHat className="w-8 h-8 text-ink-300 mx-auto mb-3" />
-                    <p className="text-[13px] font-medium text-ink-900">No menu items yet</p>
-                    <p className="text-[12px] text-ink-500 mt-1">Define your dishes and their ingredients to start forecasting.</p>
+                    <p className="text-[14px] font-semibold text-ink-900 tracking-tight">No menu items yet</p>
+                    <p className="text-[12.5px] text-ink-500 mt-1 max-w-md mx-auto">Load 10 retirement-home staple recipes (with full ingredient lists) in one click, or build your own from scratch.</p>
+                    <div className="mt-4 flex items-center justify-center gap-2">
+                        <button
+                            onClick={onLoadPack}
+                            disabled={busy}
+                            className="flex items-center gap-1.5 text-[12.5px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-lg disabled:opacity-60"
+                        >
+                            <Zap className="w-3.5 h-3.5" /> Load starter pack
+                        </button>
+                        <button onClick={newItem} className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-700 bg-white border border-ink-200 hover:border-ink-300 px-3 py-2 rounded-lg">
+                            <Plus className="w-3.5 h-3.5" /> Add manually
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
