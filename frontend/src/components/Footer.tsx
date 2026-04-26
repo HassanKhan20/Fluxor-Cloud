@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Twitter, Linkedin, Mail } from 'lucide-react';
+import { Mail, Heart } from 'lucide-react';
 import { useGalaxyTransition } from './GalaxyTransition';
 
 const Footer: React.FC = () => {
@@ -11,19 +11,14 @@ const Footer: React.FC = () => {
     const footerLinks = {
         product: [
             { name: 'Features', path: '/features' },
+            { name: 'Demo', path: '/demo' },
             { name: 'About', path: '/about' },
         ],
         legal: [
-            { name: 'Privacy', path: '#' },
-            { name: 'Terms', path: '#' },
+            { name: 'Privacy', path: '/privacy' },
+            { name: 'Terms', path: '/terms' },
         ],
     };
-
-    const socialLinks = [
-        { icon: <Twitter size={20} />, url: 'https://twitter.com/fluxorcloud' },
-        { icon: <Linkedin size={20} />, url: 'https://linkedin.com/company/fluxorcloud' },
-        { icon: <Mail size={20} />, url: 'mailto:hello@fluxorcloud.com' },
-    ];
 
     return (
         <footer className="bg-gray-50 border-t border-gray-200 text-gray-900">
@@ -61,20 +56,13 @@ const Footer: React.FC = () => {
                         <p className="text-gray-600 mb-6 max-w-xs">
                             AI-powered operations management for small convenience stores. Smarter insights, better decisions.
                         </p>
-                        <div className="flex gap-4">
-                            {socialLinks.map((link, index) => (
-                                <a
-                                    key={index}
-                                    href={link.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center
-                             text-gray-500 hover:text-white hover:bg-blue-600 transition-all duration-200"
-                                >
-                                    {link.icon}
-                                </a>
-                            ))}
-                        </div>
+                        <a
+                            href="mailto:support@fluxorcloud.com"
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-blue-600 text-gray-600 hover:text-white transition-all duration-200 text-sm font-medium"
+                        >
+                            <Mail className="w-4 h-4" />
+                            support@fluxorcloud.com
+                        </a>
                     </div>
 
                     {/* Product Links */}
@@ -123,8 +111,8 @@ const Footer: React.FC = () => {
                     <p className="text-gray-500 text-sm">
                         © {currentYear} Fluxor Cloud. All rights reserved.
                     </p>
-                    <p className="text-gray-400 text-sm">
-                        Made with ❤️ for small business owners
+                    <p className="text-gray-400 text-sm flex items-center gap-1.5">
+                        Built with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> for small business owners
                     </p>
                 </div>
             </div>

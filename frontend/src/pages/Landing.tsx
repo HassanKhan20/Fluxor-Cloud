@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Check, LayoutDashboard, Brain, Shield, Lock, Database, Activity } from 'lucide-react';
+import { ArrowRight, BarChart3, Package, Bot, TrendingUp, FileText, Zap, Check, LayoutDashboard, Shield, Lock, Database, Activity, Sparkles, Target, HeartHandshake } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -8,6 +8,7 @@ import Button from '../components/Button';
 import HeroBackground from '../components/HeroBackground';
 import GlassCard from '../components/GlassCard';
 import AnimatedSection from '../components/AnimatedSection';
+import { DashboardMockup, AIAssistantMockup } from '../components/LandingMockups';
 
 const Landing: React.FC = () => {
     const { scrollY } = useScroll();
@@ -188,67 +189,107 @@ const Landing: React.FC = () => {
                     </motion.div>
                 </section>
 
-                {/* VISUAL SHOWCASE SECTION (Floating Glass Panels) */}
+                {/* VISUAL SHOWCASE SECTION */}
                 <section id="features" className="py-32 relative">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-32">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-40">
 
-                        {/* Feature 1 */}
-                        <AnimatedSection className="flex flex-col lg:flex-row items-center gap-16">
-                            <div className="flex-1 space-y-6">
-                                <div className="p-3 bg-blue-50 rounded-xl w-fit">
-                                    <LayoutDashboard className="text-blue-600" size={32} />
+                        {/* Feature 1 — Command Center */}
+                        <AnimatedSection className="grid lg:grid-cols-12 items-center gap-12 lg:gap-16">
+                            <div className="lg:col-span-5 space-y-7">
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100">
+                                    <LayoutDashboard className="w-3.5 h-3.5 text-blue-600" />
+                                    <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">Command Center</span>
                                 </div>
-                                <h2 className="text-3xl md:text-5xl font-bold text-gray-900">Command Center</h2>
-                                <p className="text-xl text-gray-600 leading-relaxed">
-                                    A unified dashboard that gives you a bird's eye view of your entire operation.
-                                    Track sales, inventory, and staff performance in real-time with zero latency.
+
+                                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-[1.05]">
+                                    Every metric that matters.<br />
+                                    <span className="text-blue-600">Zero noise.</span>
+                                </h2>
+
+                                <p className="text-lg text-gray-600 leading-relaxed">
+                                    A daily briefing built around your store's reality — revenue,
+                                    transactions, inventory health, and the issues that need a decision before noon.
                                 </p>
-                                <ul className="space-y-4 pt-4">
-                                    {['Real-time metrics', 'Multi-location support', 'AI-powered interface'].map(item => (
+
+                                <div className="grid grid-cols-3 gap-3 pt-2">
+                                    {[
+                                        { label: 'Faster decisions', value: '4.2×' },
+                                        { label: 'Avg setup time', value: '< 5 min' },
+                                        { label: 'Stockouts cut', value: '−38%' },
+                                    ].map(stat => (
+                                        <div key={stat.label} className="border-l-2 border-blue-600 pl-3">
+                                            <div className="text-xl font-bold text-gray-900 tracking-tight">{stat.value}</div>
+                                            <div className="text-[11px] text-gray-500 leading-tight mt-0.5">{stat.label}</div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <ul className="space-y-3 pt-2">
+                                    {[
+                                        'Real-time KPIs across every register',
+                                        'Multi-location consolidated rollup',
+                                        'Briefings tuned to each role',
+                                    ].map(item => (
                                         <li key={item} className="flex items-center gap-3 text-gray-700">
-                                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                                                <Check size={14} className="text-blue-600" />
+                                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                                <Check size={12} className="text-blue-600" />
                                             </div>
-                                            {item}
+                                            <span className="text-[15px]">{item}</span>
                                         </li>
                                     ))}
                                 </ul>
                             </div>
-                            <div className="flex-1 relative group">
-                                <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-700" />
-                                <GlassCard className="h-[400px] border-blue-500/30 overflow-hidden relative">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent" />
-                                    <img
-                                        src="/command_center_v2.png"
-                                        alt="Fluxor Command Center UI"
-                                        className="w-full h-full object-cover opacity-90 relative z-10"
-                                    />
-                                </GlassCard>
+
+                            <div className="lg:col-span-7 relative">
+                                <div className="absolute -inset-8 bg-gradient-to-tr from-blue-500/20 via-blue-400/10 to-transparent blur-3xl rounded-full pointer-events-none" />
+                                <div className="relative h-[480px]">
+                                    <DashboardMockup />
+                                </div>
                             </div>
                         </AnimatedSection>
 
-                        {/* Feature 2 (Reversed) */}
-                        <AnimatedSection direction="left" className="flex flex-col lg:flex-row-reverse items-center gap-16">
-                            <div className="flex-1 space-y-6">
-                                <div className="p-3 bg-violet-50 rounded-xl w-fit">
-                                    <Brain className="text-violet-600" size={32} />
+                        {/* Feature 2 — AI Assistant */}
+                        <AnimatedSection direction="left" className="grid lg:grid-cols-12 items-center gap-12 lg:gap-16">
+                            <div className="lg:col-span-7 relative order-2 lg:order-1">
+                                <div className="absolute -inset-8 bg-gradient-to-tl from-violet-500/20 via-blue-400/10 to-transparent blur-3xl rounded-full pointer-events-none" />
+                                <div className="relative h-[480px]">
+                                    <AIAssistantMockup />
                                 </div>
-                                <h2 className="text-3xl md:text-5xl font-bold text-gray-900">AI That Works</h2>
-                                <p className="text-xl text-gray-600 leading-relaxed">
-                                    Move beyond simple charts. Our AI predicts demand, suggests reorders,
-                                    and even drafts emails to suppliers. It's like having a dedicated analyst 24/7.
-                                </p>
                             </div>
-                            <div className="flex-1 relative group">
-                                <div className="absolute inset-0 bg-violet-500/20 blur-[100px] rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-700" />
-                                <GlassCard className="h-[400px] border-violet-500/30 overflow-hidden relative">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-transparent" />
-                                    <img
-                                        src="/ai_dashboard.png"
-                                        alt="Fluxor AI Interface"
-                                        className="w-full h-full object-cover opacity-90 relative z-10"
-                                    />
-                                </GlassCard>
+
+                            <div className="lg:col-span-5 space-y-7 order-1 lg:order-2">
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-100">
+                                    <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                                    <span className="text-[11px] font-semibold text-violet-700 uppercase tracking-wider">AI Assistant</span>
+                                </div>
+
+                                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-[1.05]">
+                                    Ask in plain English.<br />
+                                    <span className="text-violet-600">Get an answer that ships.</span>
+                                </h2>
+
+                                <p className="text-lg text-gray-600 leading-relaxed">
+                                    Diagnose drops, draft purchase orders, and surface the next best action — without
+                                    a query language, a dashboard config, or a data team.
+                                </p>
+
+                                <div className="space-y-2.5">
+                                    {[
+                                        { q: 'Why did beverages drop yesterday?', a: 'Coke 20oz stockout at 2:14pm — $214 lost.' },
+                                        { q: 'Draft a reorder for PepsiCo.', a: '3 SKUs · $186.40 ready to send.' },
+                                        { q: 'Which vendor has the worst margin?', a: 'Coca-Cola Co — 28%, 3.2% waste.' },
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white border border-gray-200 hover:border-violet-300 hover:shadow-sm transition-all">
+                                            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <Sparkles className="w-3 h-3 text-white" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[13px] font-medium text-gray-900 truncate">{item.q}</div>
+                                                <div className="text-[12px] text-gray-500 truncate">{item.a}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </AnimatedSection>
                     </div>
@@ -335,20 +376,23 @@ const Landing: React.FC = () => {
                                         <h3 className="text-xl font-bold text-gray-900 mb-4">Our Core Values</h3>
                                         <div className="space-y-6">
                                             {[
-                                                { title: 'Customer First', desc: 'Every feature starts with your needs.', icon: '❤️' },
-                                                { title: 'Simplicity', desc: 'Powerful tech should feel simple.', icon: '🎯' },
-                                                { title: 'Innovation', desc: 'Democratizing AI for everyone.', icon: '⚡' },
-                                            ].map((val, i) => (
-                                                <div key={i} className="flex gap-4">
-                                                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-xl">
-                                                        {val.icon}
+                                                { title: 'Customer First', desc: 'Every feature starts with your needs.', icon: HeartHandshake, color: 'text-rose-600 bg-rose-50' },
+                                                { title: 'Simplicity', desc: 'Powerful tech should feel simple.', icon: Target, color: 'text-blue-600 bg-blue-50' },
+                                                { title: 'Innovation', desc: 'Democratizing AI for everyone.', icon: Sparkles, color: 'text-violet-600 bg-violet-50' },
+                                            ].map((val, i) => {
+                                                const Icon = val.icon;
+                                                return (
+                                                    <div key={i} className="flex gap-4">
+                                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${val.color}`}>
+                                                            <Icon className="w-5 h-5" strokeWidth={2} />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-gray-900 font-medium">{val.title}</h4>
+                                                            <p className="text-sm text-gray-600">{val.desc}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <h4 className="text-gray-900 font-medium">{val.title}</h4>
-                                                        <p className="text-sm text-gray-600">{val.desc}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </GlassCard>
                                 </div>

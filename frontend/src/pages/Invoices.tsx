@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { api, API_URL } from '@/lib/api';
-import { Upload, FileImage, CheckCircle2, Clock, AlertCircle, Eye, Sparkles, ChevronLeft } from 'lucide-react';
+import { Upload, FileImage, CheckCircle2, Clock, AlertCircle, Eye, Sparkles, ChevronLeft, AlertTriangle, Lightbulb, Check } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import type { Invoice } from '@/types';
 
@@ -285,7 +285,7 @@ export default function Invoices() {
                                         {/* Alerts */}
                                         {extractedData.alerts?.length > 0 && (
                                             <div className="space-y-2">
-                                                <p className="text-sm font-medium text-gray-700">⚠️ Pricing Alerts</p>
+                                                <p className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" />Pricing Alerts</p>
                                                 {extractedData.alerts.slice(0, 3).map((alert: any, i: number) => (
                                                     <div key={i} className={`p-2 rounded-lg text-sm ${alert.severity === 'high' ? 'bg-red-50 text-red-700 border border-red-200' :
                                                             alert.severity === 'medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
@@ -310,10 +310,10 @@ export default function Invoices() {
                                                             <div className="flex items-center gap-2 text-xs text-gray-500">
                                                                 <span>Qty: {item.qty}</span>
                                                                 {item.matchedProduct && (
-                                                                    <span className="text-green-600">✓ {item.matchedProduct}</span>
+                                                                    <span className="text-green-600 inline-flex items-center gap-1"><Check className="w-3 h-3" />{item.matchedProduct}</span>
                                                                 )}
                                                                 {!item.matchedProduct && (
-                                                                    <span className="text-orange-500">⚠ Unmatched</span>
+                                                                    <span className="text-orange-500 inline-flex items-center gap-1"><AlertCircle className="w-3 h-3" />Unmatched</span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -326,7 +326,7 @@ export default function Invoices() {
                                         {/* Insights */}
                                         {extractedData.insights?.length > 0 && (
                                             <div className="space-y-2">
-                                                <p className="text-sm font-medium text-gray-700">💡 Business Insights</p>
+                                                <p className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><Lightbulb className="w-4 h-4 text-violet-500" />Business Insights</p>
                                                 {extractedData.insights.map((insight: any, i: number) => (
                                                     <div key={i} className="p-2 bg-purple-50 border border-purple-200 rounded-lg text-sm">
                                                         <p className="font-medium text-purple-800">{insight.title}</p>

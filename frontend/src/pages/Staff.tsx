@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserCheck, Plus, X, Clock, AlertTriangle, TrendingUp, CheckCircle, ChevronDown, ChevronUp, Edit, Trash2, Flag, ShieldAlert } from 'lucide-react';
+import { UserCheck, Plus, X, Clock, AlertTriangle, TrendingUp, CheckCircle, ChevronDown, ChevronUp, Edit, Trash2, Flag, ShieldAlert, Phone, Mail } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { api } from '@/lib/api';
 
@@ -198,8 +198,8 @@ export default function Staff() {
                                                 <button onClick={() => deleteStaff(member.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50"><Trash2 size={14} /></button>
                                             </div>
                                         </div>
-                                        {member.phone && <p className="text-sm text-gray-500">📞 {member.phone}</p>}
-                                        {member.email && <p className="text-sm text-gray-500">✉️ {member.email}</p>}
+                                        {member.phone && <p className="text-sm text-gray-500 flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" />{member.phone}</p>}
+                                        {member.email && <p className="text-sm text-gray-500 flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" />{member.email}</p>}
                                         <p className="text-xs text-gray-400 mt-2">{member.shifts.length} recent shift{member.shifts.length !== 1 ? 's' : ''}</p>
                                     </div>
                                 ))}

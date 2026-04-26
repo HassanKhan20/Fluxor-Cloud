@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, Package, TrendingDown, Archive, Trash2, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { AlertTriangle, Package, TrendingDown, Archive, Trash2, ChevronDown, ChevronUp, Info, Lightbulb } from 'lucide-react';
 import type { MoneyWastedBreakdown } from '@/types';
 import { api } from '@/lib/api';
 
@@ -192,8 +192,9 @@ export default function MoneyWastedCard() {
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                                            💡 {cause.action}
+                                        <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                            <Lightbulb className="w-3 h-3" />
+                                            {cause.action}
                                         </span>
                                     </div>
                                 </div>

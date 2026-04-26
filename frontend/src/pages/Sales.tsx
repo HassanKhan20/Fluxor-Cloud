@@ -100,10 +100,10 @@ export default function Sales() {
     };
 
     const supportedSystems = [
-        { name: 'Square POS', icon: '◼️' },
-        { name: 'Clover', icon: '🍀' },
-        { name: 'Toast', icon: '🍞' },
-        { name: 'Lightspeed', icon: '⚡' },
+        { name: 'Square POS', short: 'SQ' },
+        { name: 'Clover', short: 'CL' },
+        { name: 'Toast', short: 'TO' },
+        { name: 'Lightspeed', short: 'LS' },
     ];
 
     return (
@@ -293,7 +293,7 @@ export default function Sales() {
                                         key={system.name}
                                         className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                                     >
-                                        <span className="text-2xl">{system.icon}</span>
+                                        <span className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-700 tracking-wider">{system.short}</span>
                                         <span className="font-medium text-gray-700">{system.name}</span>
                                     </div>
                                 ))}

@@ -136,7 +136,7 @@ export default function Dashboard() {
                 <header className="bg-white border-b border-blue-100 sticky top-0 z-10">
                     <div className="flex items-center justify-between px-6 h-14 max-w-6xl mx-auto">
                         <h1 className="font-semibold text-gray-900 text-lg">
-                            Hi{userName ? ` ${userName}` : ''} 👋
+                            {userName ? `Hi, ${userName}` : 'Welcome back'}
                         </h1>
                         <div className="flex items-center gap-2">
                             <AlertsDropdown />
