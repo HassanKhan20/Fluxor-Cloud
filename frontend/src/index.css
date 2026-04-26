@@ -1,99 +1,69 @@
 @import "tailwindcss";
 
 /* ============================================
-   CRITICAL: Fix text wrapping issue
-   ============================================ */
-
-/* Force normal text wrapping behavior */
-* {
-  word-break: normal !important;
-  overflow-wrap: normal !important;
-  word-wrap: normal !important;
-  white-space: normal;
-}
-
-p,
-span,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-a,
-li,
-td,
-th,
-label,
-div {
-  word-break: normal !important;
-  overflow-wrap: normal !important;
-  hyphens: none !important;
-}
-
-/* Ensure text containers have proper width */
-.text-center,
-.text-left,
-.text-right {
-  width: 100%;
-  max-width: 100%;
-}
-
-/* ============================================
-   FLUXOR CLOUD - REFINED DESIGN SYSTEM
-   Modern AI-Driven Aesthetic
+   FLUXOR CLOUD — Professional Type & Color System
    ============================================ */
 
 @theme {
-  /* Brand Colors */
-  --color-primary: #005CFF;
-  --color-primary-hover: #0047CC;
-  --color-primary-light: #E6F0FF;
-  --color-primary-glow: rgba(0, 92, 255, 0.35);
+  /* Brand - Indigo replaces electric blue for a more refined, professional tone */
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  --color-primary-light: #EEF2FF;
+  --color-primary-glow: rgba(79, 70, 229, 0.25);
 
-  /* Dark Palette */
-  --color-dark: #0B0B0B;
-  --color-dark-secondary: #1A1A1A;
+  /* Neutral foundation - Zinc, more refined than slate */
+  --color-ink-50: #FAFAFA;
+  --color-ink-100: #F4F4F5;
+  --color-ink-200: #E4E4E7;
+  --color-ink-300: #D4D4D8;
+  --color-ink-400: #A1A1AA;
+  --color-ink-500: #71717A;
+  --color-ink-600: #52525B;
+  --color-ink-700: #3F3F46;
+  --color-ink-800: #27272A;
+  --color-ink-900: #18181B;
+  --color-ink-950: #09090B;
 
-  /* Light Palette - Softer tones */
-  --color-light: #F8FAFC;
-  --color-light-secondary: #F1F5F9;
+  --color-text-primary: var(--color-ink-900);
+  --color-text-secondary: var(--color-ink-600);
+  --color-text-muted: var(--color-ink-400);
+
+  --color-border: var(--color-ink-200);
+  --color-border-light: var(--color-ink-100);
+
+  --color-light: #FFFFFF;
+  --color-light-secondary: var(--color-ink-50);
   --color-white: #FFFFFF;
+  --color-dark: var(--color-ink-950);
+  --color-dark-secondary: var(--color-ink-900);
 
-  /* Accent Colors */
-  --color-accent-gold: #FECF33;
+  /* Semantic */
+  --color-success: #10B981;
+  --color-error: #E11D48;
+  --color-warning: #F59E0B;
+
+  /* Legacy accent slots — point to neutral so old references render calmly */
+  --color-accent-gold: #F59E0B;
   --color-accent-cyan: #06B6D4;
   --color-accent-purple: #8B5CF6;
 
-  /* Text Colors - Refined hierarchy */
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94A3B8;
+  /* Typography */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter Tight', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'Roboto Mono', monospace;
+  --font-heading: var(--font-display);
+  --font-body: var(--font-sans);
 
-  /* Borders - Very subtle */
-  --color-border: #E2E8F0;
-  --color-border-light: #F1F5F9;
-
-  /* Status Colors */
-  --color-success: #10B981;
-  --color-error: #EF4444;
-  --color-warning: #F59E0B;
-
-  /* Typography - Modern AI Font Pairing */
-  --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-sans: var(--font-body);
-
-  /* Shadows - Soft & Elevated */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
-  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
-  --shadow-xl: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+  /* Shadows - measured, never glowy on UI surfaces */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 4px 16px -4px rgba(15, 23, 42, 0.08), 0 8px 32px -8px rgba(15, 23, 42, 0.06);
+  --shadow-xl: 0 12px 40px -8px rgba(15, 23, 42, 0.12);
   --shadow-glow: 0 0 25px -5px var(--color-primary-glow);
 }
 
 /* ============================================
-   BASE STYLES
+   BASE
    ============================================ */
 
 @layer base {
@@ -108,41 +78,44 @@ div {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
   }
 
   body {
-    font-family: var(--font-body);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
     background-color: var(--color-light);
     color: var(--color-text-primary);
-    line-height: 1.7;
-    letter-spacing: -0.01em;
+    line-height: 1.6;
+    letter-spacing: -0.011em;
     margin: 0;
     padding: 0;
   }
 
-  /* Headings - Space Grotesk */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-family: var(--font-heading);
+    font-family: var(--font-display);
     font-weight: 600;
-    line-height: 1.25;
+    line-height: 1.15;
     letter-spacing: -0.025em;
     color: var(--color-text-primary);
-    display: block;
-    width: 100%;
+    margin: 0;
   }
 
   h1 {
     font-size: 3rem;
     font-weight: 700;
+    letter-spacing: -0.035em;
   }
 
   h2 {
     font-size: 2.25rem;
+    letter-spacing: -0.03em;
   }
 
   h3 {
@@ -154,17 +127,23 @@ div {
   }
 
   p {
-    display: block;
-    width: 100%;
-    line-height: 1.75;
     margin: 0;
+    line-height: 1.65;
     color: var(--color-text-secondary);
+  }
+
+  /* Tabular numbers wherever metrics live */
+  .num,
+  .tabular,
+  [data-numeric="true"] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum', 'cv11';
   }
 
   a {
     color: var(--color-primary);
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: color 0.15s ease;
   }
 
   a:hover {
@@ -178,10 +157,23 @@ div {
 }
 
 /* ============================================
-   UTILITY CLASSES - Modern Effects
+   UTILITIES
    ============================================ */
 
-/* Glassmorphism Panel */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum';
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
 .glass-panel {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
@@ -196,70 +188,39 @@ div {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Elevated Card - No borders, soft shadows */
 .card-elevated {
   background: white;
-  border-radius: 1rem;
-  box-shadow: var(--shadow-lg);
-  border: none;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  border-radius: 0.875rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card-elevated:hover {
-  box-shadow: var(--shadow-xl);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-ink-300);
 }
 
-/* Glow Accent for key metrics */
-.glow-accent {
-  position: relative;
-}
-
-.glow-accent::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  background: linear-gradient(135deg, var(--color-primary-glow), rgba(139, 92, 246, 0.2));
-  border-radius: inherit;
-  filter: blur(20px);
-  opacity: 0.5;
-  z-index: -1;
-  transition: opacity 0.3s ease;
-}
-
-.glow-accent:hover::after {
-  opacity: 0.7;
-}
-
-/* Metric Glow - More subtle version */
-.metric-glow {
-  text-shadow: 0 0 40px var(--color-primary-glow);
-}
-
-/* Subtle background gradient */
 .bg-gradient-subtle {
-  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 50%, #E2E8F0 100%);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
 }
 
 .bg-gradient-mesh {
   background:
-    radial-gradient(at 40% 20%, rgba(0, 92, 255, 0.03) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, rgba(6, 182, 212, 0.03) 0px, transparent 50%),
-    #F8FAFC;
+    radial-gradient(at 20% 0%, rgba(79, 70, 229, 0.04) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(79, 70, 229, 0.025) 0px, transparent 50%),
+    #FFFFFF;
 }
 
 /* ============================================
    ANIMATIONS
    ============================================ */
 
-/* Entrance Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -267,124 +228,55 @@ div {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
 }
 
 @keyframes pulse-glow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 20px -5px var(--color-primary-glow);
-  }
-
-  50% {
-    box-shadow: 0 0 30px -5px var(--color-primary-glow);
-  }
+  0%, 100% { box-shadow: 0 0 20px -5px var(--color-primary-glow); }
+  50%      { box-shadow: 0 0 30px -5px var(--color-primary-glow); }
 }
 
 @keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
 }
 
-/* Animation Utilities */
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s ease-out forwards;
-}
+.animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+.animate-fade-in    { animation: fadeIn 0.3s ease-out forwards; }
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-slide-in-right { animation: slideInRight 0.25s ease-out forwards; }
 
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
-}
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
 
-.animate-pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out forwards;
-}
-
-/* Staggered delays */
-.delay-100 {
-  animation-delay: 100ms;
-}
-
-.delay-200 {
-  animation-delay: 200ms;
-}
-
-.delay-300 {
-  animation-delay: 300ms;
-}
-
-.delay-400 {
-  animation-delay: 400ms;
-}
-
-/* Hover elevation */
 .hover-lift {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-
 @media (max-width: 768px) {
-  h1 {
-    font-size: 2.25rem;
-  }
-
-  h2 {
-    font-size: 1.75rem;
-  }
-
-  h3 {
-    font-size: 1.25rem;
-  }
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.25rem; }
 }
 
 @media (max-width: 480px) {
-  h1 {
-    font-size: 1.75rem;
-  }
-
-  h2 {
-    font-size: 1.5rem;
-  }
+  h1 { font-size: 1.875rem; }
+  h2 { font-size: 1.5rem; }
 }
 
-/* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
 
   *,

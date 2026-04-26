@@ -129,63 +129,70 @@ export default function Dashboard() {
         );
     }
 
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
     return (
         <DashboardLayout>
-            <div className="min-h-screen bg-white">
-                {/* Clean Header */}
-                <header className="bg-white border-b border-blue-100 sticky top-0 z-10">
-                    <div className="flex items-center justify-between px-6 h-14 max-w-6xl mx-auto">
-                        <h1 className="font-semibold text-gray-900 text-lg">
-                            {userName ? `Hi, ${userName}` : 'Welcome back'}
-                        </h1>
-                        <div className="flex items-center gap-2">
+            <div className="min-h-screen bg-ink-50 font-sans">
+                {/* Header */}
+                <header className="bg-white border-b border-ink-200 sticky top-0 z-10">
+                    <div className="flex items-center justify-between px-8 h-16 max-w-7xl mx-auto">
+                        <div>
+                            <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-400">{today}</div>
+                            <h1 className="font-display font-semibold text-ink-900 text-xl tracking-tight leading-tight mt-0.5">
+                                {userName ? `Welcome back, ${userName.split(' ')[0]}` : 'Dashboard'}
+                            </h1>
+                        </div>
+                        <div className="flex items-center gap-1">
                             <AlertsDropdown />
-                            <Link to="/settings" className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 transition-colors">
+                            <Link to="/settings" className="p-2 hover:bg-ink-100 rounded-lg text-ink-500 hover:text-ink-900 transition-colors">
                                 <Settings size={18} />
                             </Link>
                         </div>
                     </div>
                 </header>
 
-                <div className="px-6 py-5 max-w-6xl mx-auto space-y-5">
+                <div className="px-8 py-6 max-w-7xl mx-auto space-y-6">
 
-                    {/* ── ROW 1: 3 Compact KPI Cards ── */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <div className="bg-white rounded-xl p-4 border border-blue-100 shadow-sm">
-                            <p className="text-xs text-blue-400 font-medium mb-1">Today's Revenue</p>
-                            <p className="text-2xl font-bold text-gray-900">
+                    {/* ── KPIs ── */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-white rounded-xl p-5 border border-ink-200 hover:border-ink-300 transition-colors">
+                            <p className="text-[11px] uppercase tracking-[0.12em] text-ink-500 font-semibold mb-2">Today's Revenue</p>
+                            <p className="font-display text-3xl font-semibold text-ink-900 tracking-tight tabular-nums">
                                 ${stats?.totalRevenue?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                             </p>
                             {stats?.revenueChange !== null && stats?.revenueChange !== undefined && (
-                                <div className={`flex items-center gap-1 mt-1 ${stats.revenueChange >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                <div className={`flex items-center gap-1 mt-2 text-[12px] font-medium tabular-nums ${stats.revenueChange >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                     {stats.revenueChange >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
-                                    <span className="text-xs font-medium">{Math.abs(stats.revenueChange).toFixed(1)}%</span>
+                                    <span>{Math.abs(stats.revenueChange).toFixed(1)}%</span>
+                                    <span className="text-ink-400 font-normal ml-1">vs yesterday</span>
                                 </div>
                             )}
                         </div>
-                        <div className="bg-white rounded-xl p-4 border border-blue-100 shadow-sm">
-                            <p className="text-xs text-blue-400 font-medium mb-1">Transactions</p>
-                            <p className="text-2xl font-bold text-gray-900">{stats?.salesCount || 0}</p>
-                            <p className="text-xs text-gray-400 mt-1">Avg ${stats?.avgTransaction?.toFixed(2) || '0.00'}</p>
+                        <div className="bg-white rounded-xl p-5 border border-ink-200 hover:border-ink-300 transition-colors">
+                            <p className="text-[11px] uppercase tracking-[0.12em] text-ink-500 font-semibold mb-2">Transactions</p>
+                            <p className="font-display text-3xl font-semibold text-ink-900 tracking-tight tabular-nums">{stats?.salesCount || 0}</p>
+                            <p className="text-[12px] text-ink-500 mt-2 tabular-nums">Avg <span className="text-ink-700 font-medium">${stats?.avgTransaction?.toFixed(2) || '0.00'}</span></p>
                         </div>
-                        <div className="bg-white rounded-xl p-4 border border-blue-100 shadow-sm">
-                            <p className="text-xs text-blue-400 font-medium mb-1">Net Cash Flow</p>
+                        <div className="bg-white rounded-xl p-5 border border-ink-200 hover:border-ink-300 transition-colors">
+                            <p className="text-[11px] uppercase tracking-[0.12em] text-ink-500 font-semibold mb-2">Net Cash Flow</p>
                             {cashFlow ? (
                                 <>
-                                    <p className={`text-2xl font-bold ${cashFlow.netCashFlow >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                        {cashFlow.netCashFlow >= 0 ? '+' : ''}${Math.abs(cashFlow.netCashFlow).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                                    <p className={`font-display text-3xl font-semibold tracking-tight tabular-nums ${cashFlow.netCashFlow >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                        {cashFlow.netCashFlow >= 0 ? '+' : '−'}${Math.abs(cashFlow.netCashFlow).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                                     </p>
-                                    <div className="flex items-center gap-1 mt-1">
+                                    <div className="flex items-center gap-1 mt-2 text-[12px] font-medium tabular-nums">
                                         {cashFlow.trendPercent >= 0
-                                            ? <ArrowUpRight size={13} className="text-emerald-500" />
-                                            : <ArrowDownRight size={13} className="text-red-500" />
+                                            ? <ArrowUpRight size={13} className="text-emerald-600" />
+                                            : <ArrowDownRight size={13} className="text-rose-600" />
                                         }
-                                        <span className={`text-xs font-medium ${cashFlow.trendPercent >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                        <span className={cashFlow.trendPercent >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
                                             {Math.abs(cashFlow.trendPercent)}%
                                         </span>
+                                        <span className="text-ink-400 font-normal ml-1">14-day</span>
                                     </div>
                                 </>
-                            ) : <p className="text-2xl font-bold text-gray-300">--</p>}
+                            ) : <p className="font-display text-3xl font-semibold text-ink-300 tabular-nums">—</p>}
                         </div>
                     </div>
 

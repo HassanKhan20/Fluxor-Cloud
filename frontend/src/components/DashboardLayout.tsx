@@ -1,124 +1,170 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Package, Upload, TrendingUp, LineChart, Settings, LogOut, Menu, X, Users, ShoppingCart, UserCheck } from 'lucide-react';
+import {
+    LayoutDashboard,
+    Boxes,
+    Upload,
+    Receipt,
+    LineChart,
+    Settings,
+    LogOut,
+    Menu,
+    X,
+    Truck,
+    UserCheck,
+    ShoppingCart,
+} from 'lucide-react';
 import StreamlineAnimation from './StreamlineAnimation';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
 }
 
+interface NavGroup {
+    label: string;
+    items: { id: number; icon: React.ReactNode; label: string; path: string }[];
+}
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const location = useLocation();
 
-    // Force re-render after mount to fix nav visibility
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    const navItems = [
-        { id: 0, icon: <BarChart3 size={20} />, label: 'Dashboard', path: '/dashboard' },
-        { id: 1, icon: <Package size={20} />, label: 'Inventory', path: '/products' },
-        { id: 2, icon: <Upload size={20} />, label: 'Import Sales', path: '/sales' },
-        { id: 3, icon: <TrendingUp size={20} />, label: 'Invoices', path: '/invoices' },
-        { id: 4, icon: <LineChart size={20} />, label: 'Analytics', path: '/analytics' },
-        { id: 5, icon: <Users size={20} />, label: 'Vendors', path: '/vendors' },
-        { id: 6, icon: <UserCheck size={20} />, label: 'Staff', path: '/staff' },
-        { id: 7, icon: <ShoppingCart size={20} />, label: 'Reorder', path: '/reorder' },
+    const navGroups: NavGroup[] = [
+        {
+            label: 'Overview',
+            items: [
+                { id: 0, icon: <LayoutDashboard size={17} />, label: 'Dashboard', path: '/dashboard' },
+                { id: 4, icon: <LineChart size={17} />, label: 'Analytics', path: '/analytics' },
+            ],
+        },
+        {
+            label: 'Operations',
+            items: [
+                { id: 1, icon: <Boxes size={17} />, label: 'Inventory', path: '/products' },
+                { id: 2, icon: <Upload size={17} />, label: 'Import Sales', path: '/sales' },
+                { id: 3, icon: <Receipt size={17} />, label: 'Invoices', path: '/invoices' },
+                { id: 7, icon: <ShoppingCart size={17} />, label: 'Reorder', path: '/reorder' },
+            ],
+        },
+        {
+            label: 'Network',
+            items: [
+                { id: 5, icon: <Truck size={17} />, label: 'Vendors', path: '/vendors' },
+                { id: 6, icon: <UserCheck size={17} />, label: 'Staff', path: '/staff' },
+            ],
+        },
     ];
 
     const isActive = (path: string) => location.pathname === path;
 
+    const Logo: React.FC<{ size?: number }> = ({ size = 32 }) => (
+        <div
+            className="flex items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 shadow-sm"
+            style={{ width: size, height: size }}
+        >
+            <span className="font-display font-bold text-white tracking-tighter" style={{ fontSize: size * 0.5 }}>
+                F
+            </span>
+        </div>
+    );
+
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            {/* One-time page load animation */}
+        <div className="min-h-screen bg-ink-50 flex font-sans">
             <StreamlineAnimation key={location.pathname} />
 
             {/* Mobile Header */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-50 flex items-center px-4">
+            <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-ink-200 z-50 flex items-center px-4">
                 <button
                     onClick={() => setMobileMenuOpen(true)}
-                    className="p-2 text-gray-600 hover:text-gray-900:text-white transition-colors"
+                    className="p-2 -ml-2 text-ink-600 hover:text-ink-900 transition-colors"
                 >
-                    <Menu size={24} />
+                    <Menu size={20} />
                 </button>
-                <Link to="/dashboard" className="flex items-center gap-2 ml-3">
-                    <svg viewBox="0 0 40 40" className="h-8 w-8 flex-shrink-0">
-                        <defs>
-                            <linearGradient id="mobileCloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#1E3A5F" />
-                                <stop offset="100%" stopColor="#3B82F6" />
-                            </linearGradient>
-                        </defs>
-                        <rect x="0" y="0" width="40" height="40" rx="10" fill="#E0F2FE" />
-                        <path d="M32 22c0-4.4-3.6-8-8-8-1.5 0-2.9.4-4.1 1.1C18.5 12.3 15.5 10 12 10c-4.4 0-8 3.6-8 8 0 .4 0 .8.1 1.2C1.7 20.1 0 22.4 0 25c0 3.3 2.7 6 6 6h24c3.3 0 6-2.7 6-6 0-2.6-1.7-4.8-4-5.6 0-.1 0-.3 0-.4z"
-                            fill="url(#mobileCloudGrad)" transform="translate(4, 5) scale(0.8)" />
-                    </svg>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-bold tracking-tight text-slate-800">FLUXOR</span>
-                        <span className="text-[8px] font-medium tracking-widest text-blue-500">CLOUD</span>
-                    </div>
+                <Link to="/dashboard" className="flex items-center gap-2 ml-2">
+                    <Logo size={28} />
+                    <span className="font-display text-[15px] font-semibold tracking-tight text-ink-900">Fluxor</span>
                 </Link>
             </div>
 
             {/* Mobile Sidebar Overlay */}
             {mobileMenuOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/50 z-50"
+                    className="lg:hidden fixed inset-0 bg-ink-950/40 backdrop-blur-sm z-50"
                     onClick={() => setMobileMenuOpen(false)}
                 />
             )}
 
             {/* Mobile Sidebar */}
             <aside
-                className={`lg:hidden fixed top-0 left-0 h-full w-64 bg-white z-50 transform transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+                className={`lg:hidden fixed top-0 left-0 h-full w-72 bg-white z-50 transform transition-transform duration-200 flex flex-col ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
                     }`}
             >
-                <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
-                    <Link to="/dashboard" className="flex items-center gap-2">
-                        <svg viewBox="0 0 40 40" className="h-8 w-8 flex-shrink-0">
-                            <rect x="0" y="0" width="40" height="40" rx="10" fill="#E0F2FE" />
-                            <path d="M32 22c0-4.4-3.6-8-8-8-1.5 0-2.9.4-4.1 1.1C18.5 12.3 15.5 10 12 10c-4.4 0-8 3.6-8 8 0 .4 0 .8.1 1.2C1.7 20.1 0 22.4 0 25c0 3.3 2.7 6 6 6h24c3.3 0 6-2.7 6-6 0-2.6-1.7-4.8-4-5.6 0-.1 0-.3 0-.4z"
-                                fill="#3B82F6" transform="translate(4, 5) scale(0.8)" />
-                        </svg>
-                        <span className="text-base font-bold text-slate-800">FLUXOR</span>
+                <div className="h-14 flex items-center justify-between px-5 border-b border-ink-200">
+                    <Link to="/dashboard" className="flex items-center gap-2.5">
+                        <Logo size={28} />
+                        <div className="flex flex-col leading-tight">
+                            <span className="font-display text-[15px] font-semibold text-ink-900 tracking-tight">Fluxor</span>
+                            <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-ink-400">Cloud</span>
+                        </div>
                     </Link>
                     <button
                         onClick={() => setMobileMenuOpen(false)}
-                        className="p-2 text-gray-600 hover:text-gray-900"
+                        className="p-2 -mr-2 text-ink-500 hover:text-ink-900"
                     >
-                        <X size={24} />
+                        <X size={20} />
                     </button>
                 </div>
-                <nav className="p-3 space-y-1 overflow-y-auto flex-1">
-                    {navItems.map((item) => (
-                        <Link
-                            key={`mobile-${item.id}`}
-                            to={item.path}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${isActive(item.path)
-                                ? 'bg-blue-50 text-blue-600'
-                                : 'text-gray-600 hover:bg-gray-50:bg-gray-700'
-                                }`}
-                        >
-                            <span className="flex-shrink-0">{item.icon}</span>
-                            <span className="font-medium text-sm">{item.label}</span>
-                        </Link>
+
+                <nav className="flex-1 px-3 py-4 overflow-y-auto">
+                    {navGroups.map(group => (
+                        <div key={group.label} className="mb-5">
+                            <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-400">
+                                {group.label}
+                            </div>
+                            <div className="space-y-0.5">
+                                {group.items.map(item => (
+                                    <Link
+                                        key={`mobile-${item.id}`}
+                                        to={item.path}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive(item.path)
+                                            ? 'bg-indigo-50 text-indigo-700'
+                                            : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900'
+                                            }`}
+                                    >
+                                        <span className="flex-shrink-0">{item.icon}</span>
+                                        <span className="font-medium text-[13px]">{item.label}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
                     ))}
                 </nav>
-                <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-100 space-y-1">
-                    <Link to="/settings" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-50:bg-gray-700 transition-colors">
-                        <Settings size={20} />
-                        <span className="font-medium text-sm">Settings</span>
+
+                <div className="p-3 border-t border-ink-200 space-y-0.5">
+                    <Link
+                        to="/settings"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-ink-600 hover:bg-ink-50 hover:text-ink-900 transition-colors"
+                    >
+                        <Settings size={17} />
+                        <span className="font-medium text-[13px]">Settings</span>
                     </Link>
                     <button
-                        onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login'; }}
-                        className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 hover:bg-gray-50:bg-gray-700 transition-colors"
+                        onClick={() => {
+                            localStorage.removeItem('token');
+                            localStorage.removeItem('user');
+                            window.location.href = '/login';
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-ink-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
                     >
-                        <LogOut size={20} />
-                        <span className="font-medium text-sm">Sign out</span>
+                        <LogOut size={17} />
+                        <span className="font-medium text-[13px]">Sign out</span>
                     </button>
                 </div>
             </aside>
@@ -126,79 +172,66 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             {/* Desktop Sidebar */}
             <aside
                 key={`sidebar-${mounted}`}
-                className={`hidden lg:flex ${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-100 flex-col transition-all duration-300 fixed h-full z-40`}
-                onMouseEnter={() => setSidebarOpen(true)}
-                onMouseLeave={() => setSidebarOpen(false)}
+                className="hidden lg:flex w-60 bg-white border-r border-ink-200 flex-col fixed h-full z-40"
             >
-                {/* Logo */}
-                <div className="h-16 flex items-center px-4 border-b border-gray-100">
-                    <Link to="/dashboard" className="flex items-center gap-2">
-                        <svg viewBox="0 0 40 40" className="h-10 w-10 flex-shrink-0">
-                            <defs>
-                                <linearGradient id="layoutCloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#1E3A5F" />
-                                    <stop offset="100%" stopColor="#3B82F6" />
-                                </linearGradient>
-                            </defs>
-                            <rect x="0" y="0" width="40" height="40" rx="10" fill="#E0F2FE" />
-                            <path d="M32 22c0-4.4-3.6-8-8-8-1.5 0-2.9.4-4.1 1.1C18.5 12.3 15.5 10 12 10c-4.4 0-8 3.6-8 8 0 .4 0 .8.1 1.2C1.7 20.1 0 22.4 0 25c0 3.3 2.7 6 6 6h24c3.3 0 6-2.7 6-6 0-2.6-1.7-4.8-4-5.6 0-.1 0-.3 0-.4z"
-                                fill="url(#layoutCloudGrad)" transform="translate(4, 5) scale(0.8)" />
-                            <g transform="translate(20, 20)">
-                                <polygon points="0,-6 5.2,-3 5.2,3 0,6 -5.2,3 -5.2,-3" fill="none" stroke="white" strokeWidth="1.2" opacity="0.95" />
-                                <circle cx="0" cy="-6" r="1.5" fill="white" />
-                                <circle cx="5.2" cy="-3" r="1.5" fill="white" />
-                                <circle cx="5.2" cy="3" r="1.5" fill="white" />
-                                <circle cx="0" cy="6" r="1.5" fill="white" />
-                                <circle cx="-5.2" cy="3" r="1.5" fill="white" />
-                                <circle cx="-5.2" cy="-3" r="1.5" fill="white" />
-                            </g>
-                        </svg>
-                        {sidebarOpen && (
-                            <div className="flex flex-col">
-                                <span className="text-base font-bold tracking-tight text-slate-800">FLUXOR</span>
-                                <span className="text-[10px] font-medium tracking-widest text-blue-500">CLOUD</span>
-                            </div>
-                        )}
+                <div className="h-16 flex items-center px-5 border-b border-ink-200">
+                    <Link to="/dashboard" className="flex items-center gap-2.5">
+                        <Logo size={32} />
+                        <div className="flex flex-col leading-tight">
+                            <span className="font-display text-base font-semibold text-ink-900 tracking-tight">Fluxor</span>
+                            <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-ink-400">Cloud</span>
+                        </div>
                     </Link>
                 </div>
 
-                {/* Nav */}
-                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-                    {navItems.map((item) => (
-                        <Link
-                            key={`desktop-${item.id}`}
-                            to={item.path}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${isActive(item.path)
-                                ? 'bg-blue-50 text-blue-600 shadow-[0_0_15px_rgba(0,92,255,0.2)]'
-                                : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:shadow-[0_0_15px_rgba(0,92,255,0.2)]'
-                                }`}
-                        >
-                            <span className="flex-shrink-0">{item.icon}</span>
-                            {sidebarOpen && <span className="font-medium text-sm whitespace-nowrap">{item.label}</span>}
-                        </Link>
+                <nav className="flex-1 px-3 py-5 overflow-y-auto">
+                    {navGroups.map(group => (
+                        <div key={group.label} className="mb-5">
+                            <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-400">
+                                {group.label}
+                            </div>
+                            <div className="space-y-0.5">
+                                {group.items.map(item => (
+                                    <Link
+                                        key={`desktop-${item.id}`}
+                                        to={item.path}
+                                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors ${isActive(item.path)
+                                            ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                                            : 'text-ink-600 font-medium hover:bg-ink-50 hover:text-ink-900'
+                                            }`}
+                                    >
+                                        <span className="flex-shrink-0">{item.icon}</span>
+                                        <span className="text-[13px] tracking-tight">{item.label}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
                     ))}
                 </nav>
 
-                {/* Bottom */}
-                <div className="p-3 border-t border-gray-100 space-y-1">
-                    <Link to="/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 transition-all duration-300 hover:bg-blue-50 hover:text-blue-600 hover:shadow-[0_0_15px_rgba(0,92,255,0.2)]">
-                        <Settings size={20} />
-                        {sidebarOpen && <span className="font-medium text-sm">Settings</span>}
+                <div className="p-3 border-t border-ink-200 space-y-0.5">
+                    <Link
+                        to="/settings"
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-ink-600 hover:bg-ink-50 hover:text-ink-900 transition-colors"
+                    >
+                        <Settings size={17} />
+                        <span className="font-medium text-[13px]">Settings</span>
                     </Link>
                     <button
-                        onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login'; }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 transition-all duration-300 hover:bg-red-50 hover:text-red-600 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                        onClick={() => {
+                            localStorage.removeItem('token');
+                            localStorage.removeItem('user');
+                            window.location.href = '/login';
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-ink-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
                     >
-                        <LogOut size={20} />
-                        {sidebarOpen && <span className="font-medium text-sm">Sign out</span>}
+                        <LogOut size={17} />
+                        <span className="font-medium text-[13px]">Sign out</span>
                     </button>
                 </div>
             </aside>
 
-            {/* Main Content */}
-            <main className={`flex-1 transition-all duration-300 pt-16 lg:pt-0 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
-                {children}
-            </main>
+            <main className="flex-1 lg:ml-60 pt-14 lg:pt-0">{children}</main>
         </div>
     );
 };

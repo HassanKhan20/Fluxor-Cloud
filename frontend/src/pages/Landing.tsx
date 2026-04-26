@@ -94,12 +94,12 @@ const Landing: React.FC = () => {
                             transition={{ duration: 0.8 }}
                             className="flex flex-col items-center mb-8"
                         >
-                            <h1 className="text-6xl md:text-8xl font-bold tracking-tighter text-gray-900 mb-2">FLUXOR</h1>
-                            <span className="text-xl md:text-3xl tracking-[0.3em] text-blue-600 font-light uppercase mb-8">Cloud</span>
+                            <h1 className="font-display text-6xl md:text-8xl font-semibold text-ink-900 mb-2 tracking-tightest">Fluxor</h1>
+                            <span className="font-mono text-[11px] md:text-xs tracking-[0.32em] text-indigo-600 uppercase font-medium mb-8">Cloud Operations Platform</span>
 
-                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 backdrop-blur-sm mb-6">
-                                <Shield size={14} className="text-blue-600" />
-                                <span className="text-xs font-medium text-blue-700">Enterprise-Grade Tools for Local Stores</span>
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 backdrop-blur-sm mb-6">
+                                <Shield size={13} className="text-indigo-600" strokeWidth={2.25} />
+                                <span className="text-[11px] font-medium text-indigo-700 tracking-wide">Enterprise-Grade Tools for Local Stores</span>
                             </div>
                         </motion.div>
 
@@ -107,18 +107,19 @@ const Landing: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2, duration: 0.8 }}
-                            className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight"
+                            className="font-display text-3xl md:text-5xl font-semibold text-ink-900 mb-5 tracking-tight leading-[1.08]"
                         >
-                            Enterprise-grade insights. <span className="text-blue-600">Built for small stores.</span>
+                            Enterprise-grade operations,<br className="hidden md:block" />
+                            <span className="text-indigo-600">built for independent stores.</span>
                         </motion.h2>
 
                         <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.4, duration: 0.8 }}
-                            className="text-base md:text-lg text-gray-600 max-w-xl mx-auto leading-relaxed"
+                            className="text-[15px] md:text-lg text-ink-600 max-w-xl mx-auto leading-relaxed"
                         >
-                            The same analytics and automation trusted by large retailers—built specifically for convenience stores. Reliable, secure, and designed for real-world operations.
+                            The analytics and automation trusted by national chains — engineered specifically for convenience stores. Reliable, secure, and designed for real-world operations.
                         </motion.p>
 
                         {/* Trust Strip */}
@@ -126,23 +127,23 @@ const Landing: React.FC = () => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.5, duration: 0.6 }}
-                            className="flex flex-wrap justify-center gap-4 mt-6 text-xs text-gray-500"
+                            className="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-7 text-[11px] font-medium text-ink-500 uppercase tracking-[0.1em]"
                         >
                             <div className="flex items-center gap-1.5">
-                                <Lock size={12} className="text-emerald-400" />
-                                <span>Secure Cloud Infrastructure</span>
+                                <Lock size={11} className="text-emerald-600" strokeWidth={2.5} />
+                                <span>Secure Infrastructure</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <Database size={12} className="text-blue-400" />
-                                <span>Store-Level Data Isolation</span>
+                                <Database size={11} className="text-indigo-600" strokeWidth={2.5} />
+                                <span>Tenant Data Isolation</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <Shield size={12} className="text-violet-400" />
+                                <Shield size={11} className="text-violet-600" strokeWidth={2.5} />
                                 <span>Role-Based Access</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <Activity size={12} className="text-cyan-400" />
-                                <span>Reliable Real-Time Analytics</span>
+                                <Activity size={11} className="text-rose-600" strokeWidth={2.5} />
+                                <span>Real-Time Analytics</span>
                             </div>
                         </motion.div>
 
@@ -155,16 +156,16 @@ const Landing: React.FC = () => {
                             <Button
                                 variant="primary"
                                 size="lg"
-                                className="bg-blue-600 hover:bg-blue-500 shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] border-0 h-14 px-8 text-lg"
-                                rightIcon={<ArrowRight />}
+                                className="bg-ink-900 hover:bg-ink-800 border-0 h-12 px-7 text-[15px] font-medium tracking-tight"
+                                rightIcon={<ArrowRight size={18} />}
                                 onClick={goToDemo}
                             >
-                                View the Demo
+                                View Live Demo
                             </Button>
                             <Button
                                 variant="secondary"
                                 size="lg"
-                                className="bg-white border-gray-300 hover:bg-gray-50 text-gray-800 h-14 px-8 text-lg hover:border-gray-400"
+                                className="bg-white border-ink-200 hover:bg-ink-50 text-ink-700 h-12 px-7 text-[15px] font-medium tracking-tight hover:border-ink-300"
                                 onClick={() => {
                                     const element = document.querySelector('#features');
                                     if (element) {
@@ -172,7 +173,7 @@ const Landing: React.FC = () => {
                                     }
                                 }}
                             >
-                                Learn More
+                                Explore Features
                             </Button>
                         </motion.div>
                     </motion.div>
@@ -196,17 +197,17 @@ const Landing: React.FC = () => {
                         {/* Feature 1 — Command Center */}
                         <AnimatedSection className="grid lg:grid-cols-12 items-center gap-12 lg:gap-16">
                             <div className="lg:col-span-5 space-y-7">
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100">
-                                    <LayoutDashboard className="w-3.5 h-3.5 text-blue-600" />
-                                    <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">Command Center</span>
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100">
+                                    <LayoutDashboard className="w-3.5 h-3.5 text-indigo-600" strokeWidth={2.25} />
+                                    <span className="font-mono text-[10px] font-semibold text-indigo-700 uppercase tracking-[0.14em]">Command Center</span>
                                 </div>
 
-                                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-[1.05]">
+                                <h2 className="font-display text-4xl md:text-5xl font-semibold text-ink-900 tracking-tightest leading-[1.05]">
                                     Every metric that matters.<br />
-                                    <span className="text-blue-600">Zero noise.</span>
+                                    <span className="text-indigo-600">Zero noise.</span>
                                 </h2>
 
-                                <p className="text-lg text-gray-600 leading-relaxed">
+                                <p className="text-[15px] text-ink-600 leading-relaxed">
                                     A daily briefing built around your store's reality — revenue,
                                     transactions, inventory health, and the issues that need a decision before noon.
                                 </p>
@@ -214,12 +215,12 @@ const Landing: React.FC = () => {
                                 <div className="grid grid-cols-3 gap-3 pt-2">
                                     {[
                                         { label: 'Faster decisions', value: '4.2×' },
-                                        { label: 'Avg setup time', value: '< 5 min' },
+                                        { label: 'Avg setup', value: '< 5 min' },
                                         { label: 'Stockouts cut', value: '−38%' },
                                     ].map(stat => (
-                                        <div key={stat.label} className="border-l-2 border-blue-600 pl-3">
-                                            <div className="text-xl font-bold text-gray-900 tracking-tight">{stat.value}</div>
-                                            <div className="text-[11px] text-gray-500 leading-tight mt-0.5">{stat.label}</div>
+                                        <div key={stat.label} className="border-l-2 border-indigo-600 pl-3">
+                                            <div className="font-display text-xl font-semibold text-ink-900 tracking-tight tabular-nums">{stat.value}</div>
+                                            <div className="text-[11px] text-ink-500 leading-tight mt-0.5">{stat.label}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -230,18 +231,18 @@ const Landing: React.FC = () => {
                                         'Multi-location consolidated rollup',
                                         'Briefings tuned to each role',
                                     ].map(item => (
-                                        <li key={item} className="flex items-center gap-3 text-gray-700">
-                                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                                <Check size={12} className="text-blue-600" />
+                                        <li key={item} className="flex items-center gap-3 text-ink-700">
+                                            <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                                <Check size={12} className="text-indigo-600" strokeWidth={3} />
                                             </div>
-                                            <span className="text-[15px]">{item}</span>
+                                            <span className="text-[14.5px]">{item}</span>
                                         </li>
                                     ))}
                                 </ul>
                             </div>
 
                             <div className="lg:col-span-7 relative">
-                                <div className="absolute -inset-8 bg-gradient-to-tr from-blue-500/20 via-blue-400/10 to-transparent blur-3xl rounded-full pointer-events-none" />
+                                <div className="absolute -inset-8 bg-gradient-to-tr from-indigo-400/15 via-indigo-300/10 to-transparent blur-3xl rounded-full pointer-events-none" />
                                 <div className="relative h-[480px]">
                                     <DashboardMockup />
                                 </div>
@@ -251,7 +252,7 @@ const Landing: React.FC = () => {
                         {/* Feature 2 — AI Assistant */}
                         <AnimatedSection direction="left" className="grid lg:grid-cols-12 items-center gap-12 lg:gap-16">
                             <div className="lg:col-span-7 relative order-2 lg:order-1">
-                                <div className="absolute -inset-8 bg-gradient-to-tl from-violet-500/20 via-blue-400/10 to-transparent blur-3xl rounded-full pointer-events-none" />
+                                <div className="absolute -inset-8 bg-gradient-to-tl from-violet-400/15 via-indigo-300/10 to-transparent blur-3xl rounded-full pointer-events-none" />
                                 <div className="relative h-[480px]">
                                     <AIAssistantMockup />
                                 </div>
@@ -259,16 +260,16 @@ const Landing: React.FC = () => {
 
                             <div className="lg:col-span-5 space-y-7 order-1 lg:order-2">
                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-100">
-                                    <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-                                    <span className="text-[11px] font-semibold text-violet-700 uppercase tracking-wider">AI Assistant</span>
+                                    <Sparkles className="w-3.5 h-3.5 text-violet-600" strokeWidth={2.25} />
+                                    <span className="font-mono text-[10px] font-semibold text-violet-700 uppercase tracking-[0.14em]">AI Assistant</span>
                                 </div>
 
-                                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-[1.05]">
+                                <h2 className="font-display text-4xl md:text-5xl font-semibold text-ink-900 tracking-tightest leading-[1.05]">
                                     Ask in plain English.<br />
                                     <span className="text-violet-600">Get an answer that ships.</span>
                                 </h2>
 
-                                <p className="text-lg text-gray-600 leading-relaxed">
+                                <p className="text-[15px] text-ink-600 leading-relaxed">
                                     Diagnose drops, draft purchase orders, and surface the next best action — without
                                     a query language, a dashboard config, or a data team.
                                 </p>
@@ -279,13 +280,13 @@ const Landing: React.FC = () => {
                                         { q: 'Draft a reorder for PepsiCo.', a: '3 SKUs · $186.40 ready to send.' },
                                         { q: 'Which vendor has the worst margin?', a: 'Coca-Cola Co — 28%, 3.2% waste.' },
                                     ].map((item, i) => (
-                                        <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white border border-gray-200 hover:border-violet-300 hover:shadow-sm transition-all">
-                                            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white border border-ink-200 hover:border-violet-300 hover:shadow-sm transition-all">
+                                            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5">
                                                 <Sparkles className="w-3 h-3 text-white" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="text-[13px] font-medium text-gray-900 truncate">{item.q}</div>
-                                                <div className="text-[12px] text-gray-500 truncate">{item.a}</div>
+                                                <div className="text-[13px] font-medium text-ink-900 truncate">{item.q}</div>
+                                                <div className="text-[12px] text-ink-500 truncate">{item.a}</div>
                                             </div>
                                         </div>
                                     ))}
@@ -299,7 +300,7 @@ const Landing: React.FC = () => {
                 < section className="py-24 relative" >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16 space-y-4">
-                            <h2 className="text-3xl md:text-5xl font-bold text-gray-900">Everything You Need</h2>
+                            <h2 className="font-display text-3xl md:text-5xl font-semibold text-ink-900 tracking-tight leading-[1.05]">Everything You Need</h2>
                             <p className="text-lg text-gray-600">Complete toolkit for modern retail</p>
                         </div>
 
@@ -321,25 +322,25 @@ const Landing: React.FC = () => {
                 < section id="demo" className="py-32 relative" >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <AnimatedSection className="text-center mb-12">
-                            <h2 className="text-3xl md:text-5xl font-bold mb-6 text-gray-900">See it in action</h2>
+                            <h2 className="font-display text-3xl md:text-5xl font-semibold mb-6 text-ink-900 tracking-tight leading-[1.05]">See it in action</h2>
                             <p className="text-gray-600 max-w-2xl mx-auto">An interactive walkthrough of the entire platform — dashboard, analytics, AI insights, inventory, vendors, and more.</p>
                         </AnimatedSection>
 
                         <div className="max-w-3xl mx-auto">
                             <AnimatedSection>
-                                <GlassCard className="relative p-12 border-blue-200 bg-blue-50/40 text-center">
+                                <GlassCard className="relative p-12 border-indigo-200 bg-indigo-50/40 text-center">
                                     <div className="flex flex-col items-center gap-6">
-                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 border border-blue-200">
-                                            <Zap size={14} className="text-blue-600" />
-                                            <span className="text-xs font-medium text-blue-700 uppercase tracking-wider">Live Product Tour</span>
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 border border-indigo-200">
+                                            <Zap size={13} className="text-indigo-600" strokeWidth={2.25} />
+                                            <span className="font-mono text-[10px] font-semibold text-indigo-700 uppercase tracking-[0.14em]">Live Product Tour</span>
                                         </div>
-                                        <h3 className="text-3xl font-bold text-gray-900">Watch Fluxor Cloud run an entire store.</h3>
-                                        <p className="text-gray-600 max-w-lg">Auto-paced walkthrough of every feature. No signup, no email — just press play.</p>
+                                        <h3 className="font-display text-3xl font-semibold text-ink-900 tracking-tight">Watch Fluxor Cloud run an entire store.</h3>
+                                        <p className="text-ink-600 max-w-lg">Auto-paced walkthrough of every feature. No signup, no email — just press play.</p>
                                         <Button
                                             variant="primary"
                                             size="lg"
-                                            className="bg-blue-600 hover:bg-blue-500 shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] border-0 h-14 px-8 text-lg"
-                                            rightIcon={<ArrowRight />}
+                                            className="bg-ink-900 hover:bg-ink-800 border-0 h-12 px-7 text-[15px] font-medium tracking-tight"
+                                            rightIcon={<ArrowRight size={18} />}
                                             onClick={goToDemo}
                                         >
                                             Launch Demo
@@ -358,7 +359,7 @@ const Landing: React.FC = () => {
                         <AnimatedSection className="mb-32">
                             <div className="grid lg:grid-cols-2 gap-16 items-center">
                                 <div>
-                                    <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-8">Built for Real Stores</h2>
+                                    <h2 className="font-display text-3xl md:text-5xl font-semibold text-ink-900 mb-8 tracking-tight leading-[1.05]">Built for Real Stores</h2>
                                     <div className="space-y-6 text-lg text-gray-700 leading-relaxed">
                                         <p className="text-gray-700">
                                             In 2023, we spent months working in convenience stores to understand the real challenges owners face.
@@ -403,19 +404,19 @@ const Landing: React.FC = () => {
 
                 {/* FINAL CTA */}
                 <section className="py-32 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-50/50 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-indigo-50/50 to-transparent pointer-events-none" />
                     <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
                         <AnimatedSection>
-                            <h2 className="text-4xl md:text-6xl font-bold mb-8 tracking-tight text-gray-900">
-                                Ready to <span className="text-blue-600">transform your store</span>?
+                            <h2 className="font-display text-4xl md:text-6xl font-semibold mb-6 tracking-tightest text-ink-900 leading-[1.04]">
+                                Ready to <span className="text-indigo-600">transform your store</span>?
                             </h2>
-                            <p className="text-xl text-gray-600 mb-12">
-                                Join the waiting list and be the first to experience the future.
+                            <p className="text-lg text-ink-600 mb-12 max-w-xl mx-auto">
+                                Join the waiting list and be among the first stores to operate with enterprise-grade intelligence.
                             </p>
                             <Button
                                 variant="primary"
                                 size="lg"
-                                className="h-16 px-12 text-lg bg-blue-600 text-white hover:bg-blue-700 border-0 shadow-[0_0_30px_rgba(59,130,246,0.3)]"
+                                className="h-13 px-8 text-[15px] font-medium tracking-tight bg-ink-900 text-white hover:bg-ink-800 border-0"
                                 onClick={goToDemo}
                             >
                                 Get Early Access

@@ -80,35 +80,36 @@ const Navbar: React.FC = () => {
 
     return (
         <nav
-            className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-200/80 py-4 transition-all duration-300"
+            className="fixed top-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-xl border-b border-ink-200/70 py-3 transition-all duration-300 font-sans"
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center gap-3 group">
-                        <div className="relative w-12 h-12 flex items-center justify-center">
-                            <img src="/logo.png" alt="Fluxor Cloud Logo" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
+                    <Link to="/" className="flex items-center gap-2.5 group">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-sm">
+                            <span className="font-display text-white text-base font-bold tracking-tighter">F</span>
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-xl font-bold font-outfit tracking-tight text-gray-900 group-hover:text-blue-600 transition-colors">FLUXOR</span>
+                        <div className="flex flex-col leading-tight">
+                            <span className="font-display text-[17px] font-semibold tracking-tight text-ink-900 group-hover:text-indigo-700 transition-colors">Fluxor</span>
+                            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-400">Cloud</span>
                         </div>
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center gap-8">
+                    <div className="hidden md:flex items-center gap-7">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.name}
                                 to={`${link.path}${link.hash}`}
                                 onClick={(e) => handleNavClick(e, link)}
-                                className={`relative text-sm font-medium transition-colors duration-300 ${isActive(link.path, link.hash) ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'
+                                className={`relative text-[13.5px] font-medium tracking-tight transition-colors duration-200 ${isActive(link.path, link.hash) ? 'text-indigo-700' : 'text-ink-600 hover:text-ink-900'
                                     }`}
                             >
                                 {link.name}
                                 {isActive(link.path, link.hash) && (
                                     <motion.span
                                         layoutId="nav-underline"
-                                        className="absolute -bottom-1 left-0 right-0 h-px bg-blue-600"
+                                        className="absolute -bottom-1.5 left-0 right-0 h-[2px] bg-indigo-600 rounded-full"
                                     />
                                 )}
                             </Link>
@@ -116,15 +117,15 @@ const Navbar: React.FC = () => {
                     </div>
 
                     {/* Desktop CTA */}
-                    <div className="hidden md:flex items-center gap-4">
-                        <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                    <div className="hidden md:flex items-center gap-3">
+                        <Link to="/login" className="text-[13.5px] font-medium tracking-tight text-ink-600 hover:text-ink-900 transition-colors">
                             Sign In
                         </Link>
                         <Button
                             variant="primary"
                             size="sm"
                             onClick={handleBookDemo}
-                            className="bg-blue-600 hover:bg-blue-500 text-white border-0 shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all"
+                            className="bg-ink-900 hover:bg-ink-800 text-white border-0 transition-all text-[13.5px] font-medium tracking-tight px-4 h-9"
                         >
                             View Demo
                         </Button>
@@ -133,9 +134,9 @@ const Navbar: React.FC = () => {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsOpen(!isOpen)}
-                        className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                        className="md:hidden p-2 text-ink-600 hover:text-ink-900 transition-colors"
                     >
-                        {isOpen ? <X size={24} /> : <Menu size={24} />}
+                        {isOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
                 </div>
             </div>
@@ -147,25 +148,25 @@ const Navbar: React.FC = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-white border-b border-gray-100 overflow-hidden"
+                        className="md:hidden bg-white border-b border-ink-200 overflow-hidden"
                     >
-                        <div className="px-4 py-6 space-y-4">
+                        <div className="px-4 py-5 space-y-3">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.name}
                                     to={`${link.path}${link.hash}`}
                                     onClick={(e) => handleNavClick(e, link)}
-                                    className={`block py-2 text-lg font-medium ${isActive(link.path, link.hash) ? 'text-blue-600' : 'text-gray-700'
+                                    className={`block py-2 text-base font-medium tracking-tight ${isActive(link.path, link.hash) ? 'text-indigo-700' : 'text-ink-700'
                                         }`}
                                 >
                                     {link.name}
                                 </Link>
                             ))}
-                            <div className="pt-4 border-t border-gray-100 space-y-3">
-                                <Link to="/login" onClick={() => setIsOpen(false)} className="block w-full text-center py-2 text-gray-600 hover:text-gray-900">
+                            <div className="pt-4 border-t border-ink-200 space-y-2.5">
+                                <Link to="/login" onClick={() => setIsOpen(false)} className="block w-full text-center py-2 text-ink-600 hover:text-ink-900">
                                     Sign In
                                 </Link>
-                                <Button variant="primary" size="md" className="w-full bg-blue-600 border-0" onClick={handleBookDemo}>
+                                <Button variant="primary" size="md" className="w-full bg-ink-900 hover:bg-ink-800 border-0" onClick={handleBookDemo}>
                                     View Demo
                                 </Button>
                             </div>
