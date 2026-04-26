@@ -19,13 +19,46 @@ import {
     ArrowUpRight,
     ArrowDownRight,
     Info,
-    Settings
+    Settings,
+    Calendar,
+    Clock,
+    PencilLine,
+    PackagePlus,
+    RefreshCw,
+    Tag,
+    Truck,
+    ShoppingCart,
+    Printer,
 } from 'lucide-react';
 import type { DashboardStats } from '@/types';
 import Button from '@/components/Button';
 import DashboardLayout from '@/components/DashboardLayout';
 import AlertsDropdown from '@/components/dashboard/AlertsDropdown';
 import WeeklySummaryCard from '@/components/dashboard/WeeklySummaryCard';
+import GlobalSearch from '@/components/GlobalSearch';
+
+interface QuickActionProps {
+    icon: React.ReactNode;
+    label: string;
+    onClick?: () => void;
+    to?: string;
+}
+const QuickAction: React.FC<QuickActionProps> = ({ icon, label, onClick, to }) => {
+    const inner = (
+        <>
+            <span className="w-12 h-12 rounded-full bg-white text-indigo-700 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all">
+                {icon}
+            </span>
+            <span className="text-[11px] font-medium text-white/85 group-hover:text-white tracking-tight whitespace-nowrap">
+                {label}
+            </span>
+        </>
+    );
+    if (to) {
+        return <Link to={to} className="flex flex-col items-center gap-2 group">{inner}</Link>;
+    }
+    return <button onClick={onClick} className="flex flex-col items-center gap-2 group">{inner}</button>;
+};
 
 export default function Dashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -129,30 +162,85 @@ export default function Dashboard() {
         );
     }
 
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const today = new Date();
+    const dateLabel = today.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    const timeLabel = today.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const initials = (userName || 'U').slice(0, 1).toUpperCase();
 
     return (
         <DashboardLayout>
-            <div className="min-h-screen bg-ink-50 font-sans">
-                {/* Header */}
-                <header className="bg-white border-b border-ink-200 sticky top-0 z-10">
-                    <div className="flex items-center justify-between px-8 h-16 max-w-7xl mx-auto">
-                        <div>
-                            <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink-400">{today}</div>
-                            <h1 className="font-display font-semibold text-ink-900 text-xl tracking-tight leading-tight mt-0.5">
-                                {userName ? `Welcome back, ${userName.split(' ')[0]}` : 'Dashboard'}
-                            </h1>
+            <div className="min-h-screen bg-ink-100/60 font-sans">
+                <div className="max-w-[1400px] mx-auto p-6 lg:p-8 space-y-6">
+
+                    {/* HERO */}
+                    <div className="rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-600 to-indigo-700 p-7 lg:p-9 shadow-[0_20px_50px_-20px_rgba(79,70,229,0.5)] relative overflow-hidden">
+                        {/* Subtle pattern */}
+                        <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{
+                            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+                            backgroundSize: '24px 24px',
+                        }} />
+
+                        {/* Top toolbar: avatar + date + search + time + edit */}
+                        <div className="relative flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center text-indigo-700 font-display font-semibold text-base shadow-sm flex-shrink-0">
+                                {initials}
+                            </div>
+                            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/15 text-white text-[12px] font-medium backdrop-blur-sm">
+                                <Calendar className="w-3.5 h-3.5" />
+                                {dateLabel}
+                            </span>
+                            <GlobalSearch placeholder="Search products, vendors, categories or pages" variant="light" />
+                            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/15 text-white text-[12px] font-medium backdrop-blur-sm">
+                                <Clock className="w-3.5 h-3.5" />
+                                {timeLabel}
+                            </span>
+                            <div className="hidden lg:flex items-center gap-1">
+                                <AlertsDropdown />
+                                <Link to="/settings" className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors flex-shrink-0">
+                                    <Settings className="w-4 h-4 text-white" />
+                                </Link>
+                            </div>
+                            <button className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors flex-shrink-0">
+                                <PencilLine className="w-4 h-4 text-white" />
+                            </button>
                         </div>
-                        <div className="flex items-center gap-1">
-                            <AlertsDropdown />
-                            <Link to="/settings" className="p-2 hover:bg-ink-100 rounded-lg text-ink-500 hover:text-ink-900 transition-colors">
-                                <Settings size={18} />
-                            </Link>
+
+                        {/* Greeting */}
+                        <div className="relative mt-8 lg:mt-10 max-w-2xl">
+                            <h1 className="font-display text-[34px] lg:text-[42px] font-semibold text-white tracking-tightest leading-[1.05]">
+                                Welcome back, {userName || 'there'}. Today's a hiring day.
+                            </h1>
+                            <p className="text-white/75 mt-2.5 text-[14px]">
+                                Your operations hive is waiting to be organized.
+                            </p>
+                        </div>
+
+                        {/* Quick remind row + action circles */}
+                        <div className="relative mt-7 lg:mt-9 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                            <div className="flex items-center gap-2 text-white/75 text-[12.5px]">
+                                <Bell className="w-3.5 h-3.5" />
+                                <span>Quick remind:</span>
+                                {(stats?.lowStockCount || 0) > 0 ? (
+                                    <>
+                                        <Link to="/products" className="text-white font-medium hover:underline">{stats?.lowStockCount} items</Link>
+                                        <span>need restock review.</span>
+                                    </>
+                                ) : (
+                                    <span className="text-white/85">All clear — no urgent restocks.</span>
+                                )}
+                            </div>
+
+                            <div className="flex flex-wrap items-end gap-x-4 gap-y-3 lg:gap-x-5">
+                                <QuickAction icon={<PackagePlus className="w-5 h-5" />} label="Add Product" to="/products" />
+                                <QuickAction icon={<RefreshCw className="w-5 h-5" />} label="Restock" to="/products" />
+                                <QuickAction icon={<Tag className="w-5 h-5" />} label="Set Pricing" to="/products" />
+                                <QuickAction icon={<Truck className="w-5 h-5" />} label="Add Vendor" to="/vendors" />
+                                <QuickAction icon={<ShoppingCart className="w-5 h-5" />} label="Reorder" to="/reorder" />
+                                <QuickAction icon={<Upload className="w-5 h-5" />} label="Import Sales" to="/sales" />
+                                <QuickAction icon={<Printer className="w-5 h-5" />} label="Invoices" to="/invoices" />
+                            </div>
                         </div>
                     </div>
-                </header>
-
-                <div className="px-8 py-6 max-w-7xl mx-auto space-y-6">
 
                     {/* ── KPIs ── */}
                     <div className="grid grid-cols-3 gap-4">

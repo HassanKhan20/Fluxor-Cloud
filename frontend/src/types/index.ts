@@ -18,10 +18,11 @@ export interface Product {
     id: string;
     name: string;
     barcode: string;
+    sku?: string;
     sellingPrice: number;
     costPrice: number;
     category: string;
-    vendor?: string; // NEW: Vendor/Supplier name
+    vendor?: string;
     isActive: boolean;
     initialStock?: number | null;
     isUnmatched?: boolean;
