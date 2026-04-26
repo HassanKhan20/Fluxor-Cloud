@@ -85,13 +85,12 @@ const Navbar: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center gap-2.5 group">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-sm">
-                            <span className="font-display text-white text-base font-bold tracking-tighter">F</span>
+                    <Link to="/" className="flex items-center gap-3 group">
+                        <div className="relative w-12 h-12 flex items-center justify-center">
+                            <img src="/logo.png" alt="Fluxor Cloud Logo" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
                         </div>
-                        <div className="flex flex-col leading-tight">
-                            <span className="font-display text-[17px] font-semibold tracking-tight text-ink-900 group-hover:text-indigo-700 transition-colors">Fluxor</span>
-                            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-400">Cloud</span>
+                        <div className="flex flex-col">
+                            <span className="text-xl font-bold font-display tracking-tight text-ink-900 group-hover:text-indigo-700 transition-colors">FLUXOR</span>
                         </div>
                     </Link>
 

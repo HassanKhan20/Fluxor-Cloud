@@ -27,13 +27,29 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
                     {/* Brand */}
                     <div className="col-span-2">
-                        <Link to="/" className="flex items-center gap-2.5 mb-4">
-                            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-sm">
-                                <span className="font-display text-white text-base font-bold tracking-tighter">F</span>
-                            </div>
-                            <div className="flex flex-col leading-tight">
-                                <span className="font-display text-base font-semibold tracking-tight text-ink-900">Fluxor</span>
-                                <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-400">Cloud</span>
+                        <Link to="/" className="flex items-center gap-3 mb-4">
+                            <svg viewBox="0 0 40 40" className="h-10 w-10 flex-shrink-0">
+                                <defs>
+                                    <linearGradient id="footerCloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#3B82F6" />
+                                        <stop offset="100%" stopColor="#60A5FA" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M32 22c0-4.4-3.6-8-8-8-1.5 0-2.9.4-4.1 1.1C18.5 12.3 15.5 10 12 10c-4.4 0-8 3.6-8 8 0 .4 0 .8.1 1.2C1.7 20.1 0 22.4 0 25c0 3.3 2.7 6 6 6h24c3.3 0 6-2.7 6-6 0-2.6-1.7-4.8-4-5.6 0-.1 0-.3 0-.4z"
+                                    fill="url(#footerCloudGrad)" transform="translate(4, 5) scale(0.8)" />
+                                <g transform="translate(20, 20)">
+                                    <polygon points="0,-6 5.2,-3 5.2,3 0,6 -5.2,3 -5.2,-3" fill="none" stroke="#3B82F6" strokeWidth="1" opacity="0.9" />
+                                    <circle cx="0" cy="-6" r="1.5" fill="#3B82F6" />
+                                    <circle cx="5.2" cy="-3" r="1.5" fill="#3B82F6" />
+                                    <circle cx="5.2" cy="3" r="1.5" fill="#3B82F6" />
+                                    <circle cx="0" cy="6" r="1.5" fill="#3B82F6" />
+                                    <circle cx="-5.2" cy="3" r="1.5" fill="#3B82F6" />
+                                    <circle cx="-5.2" cy="-3" r="1.5" fill="#3B82F6" />
+                                </g>
+                            </svg>
+                            <div className="flex flex-col">
+                                <span className="text-lg font-bold font-display tracking-tight text-ink-900">FLUXOR</span>
+                                <span className="text-xs font-medium font-mono tracking-widest text-indigo-600">CLOUD</span>
                             </div>
                         </Link>
                         <p className="text-ink-600 mb-6 max-w-xs text-[14px] leading-relaxed">

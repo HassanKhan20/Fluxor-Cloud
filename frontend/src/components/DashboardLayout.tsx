@@ -63,14 +63,26 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     const isActive = (path: string) => location.pathname === path;
 
     const Logo: React.FC<{ size?: number }> = ({ size = 32 }) => (
-        <div
-            className="flex items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-700 shadow-sm"
-            style={{ width: size, height: size }}
-        >
-            <span className="font-display font-bold text-white tracking-tighter" style={{ fontSize: size * 0.5 }}>
-                F
-            </span>
-        </div>
+        <svg viewBox="0 0 40 40" style={{ width: size, height: size }} className="flex-shrink-0">
+            <defs>
+                <linearGradient id="layoutCloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#1E3A5F" />
+                    <stop offset="100%" stopColor="#3B82F6" />
+                </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="40" height="40" rx="10" fill="#E0F2FE" />
+            <path d="M32 22c0-4.4-3.6-8-8-8-1.5 0-2.9.4-4.1 1.1C18.5 12.3 15.5 10 12 10c-4.4 0-8 3.6-8 8 0 .4 0 .8.1 1.2C1.7 20.1 0 22.4 0 25c0 3.3 2.7 6 6 6h24c3.3 0 6-2.7 6-6 0-2.6-1.7-4.8-4-5.6 0-.1 0-.3 0-.4z"
+                fill="url(#layoutCloudGrad)" transform="translate(4, 5) scale(0.8)" />
+            <g transform="translate(20, 20)">
+                <polygon points="0,-6 5.2,-3 5.2,3 0,6 -5.2,3 -5.2,-3" fill="none" stroke="white" strokeWidth="1.2" opacity="0.95" />
+                <circle cx="0" cy="-6" r="1.5" fill="white" />
+                <circle cx="5.2" cy="-3" r="1.5" fill="white" />
+                <circle cx="5.2" cy="3" r="1.5" fill="white" />
+                <circle cx="0" cy="6" r="1.5" fill="white" />
+                <circle cx="-5.2" cy="3" r="1.5" fill="white" />
+                <circle cx="-5.2" cy="-3" r="1.5" fill="white" />
+            </g>
+        </svg>
     );
 
     return (
