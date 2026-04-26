@@ -14,51 +14,62 @@ model User {
   id                  String    @id @default(uuid())
   name                String
   email               String    @unique
-  password            String    // Hashed
+  password            String // Hashed
   role                String    @default("STAFF") // OWNER, MANAGER, STAFF
-  passwordResetToken  String?   // Hashed reset token
+  passwordResetToken  String? // Hashed reset token
   passwordResetExpiry DateTime? // Expiry timestamp for the reset token
 
-  stores    StoreMembership[]
+  stores StoreMembership[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Store {
-  id              String   @id @default(uuid())
+  id              String  @id @default(uuid())
   name            String
   address         String?
-  timezone        String   @default("UTC")
-  defaultCurrency String   @default("USD")
-  
-  members         StoreMembership[]
-  products        Product[]
-  sales           Sale[]
-  invoices        Invoice[]
-  insights        Insight[]
-  chatMessages    ChatMessage[]
-  alerts          Alert[]
-  weeklySummaries WeeklySummary[]
-  staff           Staff[]
-  shifts          Shift[]
-  staffFlags      StaffFlag[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  timezone        String  @default("UTC")
+  defaultCurrency String  @default("USD")
+
+  // Kitchen module config
+  kitchenMode    Boolean @default(false) // Enable retirement-home kitchen workflow
+  weeklyOrderDay Int     @default(0) // 0 = Sunday, 6 = Saturday
+  servingsBuffer Float   @default(0) // Default extra servings buffer (e.g. 0.10 = +10%)
+
+  members           StoreMembership[]
+  products          Product[]
+  sales             Sale[]
+  invoices          Invoice[]
+  insights          Insight[]
+  chatMessages      ChatMessage[]
+  alerts            Alert[]
+  weeklySummaries   WeeklySummary[]
+  staff             Staff[]
+  shifts            Shift[]
+  staffFlags        StaffFlag[]
+  menuItems         MenuItem[]
+  mealPlans         MealPlan[]
+  consumptionEvents ConsumptionEvent[]
+  purchaseOrders    PurchaseOrder[]
+  recipeVariances   RecipeVariance[]
+  vendors           Vendor[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model StoreMembership {
-  id        String   @id @default(uuid())
-  storeId   String
-  userId    String
-  role      String   @default("STAFF") // OWNER, MANAGER, STAFF
-  
-  store     Store    @relation(fields: [storeId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-  
+  id      String @id @default(uuid())
+  storeId String
+  userId  String
+  role    String @default("STAFF") // OWNER, MANAGER, STAFF
+
+  store Store @relation(fields: [storeId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
   createdAt DateTime @default(now())
-  
+
   @@unique([storeId, userId])
 }
 
@@ -70,25 +81,38 @@ model Product {
   barcode      String?
   category     String?
   brand        String?
-  vendor       String?  // NEW: Vendor/Supplier name for vendor intelligence
+  vendor       String? // NEW: Vendor/Supplier name for vendor intelligence
   unitSize     String?
   costPrice    Float    @default(0)
   sellingPrice Float    @default(0)
   isActive     Boolean  @default(true)
-  initialStock Int?     // Null = inventory not yet set by user
+  initialStock Int? // Null = inventory not yet set by user
   isUnmatched  Boolean  @default(false) // Auto-created from import, needs review
   isConfirmed  Boolean  @default(false) // Lock fields when true
   firstSeenAt  DateTime @default(now()) // For learning mode
-  importCount  Int      @default(0)     // Track # of imports for learning mode
-  
-  store        Store    @relation(fields: [storeId], references: [id])
-  
-  inventorySnapshots InventorySnapshot[]
-  saleItems    SaleItem[]
-  invoiceItems InvoiceItem[]
+  importCount  Int      @default(0) // Track # of imports for learning mode
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Kitchen / ingredient fields
+  unit             String? // "lb", "oz", "ea", "case", "gal"
+  parLevel         Float? // Target on-hand level
+  reorderThreshold Float? // Trigger reorder when below this
+  caseSize         Float? // Round purchase orders up to multiples of this
+  leadTimeDays     Int? // Days from order → delivery
+  vendorRefId      String? // Optional FK to new Vendor table
+
+  store     Store   @relation(fields: [storeId], references: [id])
+  vendorRef Vendor? @relation(fields: [vendorRefId], references: [id])
+
+  inventorySnapshots InventorySnapshot[]
+  saleItems          SaleItem[]
+  invoiceItems       InvoiceItem[]
+  recipes            Recipe[]
+  consumptionEvents  ConsumptionEvent[]
+  purchaseOrderItems PurchaseOrderItem[]
+  recipeVariances    RecipeVariance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model InventorySnapshot {
@@ -97,197 +121,395 @@ model InventorySnapshot {
   productId      String
   quantityOnHand Int
   snapshotDate   DateTime @default(now())
-  
-  product        Product  @relation(fields: [productId], references: [id])
+
+  product Product @relation(fields: [productId], references: [id])
 }
 
 model Sale {
-  id          String   @id @default(uuid())
-  storeId     String
-  dateTime    DateTime @default(now())
-  source      String   @default("MANUAL_ENTRY")
-  totalAmount Float
+  id           String   @id @default(uuid())
+  storeId      String
+  dateTime     DateTime @default(now())
+  source       String   @default("MANUAL_ENTRY")
+  totalAmount  Float
   rawReference String?
-  importHash  String?  // Hash for idempotency - prevents duplicate imports
-  
-  store       Store    @relation(fields: [storeId], references: [id])
-  items       SaleItem[]
+  importHash   String? // Hash for idempotency - prevents duplicate imports
+
+  store Store      @relation(fields: [storeId], references: [id])
+  items SaleItem[]
 }
 
 model SaleItem {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   saleId    String
   productId String
   quantity  Int
   unitPrice Float
   lineTotal Float
-  
-  sale      Sale     @relation(fields: [saleId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+
+  sale    Sale    @relation(fields: [saleId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }
 
 model Invoice {
-  id              String   @id @default(uuid())
-  storeId         String
-  supplierName    String?
-  invoiceDate     DateTime?
-  totalAmount     Float?
-  status          String   @default("UPLOADED") // UPLOADED, PROCESSING, PARSED, ERROR
-  fileUrl         String?
-  parsedSummary   String?
-  
-  store           Store    @relation(fields: [storeId], references: [id])
-  items           InvoiceItem[]
-  
-  createdAt       DateTime @default(now())
+  id            String    @id @default(uuid())
+  storeId       String
+  supplierName  String?
+  invoiceDate   DateTime?
+  totalAmount   Float?
+  status        String    @default("UPLOADED") // UPLOADED, PROCESSING, PARSED, ERROR
+  fileUrl       String?
+  parsedSummary String?
+
+  store Store         @relation(fields: [storeId], references: [id])
+  items InvoiceItem[]
+
+  createdAt DateTime @default(now())
 }
 
 model InvoiceItem {
-  id                     String   @id @default(uuid())
-  invoiceId              String
-  productId              String?
-  rawDescription         String
-  quantity               Int
-  unitCost               Float
-  lineTotal              Float
-  matchedProductConfidence Float    @default(0)
-  
-  invoice                Invoice  @relation(fields: [invoiceId], references: [id])
-  product                Product? @relation(fields: [productId], references: [id])
+  id                       String  @id @default(uuid())
+  invoiceId                String
+  productId                String?
+  rawDescription           String
+  quantity                 Int
+  unitCost                 Float
+  lineTotal                Float
+  matchedProductConfidence Float   @default(0)
+
+  invoice Invoice  @relation(fields: [invoiceId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
 }
 
 model Insight {
-  id          String      @id @default(uuid())
-  storeId     String
-  type        String      // LOW_STOCK_ALERT, etc.
-  payload     String
-  
-  store       Store       @relation(fields: [storeId], references: [id])
-  
-  generatedAt DateTime    @default(now())
+  id      String @id @default(uuid())
+  storeId String
+  type    String // LOW_STOCK_ALERT, etc.
+  payload String
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  generatedAt DateTime @default(now())
 }
 
 model ChatMessage {
-  id              String   @id @default(uuid())
+  id              String  @id @default(uuid())
   storeId         String
   userId          String?
   role            String
   content         String
   contextMetadata String?
-  
-  store           Store    @relation(fields: [storeId], references: [id])
-  
-  createdAt       DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 // NEW: Alerts for notification system
 model Alert {
-  id          String   @id @default(uuid())
-  storeId     String
-  type        String   // low_stock, overstock, vendor_drop, sales_decline, pricing_risk
-  priority    String   // critical, warning, info
-  title       String
-  message     String
-  action      String   // Recommended action
-  productId   String?  // Related product (optional)
-  vendorName  String?  // Related vendor (optional)
-  isRead      Boolean  @default(false)
-  
-  store       Store    @relation(fields: [storeId], references: [id])
-  
-  createdAt   DateTime @default(now())
+  id         String  @id @default(uuid())
+  storeId    String
+  type       String // low_stock, overstock, vendor_drop, sales_decline, pricing_risk
+  priority   String // critical, warning, info
+  title      String
+  message    String
+  action     String // Recommended action
+  productId  String? // Related product (optional)
+  vendorName String? // Related vendor (optional)
+  isRead     Boolean @default(false)
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 // Staff management
 model Staff {
-  id          String   @id @default(uuid())
-  storeId     String
-  name        String
-  role        String   @default("CASHIER") // CASHIER, SUPERVISOR, MANAGER
-  phone       String?
-  email       String?
-  pin         String?  // 4-digit PIN for shift check-in (hashed)
-  isActive    Boolean  @default(true)
-  hireDate    DateTime?
+  id       String    @id @default(uuid())
+  storeId  String
+  name     String
+  role     String    @default("CASHIER") // CASHIER, SUPERVISOR, MANAGER
+  phone    String?
+  email    String?
+  pin      String? // 4-digit PIN for shift check-in (hashed)
+  isActive Boolean   @default(true)
+  hireDate DateTime?
 
-  store       Store    @relation(fields: [storeId], references: [id])
-  shifts      Shift[]
+  store  Store   @relation(fields: [storeId], references: [id])
+  shifts Shift[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Shift {
-  id          String   @id @default(uuid())
-  storeId     String
-  staffId     String
-  startTime   DateTime
-  endTime     DateTime?
-  notes       String?
-  salesTotal  Float?   // Sales revenue generated during this shift
+  id         String    @id @default(uuid())
+  storeId    String
+  staffId    String
+  startTime  DateTime
+  endTime    DateTime?
+  notes      String?
+  salesTotal Float? // Sales revenue generated during this shift
 
-  store       Store    @relation(fields: [storeId], references: [id])
-  staff       Staff    @relation(fields: [staffId], references: [id])
-  flags       StaffFlag[]
+  store Store       @relation(fields: [storeId], references: [id])
+  staff Staff       @relation(fields: [staffId], references: [id])
+  flags StaffFlag[]
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model StaffFlag {
-  id          String   @id @default(uuid())
-  storeId     String
-  shiftId     String?
-  staffId     String?
-  type        String   // shrinkage, low_sales, pattern_break, manual
-  severity    String   @default("warning") // info, warning, critical
-  title       String
-  description String
-  value       Float?   // Numeric value (e.g. shrinkage amount)
-  isResolved  Boolean  @default(false)
+  id           String  @id @default(uuid())
+  storeId      String
+  shiftId      String?
+  staffId      String?
+  type         String // shrinkage, low_sales, pattern_break, manual
+  severity     String  @default("warning") // info, warning, critical
+  title        String
+  description  String
+  value        Float? // Numeric value (e.g. shrinkage amount)
+  isResolved   Boolean @default(false)
   resolvedNote String?
 
-  store       Store    @relation(fields: [storeId], references: [id])
-  shift       Shift?   @relation(fields: [shiftId], references: [id])
+  store Store  @relation(fields: [storeId], references: [id])
+  shift Shift? @relation(fields: [shiftId], references: [id])
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 // NEW: Weekly summaries for owner dashboard
 model WeeklySummary {
-  id              String   @id @default(uuid())
-  storeId         String
-  weekStart       DateTime
-  weekEnd         DateTime
-  
+  id        String   @id @default(uuid())
+  storeId   String
+  weekStart DateTime
+  weekEnd   DateTime
+
   // Revenue metrics
-  revenue         Float
-  revenueChange   Float    // vs previous week
-  
+  revenue       Float
+  revenueChange Float // vs previous week
+
   // Money wasted breakdown
-  totalWasted     Float
-  wastedDeadStock Float    @default(0)
-  wastedOverstock Float    @default(0)
-  wastedSlowMovers Float   @default(0)
-  wastedShrinkage Float    @default(0)
+  totalWasted        Float
+  wastedDeadStock    Float   @default(0)
+  wastedOverstock    Float   @default(0)
+  wastedSlowMovers   Float   @default(0)
+  wastedShrinkage    Float   @default(0)
   primaryWasteReason String?
-  
+
   // Top/Worst performers
-  topProductId    String?
-  topProductName  String?
+  topProductId      String?
+  topProductName    String?
   topProductRevenue Float?
-  
-  worstPerformerId   String?
-  worstPerformerName String?
-  worstPerformerType String?  // 'product' or 'vendor'
+
+  worstPerformerId     String?
+  worstPerformerName   String?
+  worstPerformerType   String? // 'product' or 'vendor'
   worstPerformerReason String?
-  
+
   // AI recommendations (JSON array as string)
-  recommendations String   @default("[]")
-  
-  store           Store    @relation(fields: [storeId], references: [id])
-  
-  createdAt       DateTime @default(now())
-  
+  recommendations String @default("[]")
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  createdAt DateTime @default(now())
+
   @@unique([storeId, weekStart])
 }
 
+// ============================================================================
+// KITCHEN MODULE — Recipe-based forecasting + automated weekly reordering
+// Designed for set-menu kitchens (retirement homes, schools, hospitals).
+// ============================================================================
+
+// Vendor as a first-class entity (the legacy `vendor` string on Product remains
+// for back-compat). Each vendor has an email + ordering preferences.
+model Vendor {
+  id              String  @id @default(uuid())
+  storeId         String
+  name            String
+  contactEmail    String?
+  contactPhone    String?
+  notes           String?
+  autoSendEnabled Boolean @default(false) // false = drafts go to manager review
+  leadTimeDays    Int     @default(2)
+  minOrderValue   Float? // Vendor's minimum order in dollars
+
+  store          Store           @relation(fields: [storeId], references: [id])
+  products       Product[]
+  purchaseOrders PurchaseOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId])
+}
+
+// A named dish: "Tuesday Meatloaf", "Garden Salad", "Apple Pie".
+model MenuItem {
+  id              String  @id @default(uuid())
+  storeId         String
+  name            String
+  category        String? // "entree" | "side" | "dessert" | "breakfast"
+  description     String?
+  defaultServings Int     @default(1)
+  isActive        Boolean @default(true)
+  // Recipe versioning: when a recipe changes, supersede the prior version
+  // so historical forecasts/variances stay accurate.
+  version         Int     @default(1)
+
+  store             Store              @relation(fields: [storeId], references: [id])
+  recipes           Recipe[]
+  mealPlans         MealPlan[]
+  consumptionEvents ConsumptionEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId])
+  @@index([storeId, isActive])
+}
+
+// One row per ingredient in a menu item.
+// Example: MenuItem "Meatloaf" has Recipe rows for { beef: 0.25 lb, onion: 0.05 lb, egg: 0.5 ea }.
+model Recipe {
+  id            String  @id @default(uuid())
+  menuItemId    String
+  productId     String
+  qtyPerServing Float
+  unit          String // "lb", "oz", "ea", "cup", "tsp"
+  notes         String?
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([menuItemId, productId])
+  @@index([productId])
+}
+
+// One row per (date × menu item). Tracks both planned and actual servings.
+model MealPlan {
+  id              String   @id @default(uuid())
+  storeId         String
+  date            DateTime @db.Date
+  menuItemId      String
+  plannedServings Int
+  actualServings  Int? // Filled in from /log-meals — drives consumption math
+  notes           String?
+
+  store    Store    @relation(fields: [storeId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([storeId, date, menuItemId])
+  @@index([storeId, date])
+}
+
+// Source-agnostic consumption ledger. Every ingredient draw lands here:
+// from manual logging, tablet input, scale reading, scanner, or auto-deduction
+// from "meal served" events. Everything reads from one table.
+model ConsumptionEvent {
+  id         String   @id @default(uuid())
+  storeId    String
+  productId  String
+  menuItemId String? // Optional — links to the dish that drove this draw
+  qty        Float
+  unit       String
+  source     String // "tablet" | "scale" | "scanner" | "manual" | "meal_served" | "ran_out"
+  recordedAt DateTime @default(now())
+  recordedBy String? // userId or "system"
+  notes      String?
+
+  store    Store     @relation(fields: [storeId], references: [id])
+  product  Product   @relation(fields: [productId], references: [id])
+  menuItem MenuItem? @relation(fields: [menuItemId], references: [id])
+
+  @@index([storeId, recordedAt])
+  @@index([productId, recordedAt])
+}
+
+// One purchase order per (vendor, week). Status drives review/auto-send.
+model PurchaseOrder {
+  id             String    @id @default(uuid())
+  storeId        String
+  vendorId       String
+  weekStart      DateTime  @db.Date
+  weekEnd        DateTime  @db.Date
+  status         String    @default("DRAFT") // DRAFT | PENDING_REVIEW | APPROVED | SENT | FAILED | RECEIVED | CANCELLED
+  totalAmount    Float     @default(0)
+  emailedAt      DateTime?
+  emailedTo      String?
+  emailMessageId String? // SMTP message id for audit
+  approvedBy     String? // userId
+  approvedAt     DateTime?
+  failureReason  String?
+  notes          String?
+
+  store  Store                @relation(fields: [storeId], references: [id])
+  vendor Vendor               @relation(fields: [vendorId], references: [id])
+  items  PurchaseOrderItem[]
+  events PurchaseOrderEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId, weekStart])
+  @@index([vendorId, status])
+}
+
+model PurchaseOrderItem {
+  id              String @id @default(uuid())
+  purchaseOrderId String
+  productId       String
+  productName     String // Snapshot at order time (in case product is later renamed)
+  qty             Float
+  unit            String
+  unitCost        Float
+  lineTotal       Float
+  caseSize        Float?
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id])
+}
+
+// Audit trail for every action on a PO — required for any system that auto-sends emails.
+model PurchaseOrderEvent {
+  id              String   @id @default(uuid())
+  purchaseOrderId String
+  type            String // "DRAFTED" | "EDITED" | "APPROVED" | "SENT" | "FAILED" | "RECEIVED" | "CANCELLED"
+  actorId         String? // userId or "system"
+  payload         String? // JSON snapshot of what changed
+  createdAt       DateTime @default(now())
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseOrderId, createdAt])
+}
+
+// Friday reconciliation: theoretical (recipe × actual servings) vs counted on-hand.
+model RecipeVariance {
+  id             String   @id @default(uuid())
+  storeId        String
+  productId      String
+  weekStart      DateTime @db.Date
+  weekEnd        DateTime @db.Date
+  theoreticalQty Float // What recipe math says we used
+  actualQty      Float // What physical count says we used
+  variance       Float // actual - theoretical (positive = over-using)
+  variancePct    Float // variance / theoretical
+  resolved       Boolean  @default(false)
+  resolution     String? // "accepted_recipe_change" | "explained_by_event" | "investigated"
+  notes          String?
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([storeId, productId, weekStart])
+  @@index([storeId, weekStart])
+}

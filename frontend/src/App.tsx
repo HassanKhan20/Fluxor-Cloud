@@ -19,6 +19,8 @@ import Terms from './pages/Terms';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Demo from './pages/Demo';
+import Kitchen from './pages/Kitchen';
+import KitchenLogger from './pages/KitchenLogger';
 
 import ScrollToTop from './components/ScrollToTop';
 import PrivateRoute from './components/PrivateRoute';
@@ -51,6 +53,8 @@ function App() {
           <Route path="/vendors" element={<PrivateRoute><Vendors /></PrivateRoute>} />
           <Route path="/staff" element={<PrivateRoute><Staff /></PrivateRoute>} />
           <Route path="/reorder" element={<PrivateRoute><Reorder /></PrivateRoute>} />
+          <Route path="/kitchen" element={<PrivateRoute><Kitchen /></PrivateRoute>} />
+          <Route path="/kitchen/log" element={<PrivateRoute><KitchenLogger /></PrivateRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

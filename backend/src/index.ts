@@ -14,6 +14,9 @@ import alertsRoutes from './routes/alertsRoutes';
 import vendorRoutes from './routes/vendorRoutes';
 import staffRoutes from './routes/staffRoutes';
 import reorderRoutes from './routes/reorderRoutes';
+import kitchenRoutes from './routes/kitchenRoutes';
+import { runWeeklyForecastForAllStores } from './services/kitchenForecastService';
+import { sendPurchaseOrderEmail } from './services/kitchenEmailService';
 import { prisma } from './lib/prisma';
 import { generateAlertsForStore } from './controllers/alertsController';
 import { sendDemoRequestNotification } from './services/emailService';
@@ -127,6 +130,7 @@ app.use('/api/alerts', alertsRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/reorder', reorderRoutes);
+app.use('/api/kitchen', kitchenRoutes);
 
 // ── Public: Demo request (no auth — landing page form) ───────────────────────
 app.post('/api/demo-request', authLimiter, async (req, res) => {
@@ -254,6 +258,52 @@ async function runAlertGeneration() {
     }
 }
 
+// ── Kitchen weekly forecast cron ────────────────────────────────────────────
+// Generates draft POs for every kitchen-mode store, then sends emails for
+// vendors whose autoSendEnabled flag is set. Manager review the rest.
+async function runKitchenWeeklyJob() {
+    try {
+        const result = await runWeeklyForecastForAllStores();
+        console.log(`[Kitchen] Forecast: ${result.draftsCreated} draft PO(s) across ${result.storesProcessed} store(s)`);
+        if (result.errors.length > 0) console.error('[Kitchen] Errors:', result.errors);
+
+        // Auto-send for vendors flagged as auto-send eligible
+        const eligible = await prisma.purchaseOrder.findMany({
+            where: { status: 'DRAFT', vendor: { autoSendEnabled: true } },
+            select: { id: true },
+        });
+        for (const po of eligible) {
+            await sendPurchaseOrderEmail(po.id, 'system');
+        }
+        if (eligible.length > 0) console.log(`[Kitchen] Auto-sent ${eligible.length} PO(s) to auto-eligible vendors`);
+    } catch (err) {
+        console.error('[Kitchen] Weekly job failed:', err);
+    }
+}
+
+// Lightweight scheduler: checks once an hour whether the cron window has
+// arrived for any store (based on weeklyOrderDay) and fires the job.
+let lastKitchenRunTs = 0;
+async function maybeRunKitchenJob() {
+    try {
+        const now = new Date();
+        // Run once per hour, only on the hour matching 18:00 UTC (Sunday-ish for North America).
+        // For multi-tenant timezone correctness in production, swap for a cron service.
+        if (now.getUTCHours() !== 18) return;
+        if (Date.now() - lastKitchenRunTs < 23 * 60 * 60 * 1000) return; // throttle: at most once per day
+
+        const dow = now.getUTCDay();
+        const storesDue = await prisma.store.count({
+            where: { kitchenMode: true, weeklyOrderDay: dow },
+        });
+        if (storesDue === 0) return;
+        lastKitchenRunTs = Date.now();
+        await runKitchenWeeklyJob();
+    } catch (err) {
+        console.error('[Kitchen] Scheduler check failed:', err);
+    }
+}
+
 // ── Demo account seeding (reads password from env) ───────────────────────────
 async function seedDemoAccount() {
     const demoEmail = process.env.DEMO_EMAIL;
@@ -288,6 +338,7 @@ const server = app.listen(PORT, async () => {
     await seedDemoAccount();
     await runAlertGeneration();
     setInterval(runAlertGeneration, 60 * 60 * 1000);
+    setInterval(maybeRunKitchenJob, 60 * 60 * 1000);
 });
 
 process.on('SIGTERM', () => {

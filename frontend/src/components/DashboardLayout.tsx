@@ -13,6 +13,7 @@ import {
     Truck,
     UserCheck,
     ShoppingCart,
+    ChefHat,
 } from 'lucide-react';
 import StreamlineAnimation from './StreamlineAnimation';
 
@@ -46,6 +47,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             label: 'Operations',
             items: [
                 { id: 1, icon: <Boxes size={17} />, label: 'Inventory', path: '/products' },
+                { id: 8, icon: <ChefHat size={17} />, label: 'Kitchen', path: '/kitchen' },
                 { id: 2, icon: <Upload size={17} />, label: 'Import Sales', path: '/sales' },
                 { id: 3, icon: <Receipt size={17} />, label: 'Invoices', path: '/invoices' },
                 { id: 7, icon: <ShoppingCart size={17} />, label: 'Reorder', path: '/reorder' },
