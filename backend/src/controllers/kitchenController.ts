@@ -11,6 +11,7 @@ import {
 } from '../services/kitchenForecastService';
 import { sendPurchaseOrderEmail } from '../services/kitchenEmailService';
 import { computeAndSaveVariance } from '../services/kitchenVarianceService';
+import { seedKitchenStarterPack } from '../services/kitchenStarterPack';
 
 const requireStore = async (req: Request, res: Response): Promise<string | null> => {
     const storeId = await getStoreId(req);
@@ -573,4 +574,35 @@ export const updateKitchenConfig = async (req: Request, res: Response) => {
         select: { kitchenMode: true, weeklyOrderDay: true, servingsBuffer: true },
     });
     res.json(updated);
+};
+
+// One-click "Enable kitchen mode": flips the flag and (optionally) seeds the
+// starter pack of vendors + ingredients + menu items so the user can start
+// using the system immediately without any data entry.
+export const enableKitchenMode = async (req: Request, res: Response) => {
+    const storeId = await requireStore(req, res); if (!storeId) return;
+    const { weeklyOrderDay, servingsBuffer, loadStarterPack } = req.body;
+
+    const updated = await prisma.store.update({
+        where: { id: storeId },
+        data: {
+            kitchenMode: true,
+            weeklyOrderDay: weeklyOrderDay ?? undefined,
+            servingsBuffer: servingsBuffer ?? undefined,
+        },
+        select: { kitchenMode: true, weeklyOrderDay: true, servingsBuffer: true },
+    });
+
+    let starterResult = null;
+    if (loadStarterPack !== false) {
+        starterResult = await seedKitchenStarterPack(storeId);
+    }
+    res.json({ config: updated, starterPack: starterResult });
+};
+
+// Load the starter pack on demand (idempotent — re-running is safe).
+export const loadStarterPack = async (req: Request, res: Response) => {
+    const storeId = await requireStore(req, res); if (!storeId) return;
+    const result = await seedKitchenStarterPack(storeId);
+    res.json({ message: 'Starter pack loaded', result });
 };

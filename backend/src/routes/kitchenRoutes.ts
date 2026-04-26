@@ -10,6 +10,7 @@ import {
     approveAndSendPurchaseOrder, markPurchaseOrderReceived, cancelPurchaseOrder,
     submitWeeklyCounts, listVariances, acceptVarianceAdjustment,
     getKitchenConfig, updateKitchenConfig,
+    enableKitchenMode, loadStarterPack,
 } from '../controllers/kitchenController';
 
 const router = Router();
@@ -18,6 +19,8 @@ router.use(authenticateToken);
 // Config
 router.get('/config', getKitchenConfig);
 router.patch('/config', updateKitchenConfig);
+router.post('/enable', enableKitchenMode);
+router.post('/starter-pack', loadStarterPack);
 
 // Vendors
 router.get('/vendors', listVendors);

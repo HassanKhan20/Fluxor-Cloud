@@ -94,6 +94,9 @@ export const kitchenApi = {
     // Config
     getConfig: () => api.get('/kitchen/config', tok()),
     updateConfig: (body: any) => api.patch('/kitchen/config', body, tok()),
+    enableKitchen: (body: { weeklyOrderDay?: number; servingsBuffer?: number; loadStarterPack?: boolean }) =>
+        api.post('/kitchen/enable', body, tok()),
+    loadStarterPack: () => api.post('/kitchen/starter-pack', {}, tok()),
 
     // Vendors
     listVendors: () => api.get('/kitchen/vendors', tok()) as Promise<{ vendors: Vendor[] }>,

@@ -56,6 +56,7 @@ export default function Kitchen() {
     const [pos, setPos] = useState<PurchaseOrder[]>([]);
     const [forecast, setForecast] = useState<ForecastResult | null>(null);
     const [products, setProducts] = useState<Array<{ id: string; name: string; unit?: string | null; costPrice?: number }>>([]);
+    const [config, setConfig] = useState<{ kitchenMode: boolean; weeklyOrderDay: number; servingsBuffer: number } | null>(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
@@ -65,13 +66,14 @@ export default function Kitchen() {
     async function refresh() {
         setLoading(true);
         try {
-            const [m, v, p, o, f, pr] = await Promise.all([
+            const [m, v, p, o, f, pr, cfg] = await Promise.all([
                 kitchenApi.listMenuItems().catch(() => ({ menuItems: [] })),
                 kitchenApi.listVendors().catch(() => ({ vendors: [] })),
                 kitchenApi.listMealPlans(ymd(weekStart)).catch(() => ({ plans: [], weekStart: '', weekEnd: '' })),
                 kitchenApi.listPurchaseOrders().catch(() => ({ purchaseOrders: [] })),
                 kitchenApi.previewForecast(ymd(weekStart)).catch(() => null),
                 api.get('/products?limit=500', localStorage.getItem('token') || '').catch(() => ({ products: [] })),
+                kitchenApi.getConfig().catch(() => null),
             ]);
             setMenuItems(m.menuItems || []);
             setVendors(v.vendors || []);
@@ -79,12 +81,39 @@ export default function Kitchen() {
             setPos(o.purchaseOrders || []);
             setForecast(f);
             setProducts((pr.products || pr || []).map((x: any) => ({ id: x.id, name: x.name, unit: x.unit, costPrice: x.costPrice })));
+            setConfig(cfg);
         } finally {
             setLoading(false);
         }
     }
 
     useEffect(() => { refresh(); }, [weekStart]);
+
+    async function enableKitchen(loadStarterPack: boolean) {
+        setBusy(true);
+        try {
+            const r = await kitchenApi.enableKitchen({ loadStarterPack });
+            showToast(loadStarterPack
+                ? `Kitchen enabled · ${r.starterPack?.menuItemsCreated ?? 0} dishes, ${r.starterPack?.productsCreated ?? 0} ingredients seeded`
+                : 'Kitchen enabled');
+            await refresh();
+        } catch (e: any) { showToast(e.message || 'Failed to enable'); }
+        finally { setBusy(false); }
+    }
+
+    async function loadPack() {
+        setBusy(true);
+        try {
+            const r = await kitchenApi.loadStarterPack();
+            showToast(`Loaded · ${r.result.menuItemsCreated} new dishes, ${r.result.productsCreated} new ingredients`);
+            await refresh();
+        } catch (e: any) { showToast(e.message || 'Failed to load'); }
+        finally { setBusy(false); }
+    }
+
+    // Pre-empt the rest of the page with an onboarding CTA when kitchen mode
+    // is off OR when there are no menu items yet.
+    const needsOnboarding = !loading && (config?.kitchenMode === false || (config?.kitchenMode && menuItems.length === 0));
 
     return (
         <DashboardLayout>
@@ -125,6 +154,52 @@ export default function Kitchen() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Onboarding banner */}
+                    {needsOnboarding && (
+                        <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-3xl p-7 text-white shadow-[0_20px_50px_-20px_rgba(79,70,229,0.5)] relative overflow-hidden">
+                            <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{ backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`, backgroundSize: '24px 24px' }} />
+                            <div className="relative max-w-3xl">
+                                <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.16em] text-indigo-200">Get started in 30 seconds</p>
+                                <h2 className="font-display text-[26px] font-semibold tracking-tightest mt-1.5 leading-[1.1]">
+                                    {config?.kitchenMode ? 'Load a starter pack so you can start cooking — literally.' : 'Turn on Kitchen mode to automate weekly ordering.'}
+                                </h2>
+                                <p className="text-white/80 text-[13.5px] mt-2 max-w-xl">
+                                    {config?.kitchenMode
+                                        ? 'Seeds 4 vendors, 27 common ingredients with par levels and case sizes, and 10 retirement-home menu items with full recipes. Idempotent — safe to re-run.'
+                                        : 'Enables recipe forecasting, weekly meal planning, and automated vendor PO emails. We\'ll also seed a starter pack of vendors, ingredients, and menu items so you don\'t start from a blank screen.'}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-3 mt-5">
+                                    {config?.kitchenMode ? (
+                                        <button
+                                            onClick={loadPack}
+                                            disabled={busy}
+                                            className="flex items-center gap-1.5 text-[13px] font-semibold text-indigo-700 bg-white hover:bg-white/90 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-60"
+                                        >
+                                            <Sparkles className="w-3.5 h-3.5" /> Load starter pack
+                                        </button>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => enableKitchen(true)}
+                                                disabled={busy}
+                                                className="flex items-center gap-1.5 text-[13px] font-semibold text-indigo-700 bg-white hover:bg-white/90 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-60"
+                                            >
+                                                <Zap className="w-3.5 h-3.5" /> Enable + load starter pack
+                                            </button>
+                                            <button
+                                                onClick={() => enableKitchen(false)}
+                                                disabled={busy}
+                                                className="text-[13px] font-medium text-white/85 hover:text-white px-3 py-2.5"
+                                            >
+                                                Enable empty (I'll set up everything myself)
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Tabs */}
                     <div className="bg-white border border-ink-200 rounded-2xl px-2 py-1.5 inline-flex gap-1 overflow-x-auto">
