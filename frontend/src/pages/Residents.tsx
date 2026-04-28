@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-    HeartHandshake,
     Plus,
     X,
     Search,
@@ -14,6 +13,7 @@ import {
     Edit,
 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import WarmthIllustration from '@/components/WarmthIllustration';
 import { retirementApi, type Resident, type DietaryProfile, type CarePlan } from '@/lib/retirementApi';
 
 const TEXTURES = [
@@ -105,19 +105,22 @@ export default function Residents() {
             <div className="min-h-screen bg-ink-100/60 font-sans">
                 <div className="max-w-[1400px] mx-auto p-6 lg:p-8 space-y-6">
 
-                    {/* Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                        <div>
+                    {/* Header — with a small warmth vignette on the right */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex-1">
                             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-600">Care</p>
                             <h1 className="font-display text-3xl font-semibold text-ink-900 tracking-tightest mt-1.5 leading-tight">Residents</h1>
                             <p className="text-[13.5px] text-ink-600 mt-1.5 max-w-2xl">
                                 Single source of truth for every resident's room, dietary needs, and care plan. Drives meal planning, tray tickets, and supply forecasting.
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
+                            <div className="hidden md:block">
+                                <WarmthIllustration size="md" />
+                            </div>
                             <button
                                 onClick={startNew}
-                                className="flex items-center gap-1.5 text-[12.5px] font-semibold text-white bg-ink-900 hover:bg-ink-800 px-3.5 py-2 rounded-lg transition-colors"
+                                className="flex items-center gap-1.5 text-[12.5px] font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 rounded-lg transition-colors shadow-sm"
                             >
                                 <Plus className="w-3.5 h-3.5" /> New resident
                             </button>
@@ -148,12 +151,14 @@ export default function Residents() {
                     {loading ? (
                         <div className="bg-white border border-ink-200 rounded-2xl p-12 text-center text-[13px] text-ink-500">Loading…</div>
                     ) : residents.length === 0 ? (
-                        <div className="bg-white border border-ink-200 rounded-2xl p-12 text-center">
-                            <HeartHandshake className="w-8 h-8 text-ink-300 mx-auto mb-3" />
-                            <p className="text-[14px] font-semibold text-ink-900">No residents yet</p>
-                            <p className="text-[12.5px] text-ink-500 mt-1">Add your first resident to start managing dietary needs and care plans.</p>
-                            <button onClick={startNew} className="mt-4 text-[12.5px] font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 rounded-lg inline-flex items-center gap-1.5">
-                                <Plus className="w-3.5 h-3.5" /> Add first resident
+                        <div className="bg-white border border-emerald-100 rounded-2xl p-12 text-center">
+                            <div className="flex justify-center mb-4">
+                                <WarmthIllustration size="lg" scenic />
+                            </div>
+                            <p className="font-display text-[16px] font-semibold text-ink-900 tracking-tight">A quiet morning, ready for your first resident</p>
+                            <p className="text-[12.5px] text-ink-500 mt-1.5 max-w-md mx-auto">Add their name, room, dietary needs, and care plan — and we will take care of meal planning and supply ordering from there.</p>
+                            <button onClick={startNew} className="mt-5 text-[13px] font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-lg inline-flex items-center gap-1.5 shadow-sm">
+                                <Plus className="w-3.5 h-3.5" /> Welcome a resident
                             </button>
                         </div>
                     ) : filtered.length === 0 ? (
