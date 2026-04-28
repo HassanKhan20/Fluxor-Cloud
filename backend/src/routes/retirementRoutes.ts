@@ -7,6 +7,8 @@ import {
     getPrepSheet, getTrayTickets,
     listSupplyItems, createSupplyItem, recordSupplyConsumption,
     getStockoutWatch, bulkLogMeal,
+    recordGuestMeal, listGuestMeals,
+    logResidentMeal, getResidentMealHistory,
 } from '../controllers/retirementController';
 
 const router = Router();
@@ -42,5 +44,13 @@ router.get('/stockout-watch', getStockoutWatch);
 
 // Bulk meal-choice tally — replaces per-tap logging when residents pick from a sheet
 router.post('/log-meals-bulk', bulkLogMeal);
+
+// Per-resident meal logging + history (for compliance / state surveys)
+router.post('/log-meal-resident', logResidentMeal);
+router.get('/residents/:id/meals', getResidentMealHistory);
+
+// Guest meals — drop-in family/visitor flat-fee meals
+router.post('/guest-meals', recordGuestMeal);
+router.get('/guest-meals', listGuestMeals);
 
 export default router;

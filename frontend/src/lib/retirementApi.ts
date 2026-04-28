@@ -122,7 +122,37 @@ export const retirementApi = {
     // Bulk meal tally
     bulkLogMeals: (date: string, entries: { menuItemId: string; servings: number }[]) =>
         api.post('/retirement/log-meals-bulk', { date, entries }, tok()),
+
+    // Per-resident meal logging
+    logMealForResident: (menuItemId: string, residentId?: string | null, date?: string, servings = 1) =>
+        api.post('/retirement/log-meal-resident', { menuItemId, residentId, date, servings }, tok()),
+    getResidentMealHistory: (residentId: string, start?: string, end?: string) =>
+        api.get(`/retirement/residents/${residentId}/meals${start && end ? `?start=${start}&end=${end}` : ''}`, tok()),
+
+    // Guest meals
+    recordGuestMeal: (body: {
+        menuItemId?: string | null;
+        guestName?: string;
+        paidAmount: number;
+        paymentMethod?: 'cash' | 'card' | 'charged_to_room';
+        date?: string;
+        notes?: string;
+    }) => api.post('/retirement/guest-meals', body, tok()),
+    listGuestMeals: (start?: string, end?: string) =>
+        api.get(`/retirement/guest-meals${start && end ? `?start=${start}&end=${end}` : ''}`, tok()) as Promise<{ guestMeals: GuestMeal[]; totalAmount: number; count: number }>,
 };
+
+export interface GuestMeal {
+    id: string;
+    storeId: string;
+    date: string;
+    menuItemId: string | null;
+    guestName: string | null;
+    paidAmount: number;
+    paymentMethod: string;
+    notes: string | null;
+    createdAt: string;
+}
 
 export interface StockoutRow {
     productId: string;

@@ -457,3 +457,158 @@ export const bulkLogMeal = async (req: Request, res: Response) => {
 
     res.json({ message: `Logged ${totalServings} serving(s) across ${results.length} dish(es)`, results, totalEvents });
 };
+
+// ────────────────────────────────────────────────────────────────────────────
+// GUEST MEALS — drop-in family/visitor flat-fee meals
+// ────────────────────────────────────────────────────────────────────────────
+
+export const recordGuestMeal = async (req: Request, res: Response) => {
+    const storeId = await requireStore(req, res); if (!storeId) return;
+    const { menuItemId, guestName, paidAmount, paymentMethod, notes, date } = req.body;
+    if (paidAmount == null || isNaN(Number(paidAmount))) {
+        return res.status(400).json({ message: 'paidAmount is required' });
+    }
+    const userId = (req as any).user?.userId ?? null;
+    const day = parseDate(date) ?? parseDate(new Date().toISOString().slice(0, 10))!;
+
+    const result = await prisma.$transaction(async (db) => {
+        const guestMeal = await db.guestMeal.create({
+            data: {
+                storeId,
+                date: day,
+                menuItemId: menuItemId || null,
+                guestName: guestName || null,
+                paidAmount: Number(paidAmount),
+                paymentMethod: paymentMethod || 'cash',
+                notes: notes || null,
+                recordedBy: userId,
+            },
+        });
+
+        // If a menu item was picked, fire recipe-level consumption events
+        if (menuItemId) {
+            const menuItem = await db.menuItem.findFirst({
+                where: { id: menuItemId, storeId },
+                include: { recipes: true },
+            });
+            if (menuItem) {
+                for (const r of menuItem.recipes) {
+                    await db.consumptionEvent.create({
+                        data: {
+                            storeId,
+                            productId: r.productId,
+                            menuItemId,
+                            qty: r.qtyPerServing,
+                            unit: r.unit,
+                            source: 'guest_meal',
+                            recordedBy: userId,
+                            notes: guestName ? `Guest: ${guestName}` : null,
+                        },
+                    });
+                }
+            }
+        }
+        return guestMeal;
+    });
+    res.status(201).json({ guestMeal: result });
+};
+
+export const listGuestMeals = async (req: Request, res: Response) => {
+    const storeId = await requireStore(req, res); if (!storeId) return;
+    const start = parseDate(req.query.start as string);
+    const end = parseDate(req.query.end as string);
+    const where: any = { storeId };
+    if (start && end) where.date = { gte: start, lte: end };
+    const meals = await prisma.guestMeal.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        take: 100,
+    });
+    const total = meals.reduce((s, m) => s + m.paidAmount, 0);
+    res.json({ guestMeals: meals, totalAmount: total, count: meals.length });
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// LOG MEAL TO A RESIDENT — same as kitchen logMealServed but with residentId
+// ────────────────────────────────────────────────────────────────────────────
+
+export const logResidentMeal = async (req: Request, res: Response) => {
+    const storeId = await requireStore(req, res); if (!storeId) return;
+    const { menuItemId, residentId, date, servings = 1 } = req.body;
+    if (!menuItemId) return res.status(400).json({ message: 'menuItemId required' });
+    const day = parseDate(date) ?? parseDate(new Date().toISOString().slice(0, 10))!;
+    const userId = (req as any).user?.userId ?? null;
+
+    const menuItem = await prisma.menuItem.findFirst({
+        where: { id: menuItemId, storeId },
+        include: { recipes: true },
+    });
+    if (!menuItem) return res.status(404).json({ message: 'Menu item not found' });
+
+    // Validate resident if provided
+    if (residentId) {
+        const resident = await prisma.resident.findFirst({ where: { id: residentId, storeId } });
+        if (!resident) return res.status(404).json({ message: 'Resident not found' });
+    }
+
+    await prisma.$transaction(async (db) => {
+        await db.mealPlan.upsert({
+            where: { storeId_date_menuItemId: { storeId, date: day, menuItemId } },
+            update: { actualServings: { increment: servings } },
+            create: { storeId, date: day, menuItemId, plannedServings: 0, actualServings: servings },
+        });
+        for (const r of menuItem.recipes) {
+            await db.consumptionEvent.create({
+                data: {
+                    storeId,
+                    productId: r.productId,
+                    menuItemId,
+                    residentId: residentId || null,
+                    qty: r.qtyPerServing * servings,
+                    unit: r.unit,
+                    source: residentId ? 'resident_meal' : 'meal_served',
+                    recordedBy: userId,
+                },
+            });
+        }
+    });
+    res.json({ message: `Logged ${servings} serving(s) of ${menuItem.name}${residentId ? ' to resident' : ''}` });
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// PER-RESIDENT MEAL HISTORY — for compliance reports
+// ────────────────────────────────────────────────────────────────────────────
+
+export const getResidentMealHistory = async (req: Request, res: Response) => {
+    const storeId = await requireStore(req, res); if (!storeId) return;
+    const { id } = req.params;
+    const start = parseDate(req.query.start as string);
+    const end = parseDate(req.query.end as string);
+
+    const resident = await prisma.resident.findFirst({ where: { id, storeId } });
+    if (!resident) return res.status(404).json({ message: 'Resident not found' });
+
+    const where: any = { storeId, residentId: id };
+    if (start && end) where.recordedAt = { gte: start, lte: end };
+
+    const events = await prisma.consumptionEvent.findMany({
+        where,
+        orderBy: { recordedAt: 'desc' },
+        include: { menuItem: { select: { name: true, category: true } }, product: { select: { name: true } } },
+        take: 500,
+    });
+
+    // Aggregate by meal — group ConsumptionEvents that share (menuItemId, day)
+    const mealMap = new Map<string, { date: string; menuItemName: string; servings: number }>();
+    for (const e of events) {
+        if (!e.menuItem) continue;
+        const dayKey = e.recordedAt.toISOString().slice(0, 10);
+        const k = `${dayKey}-${e.menuItemId}`;
+        const ex = mealMap.get(k);
+        if (ex) continue; // count once per (day, menuItem)
+        mealMap.set(k, { date: dayKey, menuItemName: e.menuItem.name, servings: 1 });
+    }
+    const meals = Array.from(mealMap.values()).sort((a, b) => b.date.localeCompare(a.date));
+
+    res.json({ resident, meals, eventCount: events.length });
+};

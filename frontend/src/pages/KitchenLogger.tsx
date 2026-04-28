@@ -4,9 +4,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, Plus, Minus, Coffee, UtensilsCrossed, Cake, ChefHat, ListChecks, MousePointerClick, Send } from 'lucide-react';
+import { ArrowLeft, Check, Plus, Minus, Coffee, UtensilsCrossed, Cake, ChefHat, ListChecks, MousePointerClick, Send, UserCircle, DollarSign, X } from 'lucide-react';
 import { kitchenApi, type MenuItem } from '@/lib/kitchenApi';
-import { retirementApi } from '@/lib/retirementApi';
+import { retirementApi, type Resident } from '@/lib/retirementApi';
 
 const CATEGORY_ICON: Record<string, React.ReactNode> = {
     breakfast: <Coffee className="w-4 h-4" />,
@@ -15,24 +15,37 @@ const CATEGORY_ICON: Record<string, React.ReactNode> = {
     dessert: <Cake className="w-4 h-4" />,
 };
 
-type Mode = 'tap' | 'tally';
+type Mode = 'tap' | 'tally' | 'guest';
 
 export default function KitchenLogger() {
     const [items, setItems] = useState<MenuItem[]>([]);
+    const [residents, setResidents] = useState<Resident[]>([]);
     const [loading, setLoading] = useState(true);
     const [counts, setCounts] = useState<Record<string, number>>({});
     const [recentlyLogged, setRecentlyLogged] = useState<{ id: string; name: string; ts: number }[]>([]);
     const [mode, setMode] = useState<Mode>('tap');
+    // Tap mode: optional resident attribution
+    const [tapResidentId, setTapResidentId] = useState<string>('');
     // Bulk-tally state — typed counts per dish, submit once at end of meal
     const [tally, setTally] = useState<Record<string, string>>({});
     const [tallyBusy, setTallyBusy] = useState(false);
     const [tallyMsg, setTallyMsg] = useState<string | null>(null);
+    // Guest meal state
+    const [guestForm, setGuestForm] = useState<{ menuItemId: string; guestName: string; paidAmount: string; paymentMethod: 'cash' | 'card' | 'charged_to_room' }>({
+        menuItemId: '', guestName: '', paidAmount: '10.00', paymentMethod: 'cash',
+    });
+    const [guestBusy, setGuestBusy] = useState(false);
+    const [guestMsg, setGuestMsg] = useState<string | null>(null);
 
     useEffect(() => {
         (async () => {
             try {
-                const r = await kitchenApi.listMenuItems();
-                setItems(r.menuItems || []);
+                const [m, r] = await Promise.all([
+                    kitchenApi.listMenuItems().catch(() => ({ menuItems: [] })),
+                    retirementApi.listResidents().catch(() => ({ residents: [] as Resident[] })),
+                ]);
+                setItems(m.menuItems || []);
+                setResidents(r.residents);
             } finally { setLoading(false); }
         })();
     }, []);
@@ -67,12 +80,45 @@ export default function KitchenLogger() {
         setCounts(c => ({ ...c, [item.id]: Math.max(0, (c[item.id] || 0) + delta) }));
         if (delta === 1) {
             try {
-                await kitchenApi.logMealServed(item.id, today, 1);
-                setRecentlyLogged(prev => [{ id: `${item.id}-${Date.now()}`, name: item.name, ts: Date.now() }, ...prev].slice(0, 6));
+                if (tapResidentId) {
+                    await retirementApi.logMealForResident(item.id, tapResidentId, today, 1);
+                } else {
+                    await kitchenApi.logMealServed(item.id, today, 1);
+                }
+                const residentName = residents.find(r => r.id === tapResidentId)?.name;
+                const label = residentName ? `${item.name} → ${residentName}` : item.name;
+                setRecentlyLogged(prev => [{ id: `${item.id}-${Date.now()}`, name: label, ts: Date.now() }, ...prev].slice(0, 6));
             } catch {
-                // Roll back on failure
                 setCounts(c => ({ ...c, [item.id]: Math.max(0, (c[item.id] || 0) - 1) }));
             }
+        }
+    }
+
+    async function submitGuestMeal() {
+        const paid = parseFloat(guestForm.paidAmount);
+        if (isNaN(paid) || paid < 0) {
+            setGuestMsg('Enter a valid amount');
+            setTimeout(() => setGuestMsg(null), 2000);
+            return;
+        }
+        setGuestBusy(true);
+        try {
+            await retirementApi.recordGuestMeal({
+                menuItemId: guestForm.menuItemId || null,
+                guestName: guestForm.guestName || undefined,
+                paidAmount: paid,
+                paymentMethod: guestForm.paymentMethod,
+                date: today,
+            });
+            const dish = items.find(i => i.id === guestForm.menuItemId)?.name || 'Guest meal';
+            setGuestMsg(`Logged: ${dish} · $${paid.toFixed(2)}`);
+            setGuestForm({ menuItemId: '', guestName: '', paidAmount: '10.00', paymentMethod: 'cash' });
+            setTimeout(() => setGuestMsg(null), 3500);
+        } catch (e: any) {
+            setGuestMsg(e.message || 'Failed to log');
+            setTimeout(() => setGuestMsg(null), 3500);
+        } finally {
+            setGuestBusy(false);
         }
     }
 
@@ -96,7 +142,9 @@ export default function KitchenLogger() {
                 <div className="text-center">
                     <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-indigo-300">Tablet logger</p>
                     <h1 className="font-display text-[18px] font-semibold tracking-tight">
-                        {mode === 'tap' ? "Tap a dish each time it's served" : 'Type end-of-meal counts'}
+                        {mode === 'tap'   ? "Tap a dish each time it's served"
+                        : mode === 'tally' ? 'Type end-of-meal counts'
+                        :                    'Log a paid guest meal'}
                     </h1>
                 </div>
                 <div className="flex items-center gap-3">
@@ -113,6 +161,12 @@ export default function KitchenLogger() {
                             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${mode === 'tally' ? 'bg-emerald-600 text-white' : 'text-white/70 hover:text-white'}`}
                         >
                             <ListChecks className="w-3 h-3" /> Bulk tally
+                        </button>
+                        <button
+                            onClick={() => setMode('guest')}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${mode === 'guest' ? 'bg-amber-600 text-white' : 'text-white/70 hover:text-white'}`}
+                        >
+                            <DollarSign className="w-3 h-3" /> Guest
                         </button>
                     </div>
                     <div className="text-[12px] text-white/60 tabular-nums">
@@ -169,8 +223,109 @@ export default function KitchenLogger() {
                             </p>
                         </div>
                     </div>
+                ) : mode === 'guest' ? (
+                    <div className="max-w-xl mx-auto">
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                            <p className="text-[13px] text-white/70 mb-5">
+                                Use this for family or visitors who pay for a meal at the home. Inventory is deducted automatically; the dollars are tracked separately.
+                            </p>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[11.5px] font-medium text-white/70 mb-1.5">Dish</label>
+                                    <select
+                                        value={guestForm.menuItemId}
+                                        onChange={e => setGuestForm(g => ({ ...g, menuItemId: e.target.value }))}
+                                        className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-3 text-[15px] text-white outline-none focus:border-amber-500"
+                                    >
+                                        <option value="" className="bg-ink-900">Pick a dish (optional)</option>
+                                        {items.filter(i => i.isActive).map(i => (
+                                            <option key={i.id} value={i.id} className="bg-ink-900">{i.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11.5px] font-medium text-white/70 mb-1.5">Guest name (optional)</label>
+                                    <input
+                                        type="text"
+                                        value={guestForm.guestName}
+                                        onChange={e => setGuestForm(g => ({ ...g, guestName: e.target.value }))}
+                                        placeholder="e.g. Mrs. Smith's daughter"
+                                        className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-3 text-[15px] text-white placeholder:text-white/30 outline-none focus:border-amber-500"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[11.5px] font-medium text-white/70 mb-1.5">Amount paid</label>
+                                        <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-3 h-12 focus-within:border-amber-500">
+                                            <DollarSign className="w-4 h-4 text-white/50" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={guestForm.paidAmount}
+                                                onChange={e => setGuestForm(g => ({ ...g, paidAmount: e.target.value }))}
+                                                className="flex-1 bg-transparent text-[18px] font-display font-semibold tabular-nums text-white outline-none ml-1"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11.5px] font-medium text-white/70 mb-1.5">Payment</label>
+                                        <select
+                                            value={guestForm.paymentMethod}
+                                            onChange={e => setGuestForm(g => ({ ...g, paymentMethod: e.target.value as any }))}
+                                            className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-3 text-[15px] text-white outline-none focus:border-amber-500"
+                                        >
+                                            <option value="cash"             className="bg-ink-900">Cash</option>
+                                            <option value="card"             className="bg-ink-900">Card</option>
+                                            <option value="charged_to_room"  className="bg-ink-900">Charge to room</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={submitGuestMeal}
+                                disabled={guestBusy}
+                                className="mt-6 w-full flex items-center justify-center gap-2 h-14 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-display text-[15px] font-semibold tracking-tight shadow-[0_0_24px_-5px_rgba(217,119,6,0.6)] disabled:opacity-60 transition-colors"
+                            >
+                                <Check className="w-4 h-4" /> {guestBusy ? 'Logging…' : 'Log guest meal'}
+                            </button>
+                            {guestMsg && (
+                                <p className="text-center text-[13px] text-amber-300 mt-3">{guestMsg}</p>
+                            )}
+                            <p className="text-center text-[11px] text-white/40 mt-4">
+                                Tracked separately from resident meals. Use the home's monthly report to see total guest revenue.
+                            </p>
+                        </div>
+                    </div>
                 ) : (
-                    <div className="space-y-8">
+                    <div className="space-y-6">
+                        {/* Resident attribution bar — optional */}
+                        <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 flex items-center gap-3 flex-wrap">
+                            <UserCircle className="w-4 h-4 text-white/60 flex-shrink-0" />
+                            <span className="text-[12px] text-white/70 font-medium">Logging meals for:</span>
+                            <select
+                                value={tapResidentId}
+                                onChange={e => setTapResidentId(e.target.value)}
+                                className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-[13px] text-white outline-none focus:border-indigo-500"
+                            >
+                                <option value="" className="bg-ink-900">Anyone (no attribution)</option>
+                                {residents.map(r => (
+                                    <option key={r.id} value={r.id} className="bg-ink-900">{r.name}{r.room ? ` · Room ${r.room}` : ''}</option>
+                                ))}
+                            </select>
+                            {tapResidentId && (
+                                <button onClick={() => setTapResidentId('')} className="text-white/40 hover:text-white/80 ml-auto" aria-label="Clear resident">
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                            <p className="text-[11px] text-white/40 w-full">
+                                Optional — pick a resident to record who specifically received each tap. Skip for generic batch counts.
+                            </p>
+                        </div>
                         {Array.from(grouped.entries()).map(([category, dishes]) => (
                             <section key={category}>
                                 <div className="flex items-center gap-2 mb-3">

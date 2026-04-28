@@ -65,6 +65,7 @@ model Store {
   dailyCensus       DailyCensus[]
   supplyItems       SupplyItem[]
   supplyConsumption SupplyConsumption[]
+  guestMeals        GuestMeal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -427,9 +428,10 @@ model ConsumptionEvent {
   storeId    String
   productId  String
   menuItemId String? // Optional — links to the dish that drove this draw
+  residentId String? // Optional — links to the resident who received the meal
   qty        Float
   unit       String
-  source     String // "tablet" | "scale" | "scanner" | "manual" | "meal_served" | "ran_out"
+  source     String // "tablet" | "scale" | "scanner" | "manual" | "meal_served" | "ran_out" | "bulk_tally" | "guest_meal"
   recordedAt DateTime @default(now())
   recordedBy String? // userId or "system"
   notes      String?
@@ -437,9 +439,11 @@ model ConsumptionEvent {
   store    Store     @relation(fields: [storeId], references: [id])
   product  Product   @relation(fields: [productId], references: [id])
   menuItem MenuItem? @relation(fields: [menuItemId], references: [id])
+  resident Resident? @relation("ResidentMeals", fields: [residentId], references: [id])
 
   @@index([storeId, recordedAt])
   @@index([productId, recordedAt])
+  @@index([residentId, recordedAt])
 }
 
 // One purchase order per (vendor, week). Status drives review/auto-send.
@@ -545,6 +549,7 @@ model Resident {
   dietaryProfile    DietaryProfile?
   carePlan          CarePlan?
   supplyConsumption SupplyConsumption[]
+  mealEvents        ConsumptionEvent[]  @relation("ResidentMeals")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -673,4 +678,26 @@ model SupplyConsumption {
 
   @@index([storeId, recordedAt])
   @@index([supplyItemId, recordedAt])
+}
+
+// Guest meals — drop-in family/visitor meals charged at a flat rate.
+// Distinct from resident meals because there is a real $ transaction.
+// Inventory deduction still happens via ConsumptionEvent (source='guest_meal'),
+// but the dollars and the guest name live here.
+model GuestMeal {
+  id            String   @id @default(uuid())
+  storeId       String
+  date          DateTime @db.Date
+  menuItemId    String? // Optional — what they ate
+  guestName     String? // Optional — who they were (Mrs. Smith's daughter)
+  paidAmount    Float // What the home charged ($10 typically)
+  paymentMethod String   @default("cash") // cash | card | charged_to_room
+  notes         String?
+  recordedBy    String? // userId
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([storeId, date])
 }
