@@ -25,17 +25,32 @@ export default function VoiceAssistant() {
     const chunksRef = useRef<Blob[]>([]);
     const audioElRef = useRef<HTMLAudioElement | null>(null);
 
-    // Probe availability on mount so we can hide the button when the
-    // backend has no GROQ key configured.
+    // Probe availability on mount. Only show the mic once we know GROQ
+    // is configured server-side — avoids a flashing button on first paint.
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) { setAvailable(false); return; }
         fetch(`${API_URL}/ai-assistant/health`, {
             headers: { Authorization: `Bearer ${token}` },
         })
-            .then(r => r.ok ? r.json() : null)
-            .then(d => setAvailable(!!d?.groq))
-            .catch(() => setAvailable(false));
+            .then(async r => {
+                if (!r.ok) {
+                    console.warn('[VoiceAssistant] health endpoint returned', r.status, '— backend likely not redeployed with /api/ai-assistant routes yet');
+                    return null;
+                }
+                return r.json();
+            })
+            .then(d => {
+                if (!d) { setAvailable(false); return; }
+                if (!d.groq) {
+                    console.warn('[VoiceAssistant] hidden — GROQ_API_KEY is not set on the backend. Add it on your backend host (Render/Railway) → Environment Variables.');
+                }
+                setAvailable(!!d?.groq);
+            })
+            .catch(err => {
+                console.warn('[VoiceAssistant] health check failed:', err?.message || err, '— backend may be down or the new /api/ai-assistant routes are not deployed yet');
+                setAvailable(false);
+            });
     }, []);
 
     async function startRecording() {
@@ -120,7 +135,8 @@ export default function VoiceAssistant() {
         setPhase('idle');
     }
 
-    if (available === false) return null;
+    // Only render once we have a positive yes — kills the flash-and-disappear
+    if (available !== true) return null;
 
     return (
         <>
