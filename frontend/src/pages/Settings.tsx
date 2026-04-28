@@ -15,9 +15,13 @@ import {
     Lock,
     Mail,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    Building2,
+    HeartHandshake,
 } from 'lucide-react';
 import { API_URL } from '@/lib/api';
+import { retirementApi, type FacilityType } from '@/lib/retirementApi';
+import { useFacility } from '@/components/FacilityTypeGate';
 
 interface UserInfo {
     name: string;
@@ -26,6 +30,7 @@ interface UserInfo {
 
 export default function Settings() {
     const navigate = useNavigate();
+    const { facility, refresh: refreshFacility, isRetirement } = useFacility();
     const [notifications, setNotifications] = useState(() => {
         const saved = localStorage.getItem('notificationSettings');
         if (saved) { try { return JSON.parse(saved); } catch {} }
@@ -35,6 +40,25 @@ export default function Settings() {
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [switchingType, setSwitchingType] = useState(false);
+    const [switchMsg, setSwitchMsg] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+
+    async function switchFacility(type: FacilityType) {
+        if (facility?.facilityType === type) return;
+        const verb = type === 'RETIREMENT_HOME' ? 'Retirement Home' : 'Convenience Store';
+        if (!confirm(`Switch this facility to ${verb} mode?\n\nYour data won't be deleted, but the sidebar and dashboards will change.`)) return;
+        setSwitchingType(true);
+        setSwitchMsg(null);
+        try {
+            await retirementApi.setFacility(type);
+            await refreshFacility();
+            setSwitchMsg({ tone: 'success', text: `Switched to ${verb} mode. Refresh the page to see the new sidebar.` });
+        } catch (e: any) {
+            setSwitchMsg({ tone: 'error', text: e.message || 'Failed to switch facility type' });
+        } finally {
+            setSwitchingType(false);
+        }
+    }
 
     // Change password state
     const [showChangePassword, setShowChangePassword] = useState(false);
@@ -152,6 +176,61 @@ export default function Settings() {
                             <p className="text-gray-500 mt-1">Manage your account and preferences</p>
                         </div>
                     </div>
+
+                    {/* Facility type — switch between Convenience Store and Retirement Home */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-700">
+                                    {isRetirement ? <HeartHandshake className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
+                                </div>
+                                <div>
+                                    <CardTitle>Facility type</CardTitle>
+                                    <CardDescription>Switch the entire app between store and retirement-home modes</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid md:grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => switchFacility('CONVENIENCE_STORE')}
+                                    disabled={switchingType}
+                                    className={`text-left rounded-xl border-2 p-4 transition-all ${facility?.facilityType === 'CONVENIENCE_STORE' ? 'border-indigo-600 bg-indigo-50/40' : 'border-gray-200 hover:border-indigo-300'} disabled:opacity-60`}
+                                >
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <Building2 className="w-4 h-4 text-indigo-700" />
+                                        <span className="font-semibold text-gray-900">Convenience Store</span>
+                                        {facility?.facilityType === 'CONVENIENCE_STORE' && <span className="ml-auto text-[10px] font-mono uppercase tracking-wider text-indigo-700 bg-white px-1.5 py-0.5 rounded-full border border-indigo-200">Active</span>}
+                                    </div>
+                                    <p className="text-xs text-gray-600 leading-relaxed">Sales, vendors, inventory turnover, daily revenue analytics, POS imports.</p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => switchFacility('RETIREMENT_HOME')}
+                                    disabled={switchingType}
+                                    className={`text-left rounded-xl border-2 p-4 transition-all ${facility?.facilityType === 'RETIREMENT_HOME' ? 'border-emerald-600 bg-emerald-50/40' : 'border-gray-200 hover:border-emerald-300'} disabled:opacity-60`}
+                                >
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <HeartHandshake className="w-4 h-4 text-emerald-700" />
+                                        <span className="font-semibold text-gray-900">Retirement Home</span>
+                                        {facility?.facilityType === 'RETIREMENT_HOME' && <span className="ml-auto text-[10px] font-mono uppercase tracking-wider text-emerald-700 bg-white px-1.5 py-0.5 rounded-full border border-emerald-200">Active</span>}
+                                    </div>
+                                    <p className="text-xs text-gray-600 leading-relaxed">Residents + dietary profiles, kitchen + meal planning, tray tickets, automated weekly vendor POs.</p>
+                                </button>
+                            </div>
+                            {switchMsg && (
+                                <p className={`mt-3 text-sm flex items-center gap-1.5 ${switchMsg.tone === 'success' ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                    {switchMsg.tone === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                                    {switchMsg.text}
+                                    {switchMsg.tone === 'success' && (
+                                        <button onClick={() => window.location.reload()} className="ml-2 text-indigo-700 hover:text-indigo-800 font-semibold">Refresh now</button>
+                                    )}
+                                </p>
+                            )}
+                            <p className="mt-3 text-xs text-gray-500">Your data is preserved across switches — only the sidebar, dashboards, and automations change.</p>
+                        </CardContent>
+                    </Card>
 
                     {/* Profile */}
                     <Card>
