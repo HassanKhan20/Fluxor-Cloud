@@ -50,3 +50,16 @@ export const csvUpload = multer({
         cb(null, true);
     }
 });
+
+// Voice-assistant audio upload: short audio clips, 5 MB max
+const audioStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+    filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase() || '.webm';
+        cb(null, `voice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`);
+    },
+});
+export const audioUpload = multer({
+    storage: audioStorage,
+    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+});

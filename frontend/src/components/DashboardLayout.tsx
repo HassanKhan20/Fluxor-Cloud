@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import StreamlineAnimation from './StreamlineAnimation';
 import { useFacility } from './FacilityTypeGate';
+import VoiceAssistant from './VoiceAssistant';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
@@ -292,6 +293,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </aside>
 
             <main className="flex-1 lg:ml-60 pt-14 lg:pt-0">{children}</main>
+
+            {/* Voice assistant — only render on retirement-mode pages */}
+            {isRetirement && <VoiceAssistant />}
         </div>
     );
 };
