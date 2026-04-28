@@ -21,14 +21,19 @@ import ResetPassword from './pages/ResetPassword';
 import Demo from './pages/Demo';
 import Kitchen from './pages/Kitchen';
 import KitchenLogger from './pages/KitchenLogger';
+import Residents from './pages/Residents';
+import PrepSheet from './pages/PrepSheet';
+import TrayTickets from './pages/TrayTickets';
 
 import ScrollToTop from './components/ScrollToTop';
 import PrivateRoute from './components/PrivateRoute';
+import { FacilityProvider } from './components/FacilityTypeGate';
 
 function App() {
   return (
     <Router>
       <ScrollToTop />
+      <FacilityProvider>
       <GalaxyTransitionProvider>
         <Routes>
           {/* Public Pages */}
@@ -55,11 +60,15 @@ function App() {
           <Route path="/reorder" element={<PrivateRoute><Reorder /></PrivateRoute>} />
           <Route path="/kitchen" element={<PrivateRoute><Kitchen /></PrivateRoute>} />
           <Route path="/kitchen/log" element={<PrivateRoute><KitchenLogger /></PrivateRoute>} />
+          <Route path="/residents" element={<PrivateRoute><Residents /></PrivateRoute>} />
+          <Route path="/kitchen/prep" element={<PrivateRoute><PrepSheet /></PrivateRoute>} />
+          <Route path="/kitchen/tray-tickets" element={<PrivateRoute><TrayTickets /></PrivateRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </GalaxyTransitionProvider>
+      </FacilityProvider>
     </Router>
   );
 }

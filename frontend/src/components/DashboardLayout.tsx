@@ -14,8 +14,12 @@ import {
     UserCheck,
     ShoppingCart,
     ChefHat,
+    HeartHandshake,
+    ClipboardList,
+    Printer,
 } from 'lucide-react';
 import StreamlineAnimation from './StreamlineAnimation';
+import { useFacility } from './FacilityTypeGate';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
@@ -30,37 +34,77 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const location = useLocation();
+    const { isRetirement } = useFacility();
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    const navGroups: NavGroup[] = [
-        {
-            label: 'Overview',
-            items: [
-                { id: 0, icon: <LayoutDashboard size={17} />, label: 'Dashboard', path: '/dashboard' },
-                { id: 4, icon: <LineChart size={17} />, label: 'Analytics', path: '/analytics' },
-            ],
-        },
-        {
-            label: 'Operations',
-            items: [
-                { id: 1, icon: <Boxes size={17} />, label: 'Inventory', path: '/products' },
-                { id: 8, icon: <ChefHat size={17} />, label: 'Kitchen', path: '/kitchen' },
-                { id: 2, icon: <Upload size={17} />, label: 'Import Sales', path: '/sales' },
-                { id: 3, icon: <Receipt size={17} />, label: 'Invoices', path: '/invoices' },
-                { id: 7, icon: <ShoppingCart size={17} />, label: 'Reorder', path: '/reorder' },
-            ],
-        },
-        {
-            label: 'Network',
-            items: [
-                { id: 5, icon: <Truck size={17} />, label: 'Vendors', path: '/vendors' },
-                { id: 6, icon: <UserCheck size={17} />, label: 'Staff', path: '/staff' },
-            ],
-        },
-    ];
+    // Two distinct nav layouts depending on facility type. Retirement-home
+    // facilities don't see Sales / Reorder / Vendors as the primary actions —
+    // their world is residents, meals, and supplies.
+    const navGroups: NavGroup[] = isRetirement
+        ? [
+            {
+                label: 'Overview',
+                items: [
+                    { id: 0, icon: <LayoutDashboard size={17} />, label: 'Dashboard', path: '/dashboard' },
+                ],
+            },
+            {
+                label: 'Care',
+                items: [
+                    { id: 10, icon: <HeartHandshake size={17} />, label: 'Residents', path: '/residents' },
+                ],
+            },
+            {
+                label: 'Kitchen',
+                items: [
+                    { id: 8, icon: <ChefHat size={17} />, label: 'Menu & Plan', path: '/kitchen' },
+                    { id: 11, icon: <ClipboardList size={17} />, label: 'Today\'s Prep', path: '/kitchen/prep' },
+                    { id: 12, icon: <Printer size={17} />, label: 'Tray Tickets', path: '/kitchen/tray-tickets' },
+                ],
+            },
+            {
+                label: 'Supply',
+                items: [
+                    { id: 1, icon: <Boxes size={17} />, label: 'Inventory', path: '/products' },
+                    { id: 3, icon: <Receipt size={17} />, label: 'Invoices', path: '/invoices' },
+                    { id: 5, icon: <Truck size={17} />, label: 'Vendors', path: '/vendors' },
+                ],
+            },
+            {
+                label: 'Team',
+                items: [
+                    { id: 6, icon: <UserCheck size={17} />, label: 'Staff', path: '/staff' },
+                ],
+            },
+        ]
+        : [
+            {
+                label: 'Overview',
+                items: [
+                    { id: 0, icon: <LayoutDashboard size={17} />, label: 'Dashboard', path: '/dashboard' },
+                    { id: 4, icon: <LineChart size={17} />, label: 'Analytics', path: '/analytics' },
+                ],
+            },
+            {
+                label: 'Operations',
+                items: [
+                    { id: 1, icon: <Boxes size={17} />, label: 'Inventory', path: '/products' },
+                    { id: 2, icon: <Upload size={17} />, label: 'Import Sales', path: '/sales' },
+                    { id: 3, icon: <Receipt size={17} />, label: 'Invoices', path: '/invoices' },
+                    { id: 7, icon: <ShoppingCart size={17} />, label: 'Reorder', path: '/reorder' },
+                ],
+            },
+            {
+                label: 'Network',
+                items: [
+                    { id: 5, icon: <Truck size={17} />, label: 'Vendors', path: '/vendors' },
+                    { id: 6, icon: <UserCheck size={17} />, label: 'Staff', path: '/staff' },
+                ],
+            },
+        ];
 
     const isActive = (path: string) => location.pathname === path;
 

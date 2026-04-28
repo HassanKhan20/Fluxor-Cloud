@@ -32,10 +32,17 @@ model Store {
   timezone        String  @default("UTC")
   defaultCurrency String  @default("USD")
 
-  // Kitchen module config
-  kitchenMode    Boolean @default(false) // Enable retirement-home kitchen workflow
+  // Facility-type switch: drives the entire UX (which pages, which dashboards,
+  // which onboarding) based on what kind of operation the customer runs.
+  // CONVENIENCE_STORE = original Fluxor surface (sales, vendors, analytics)
+  // RETIREMENT_HOME   = kitchen + residents + dietary + supplies workflow
+  facilityType    String  @default("CONVENIENCE_STORE")
+  facilityTypeSet Boolean @default(false) // True once user has chosen — drives onboarding modal
+
+  // Kitchen module config (still used; kitchenMode left for back-compat with older code paths)
+  kitchenMode    Boolean @default(false)
   weeklyOrderDay Int     @default(0) // 0 = Sunday, 6 = Saturday
-  servingsBuffer Float   @default(0) // Default extra servings buffer (e.g. 0.10 = +10%)
+  servingsBuffer Float   @default(0)
 
   members           StoreMembership[]
   products          Product[]
@@ -54,6 +61,10 @@ model Store {
   purchaseOrders    PurchaseOrder[]
   recipeVariances   RecipeVariance[]
   vendors           Vendor[]
+  residents         Resident[]
+  dailyCensus       DailyCensus[]
+  supplyItems       SupplyItem[]
+  supplyConsumption SupplyConsumption[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -512,4 +523,154 @@ model RecipeVariance {
 
   @@unique([storeId, productId, weekStart])
   @@index([storeId, weekStart])
+}
+
+// ============================================================================
+// RETIREMENT-HOME MODULE — residents, dietary needs, care plans, census,
+// non-food supplies. Built on the same architectural pattern as the kitchen
+// module (event ledger + forecast service + audit trail).
+// ============================================================================
+
+model Resident {
+  id            String    @id @default(uuid())
+  storeId       String
+  name          String
+  room          String? // "207", "Memory Care 4", etc.
+  admissionDate DateTime?
+  dischargeDate DateTime?
+  isActive      Boolean   @default(true)
+  notes         String?
+
+  store             Store               @relation(fields: [storeId], references: [id])
+  dietaryProfile    DietaryProfile?
+  carePlan          CarePlan?
+  supplyConsumption SupplyConsumption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId, isActive])
+}
+
+// One row per resident — captures dietary restrictions used to filter menu
+// items at meal time and to generate per-resident tray tickets.
+model DietaryProfile {
+  id          String  @id @default(uuid())
+  residentId  String  @unique
+  // Restriction flags (booleans rather than tags so the DB can index quickly)
+  diabetic    Boolean @default(false)
+  lowSodium   Boolean @default(false)
+  renal       Boolean @default(false)
+  cardiac     Boolean @default(false)
+  glutenFree  Boolean @default(false)
+  vegetarian  Boolean @default(false)
+  // Texture (for swallowing/dental)
+  texture     String  @default("regular") // regular | mechanical_soft | pureed | thickened_liquids
+  // Free-text fields for things outside the standard taxonomy
+  allergens   String? // comma-separated: "peanuts, shellfish"
+  dislikes    String? // "no onions, hates beets"
+  preferences String? // "tea with one sugar, milk on side"
+
+  resident Resident @relation(fields: [residentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Captures what each resident needs every day in terms of care + supplies.
+// This is the table that drives the supply-forecast differentiator.
+model CarePlan {
+  id                   String  @id @default(uuid())
+  residentId           String  @unique
+  // Incontinence: drives brief / wipe / glove demand
+  incontinenceLevel    String  @default("none") // none | nighttime_only | light | moderate | full
+  briefChangesPerDay   Int     @default(0) // Operator override; if 0, derived from level
+  // Mobility (drives walker/wheelchair maintenance + transfer-belt usage)
+  mobility             String  @default("independent") // independent | walker | wheelchair | bedbound
+  // Infection control / PPE demand
+  isolationPrecautions String  @default("none") // none | contact | droplet | airborne
+  // Hydration goal — for memory care units required to log intake
+  fluidGoalMl          Int?
+  // Free-text
+  notes                String?
+
+  resident Resident @relation(fields: [residentId], references: [id], onDelete: Cascade)
+
+  // Versioning so historical forecasts stay accurate after a plan change
+  version Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// One integer per day per store — the resident headcount actually present
+// (excludes hospitalized residents, includes family-meal guests).
+// Drives meal-plan scaling: actual_servings = census × menu coverage factor.
+model DailyCensus {
+  id      String   @id @default(uuid())
+  storeId String
+  date    DateTime @db.Date
+  count   Int // Total resident headcount for this day
+  guests  Int      @default(0) // Family meals, day-care visitors, etc.
+  notes   String?
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([storeId, date])
+  @@index([storeId, date])
+}
+
+// Non-food consumables: incontinence briefs, gloves, wipes, PPE, linens, etc.
+// Kept separate from `Product` because: (a) different forecast math (per-resident
+// per-day rather than per-meal), (b) different vendor relationships, (c) different
+// reorder cadence, (d) typically managed by DON / Housekeeping rather than the chef.
+model SupplyItem {
+  id               String  @id @default(uuid())
+  storeId          String
+  name             String
+  category         String // "incontinence" | "ppe" | "linen" | "housekeeping" | "personal_care"
+  unit             String // "ea" | "case" | "box" | "pair"
+  size             String? // brief size, glove size, etc.
+  costPrice        Float   @default(0)
+  caseSize         Float   @default(1)
+  parLevel         Float?
+  reorderThreshold Float?
+  leadTimeDays     Int     @default(2)
+  vendorRefId      String? // Optional FK to Vendor (reuses the kitchen-module vendor table)
+  isActive         Boolean @default(true)
+  notes            String?
+
+  store       Store               @relation(fields: [storeId], references: [id])
+  consumption SupplyConsumption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId, category])
+}
+
+// Source-agnostic ledger of every supply draw — point-of-use logging, central-
+// supply dispensing, even auto-deduction from care plan can all land here.
+// Mirrors the ConsumptionEvent pattern from the kitchen module.
+model SupplyConsumption {
+  id           String   @id @default(uuid())
+  storeId      String
+  supplyItemId String
+  residentId   String? // Optional — point-of-use logs include the resident
+  qty          Float
+  unit         String
+  source       String // "tablet" | "central_dispense" | "manual" | "care_plan_auto"
+  recordedAt   DateTime @default(now())
+  recordedBy   String? // userId
+  notes        String?
+
+  store      Store      @relation(fields: [storeId], references: [id])
+  supplyItem SupplyItem @relation(fields: [supplyItemId], references: [id])
+  resident   Resident?  @relation(fields: [residentId], references: [id])
+
+  @@index([storeId, recordedAt])
+  @@index([supplyItemId, recordedAt])
 }
