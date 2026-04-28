@@ -191,7 +191,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                                         to={item.path}
                                         onClick={() => setMobileMenuOpen(false)}
                                         className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive(item.path)
-                                            ? 'bg-indigo-50 text-indigo-700'
+                                            ? (isRetirement ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700')
                                             : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900'
                                             }`}
                                     >
@@ -254,7 +254,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                                         key={`desktop-${item.id}`}
                                         to={item.path}
                                         className={`flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors ${isActive(item.path)
-                                            ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                                            ? (isRetirement
+                                                ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                                                : 'bg-indigo-50 text-indigo-700 font-semibold')
                                             : 'text-ink-600 font-medium hover:bg-ink-50 hover:text-ink-900'
                                             }`}
                                     >

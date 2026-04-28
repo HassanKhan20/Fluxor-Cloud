@@ -36,17 +36,21 @@ import DashboardLayout from '@/components/DashboardLayout';
 import AlertsDropdown from '@/components/dashboard/AlertsDropdown';
 import WeeklySummaryCard from '@/components/dashboard/WeeklySummaryCard';
 import GlobalSearch from '@/components/GlobalSearch';
+import { useFacility } from '@/components/FacilityTypeGate';
+import RetirementDashboard from './RetirementDashboard';
 
 interface QuickActionProps {
     icon: React.ReactNode;
     label: string;
     onClick?: () => void;
     to?: string;
+    accent?: 'indigo' | 'emerald';
 }
-const QuickAction: React.FC<QuickActionProps> = ({ icon, label, onClick, to }) => {
+const QuickAction: React.FC<QuickActionProps> = ({ icon, label, onClick, to, accent = 'indigo' }) => {
+    const iconColor = accent === 'emerald' ? 'text-emerald-700' : 'text-indigo-700';
     const inner = (
         <>
-            <span className="w-12 h-12 rounded-full bg-white text-indigo-700 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all">
+            <span className={`w-12 h-12 rounded-full bg-white ${iconColor} flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all`}>
                 {icon}
             </span>
             <span className="text-[11px] font-medium text-white/85 group-hover:text-white tracking-tight whitespace-nowrap">
@@ -61,6 +65,12 @@ const QuickAction: React.FC<QuickActionProps> = ({ icon, label, onClick, to }) =
 };
 
 export default function Dashboard() {
+    const { isRetirement } = useFacility();
+    if (isRetirement) return <RetirementDashboard />;
+    return <ConvenienceStoreDashboard />;
+}
+
+function ConvenienceStoreDashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState('');
