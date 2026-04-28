@@ -18,6 +18,8 @@ import {
     Zap,
 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import WarmthIllustration from '@/components/WarmthIllustration';
+import { useFacility } from '@/components/FacilityTypeGate';
 import { kitchenApi, type MenuItem, type MealPlan, type Vendor, type PurchaseOrder, type ForecastResult } from '@/lib/kitchenApi';
 import { api } from '@/lib/api';
 
@@ -48,6 +50,7 @@ const toneClasses = {
 };
 
 export default function Kitchen() {
+    const { isRetirement } = useFacility();
     const [tab, setTab] = useState<Tab>('overview');
     const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date()));
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -123,15 +126,20 @@ export default function Kitchen() {
                 <div className="max-w-[1400px] mx-auto p-6 lg:p-8 space-y-6">
 
                     {/* Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                        <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex-1">
                             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600">Kitchen</p>
                             <h1 className="font-display text-3xl font-semibold text-ink-900 tracking-tightest mt-1.5 leading-tight">Recipes, plans &amp; weekly orders</h1>
                             <p className="text-[13.5px] text-ink-600 mt-1.5 max-w-2xl">
                                 Define menu items once, plan the week, log meals served. Fluxor turns recipes × meal plans into draft purchase orders and emails them to your vendors automatically.
                             </p>
                         </div>
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            {isRetirement && (
+                                <div className="hidden md:block">
+                                    <WarmthIllustration variant="kitchen" size="md" />
+                                </div>
+                            )}
                             <button
                                 onClick={loadPack}
                                 disabled={busy}

@@ -22,6 +22,7 @@ import {
 import DashboardLayout from '@/components/DashboardLayout';
 import AlertsDropdown from '@/components/dashboard/AlertsDropdown';
 import GlobalSearch from '@/components/GlobalSearch';
+import WarmthIllustration from '@/components/WarmthIllustration';
 import { retirementApi, type Resident, type DailyCensus, type PrepSheet } from '@/lib/retirementApi';
 
 interface QuickActionProps {
@@ -175,19 +176,24 @@ export default function RetirementDashboard() {
                             </button>
                         </div>
 
-                        {/* Greeting */}
-                        <div className="relative mt-8 lg:mt-10 max-w-2xl">
-                            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-white/75 flex items-center gap-1.5">
-                                <Heart className="w-3 h-3 fill-white/80" /> Today
-                            </p>
-                            <h1 className="font-display text-[34px] lg:text-[42px] font-semibold text-white tracking-tightest leading-[1.05] mt-1.5">
-                                Good {greetingByHour()}, {userName || 'friend'}.
-                            </h1>
-                            <p className="text-white/85 mt-2.5 text-[14px] max-w-xl">
-                                {residents.length === 0
-                                    ? "Add your first resident to start tracking dietary needs and care plans."
-                                    : `${todayCensus?.count ?? residents.length} residents in your care today. Wishing them a calm, comfortable day.`}
-                            </p>
+                        {/* Greeting + morning scene */}
+                        <div className="relative mt-8 lg:mt-10 flex items-end justify-between gap-4">
+                            <div className="max-w-2xl flex-1">
+                                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-white/75 flex items-center gap-1.5">
+                                    <Heart className="w-3 h-3 fill-white/80" /> Today
+                                </p>
+                                <h1 className="font-display text-[34px] lg:text-[42px] font-semibold text-white tracking-tightest leading-[1.05] mt-1.5">
+                                    Good {greetingByHour()}, {userName || 'friend'}.
+                                </h1>
+                                <p className="text-white/85 mt-2.5 text-[14px] max-w-xl">
+                                    {residents.length === 0
+                                        ? "Add your first resident to start tracking dietary needs and care plans."
+                                        : `${todayCensus?.count ?? residents.length} residents in your care today. Wishing them a calm, comfortable day.`}
+                                </p>
+                            </div>
+                            <div className="hidden lg:block flex-shrink-0">
+                                <WarmthIllustration variant="morning" size="md" />
+                            </div>
                         </div>
 
                         {/* Quick remind + actions */}

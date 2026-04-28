@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Printer, AlertTriangle, Coffee, Utensils, Cake } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import WarmthIllustration from '@/components/WarmthIllustration';
 import { retirementApi, type TrayTicket } from '@/lib/retirementApi';
 
 const MEAL_OPTIONS: { value: 'breakfast' | 'lunch' | 'dinner'; label: string; icon: React.ReactNode }[] = [
@@ -35,13 +36,16 @@ export default function TrayTicketsPage() {
                 <div className="max-w-[1200px] mx-auto p-6 lg:p-8 space-y-5 print:p-0">
 
                     {/* Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 print:hidden">
-                        <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:hidden">
+                        <div className="flex-1">
                             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-600">Kitchen</p>
                             <h1 className="font-display text-3xl font-semibold text-ink-900 tracking-tightest mt-1.5">Tray Tickets</h1>
                             <p className="text-[13.5px] text-ink-600 mt-1.5">One slip per resident with their diet flags, plus per-item allergen warnings derived from each resident's profile.</p>
                         </div>
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <div className="hidden lg:block">
+                                <WarmthIllustration variant="tray" size="md" />
+                            </div>
                             <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-white border border-ink-200 rounded-lg px-3 py-2 text-[13px]" />
                             <div className="bg-white border border-ink-200 rounded-lg px-1 py-1 inline-flex">
                                 {MEAL_OPTIONS.map(m => (
