@@ -114,4 +114,31 @@ export const retirementApi = {
     listSupplies: () => api.get('/retirement/supplies', tok()),
     createSupply: (body: any) => api.post('/retirement/supplies', body, tok()),
     recordSupplyUse: (body: any) => api.post('/retirement/supplies/consumption', body, tok()),
+
+    // Stockout prediction
+    getStockoutWatch: () =>
+        api.get('/retirement/stockout-watch', tok()) as Promise<{ rows: StockoutRow[]; summary: StockoutSummary }>,
+
+    // Bulk meal tally
+    bulkLogMeals: (date: string, entries: { menuItemId: string; servings: number }[]) =>
+        api.post('/retirement/log-meals-bulk', { date, entries }, tok()),
 };
+
+export interface StockoutRow {
+    productId: string;
+    productName: string;
+    unit: string | null;
+    onHand: number;
+    historicalDailyRate: number;
+    plannedDailyDemand: number;
+    effectiveDailyDemand: number;
+    daysUntilStockout: number;
+    leadTimeDays: number;
+    urgency: 'critical' | 'warning' | 'watch' | 'ok';
+    vendorName: string | null;
+    vendorRefId: string | null;
+}
+
+export interface StockoutSummary {
+    critical: number; warning: number; watch: number; ok: number;
+}

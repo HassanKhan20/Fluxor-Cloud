@@ -6,6 +6,7 @@ import {
     upsertCensus, listCensus, autoFillCensusWeek,
     getPrepSheet, getTrayTickets,
     listSupplyItems, createSupplyItem, recordSupplyConsumption,
+    getStockoutWatch, bulkLogMeal,
 } from '../controllers/retirementController';
 
 const router = Router();
@@ -35,5 +36,11 @@ router.get('/tray-tickets', getTrayTickets);
 router.get('/supplies', listSupplyItems);
 router.post('/supplies', createSupplyItem);
 router.post('/supplies/consumption', recordSupplyConsumption);
+
+// Stockout prediction
+router.get('/stockout-watch', getStockoutWatch);
+
+// Bulk meal-choice tally — replaces per-tap logging when residents pick from a sheet
+router.post('/log-meals-bulk', bulkLogMeal);
 
 export default router;

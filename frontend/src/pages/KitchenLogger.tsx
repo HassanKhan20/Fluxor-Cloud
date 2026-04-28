@@ -4,8 +4,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, Plus, Minus, Coffee, UtensilsCrossed, Cake, ChefHat } from 'lucide-react';
+import { ArrowLeft, Check, Plus, Minus, Coffee, UtensilsCrossed, Cake, ChefHat, ListChecks, MousePointerClick, Send } from 'lucide-react';
 import { kitchenApi, type MenuItem } from '@/lib/kitchenApi';
+import { retirementApi } from '@/lib/retirementApi';
 
 const CATEGORY_ICON: Record<string, React.ReactNode> = {
     breakfast: <Coffee className="w-4 h-4" />,
@@ -14,11 +15,18 @@ const CATEGORY_ICON: Record<string, React.ReactNode> = {
     dessert: <Cake className="w-4 h-4" />,
 };
 
+type Mode = 'tap' | 'tally';
+
 export default function KitchenLogger() {
     const [items, setItems] = useState<MenuItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [counts, setCounts] = useState<Record<string, number>>({});
     const [recentlyLogged, setRecentlyLogged] = useState<{ id: string; name: string; ts: number }[]>([]);
+    const [mode, setMode] = useState<Mode>('tap');
+    // Bulk-tally state — typed counts per dish, submit once at end of meal
+    const [tally, setTally] = useState<Record<string, string>>({});
+    const [tallyBusy, setTallyBusy] = useState(false);
+    const [tallyMsg, setTallyMsg] = useState<string | null>(null);
 
     useEffect(() => {
         (async () => {
@@ -30,6 +38,29 @@ export default function KitchenLogger() {
     }, []);
 
     const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+    async function submitTally() {
+        const entries = Object.entries(tally)
+            .map(([menuItemId, v]) => ({ menuItemId, servings: parseInt(v) || 0 }))
+            .filter(e => e.servings > 0);
+        if (entries.length === 0) {
+            setTallyMsg('Enter at least one count');
+            setTimeout(() => setTallyMsg(null), 2000);
+            return;
+        }
+        setTallyBusy(true);
+        try {
+            const r = await retirementApi.bulkLogMeals(today, entries);
+            setTallyMsg(r.message || 'Logged');
+            setTally({});
+            setTimeout(() => setTallyMsg(null), 3500);
+        } catch (e: any) {
+            setTallyMsg(e.message || 'Failed to log');
+            setTimeout(() => setTallyMsg(null), 3500);
+        } finally {
+            setTallyBusy(false);
+        }
+    }
 
     async function bump(item: MenuItem, delta: 1 | -1) {
         // Optimistic local count
@@ -58,16 +89,35 @@ export default function KitchenLogger() {
     return (
         <div className="min-h-screen bg-ink-950 text-white font-sans">
             {/* Top bar */}
-            <header className="bg-ink-900/80 backdrop-blur-sm border-b border-white/5 px-6 py-4 flex items-center justify-between">
+            <header className="bg-ink-900/80 backdrop-blur-sm border-b border-white/5 px-6 py-4 flex items-center justify-between gap-3 flex-wrap">
                 <Link to="/kitchen" className="flex items-center gap-2 text-[13px] text-white/70 hover:text-white">
                     <ArrowLeft className="w-4 h-4" /> Back
                 </Link>
                 <div className="text-center">
                     <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-indigo-300">Tablet logger</p>
-                    <h1 className="font-display text-[18px] font-semibold tracking-tight">Tap a dish each time it's served</h1>
+                    <h1 className="font-display text-[18px] font-semibold tracking-tight">
+                        {mode === 'tap' ? "Tap a dish each time it's served" : 'Type end-of-meal counts'}
+                    </h1>
                 </div>
-                <div className="text-right text-[12px] text-white/60 tabular-nums">
-                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                <div className="flex items-center gap-3">
+                    {/* Mode switcher */}
+                    <div className="flex items-center gap-0.5 bg-white/5 border border-white/10 rounded-lg p-0.5">
+                        <button
+                            onClick={() => setMode('tap')}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${mode === 'tap' ? 'bg-indigo-600 text-white' : 'text-white/70 hover:text-white'}`}
+                        >
+                            <MousePointerClick className="w-3 h-3" /> Tap
+                        </button>
+                        <button
+                            onClick={() => setMode('tally')}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors ${mode === 'tally' ? 'bg-emerald-600 text-white' : 'text-white/70 hover:text-white'}`}
+                        >
+                            <ListChecks className="w-3 h-3" /> Bulk tally
+                        </button>
+                    </div>
+                    <div className="text-[12px] text-white/60 tabular-nums">
+                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                    </div>
                 </div>
             </header>
 
@@ -78,6 +128,46 @@ export default function KitchenLogger() {
                     <div className="text-center py-16">
                         <p className="text-white/80 text-[15px]">No menu items defined yet.</p>
                         <Link to="/kitchen" className="text-indigo-300 hover:text-indigo-200 text-[13px] mt-2 inline-block">Set up menu items →</Link>
+                    </div>
+                ) : mode === 'tally' ? (
+                    <div className="max-w-2xl mx-auto">
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                            <p className="text-[13px] text-white/70 mb-4">
+                                Use this when residents pick from a paper sheet. Type the count for each dish, then submit once at the end of the meal.
+                            </p>
+                            <div className="space-y-2">
+                                {Array.from(grouped.entries()).flatMap(([_, dishes]) => dishes).map(d => (
+                                    <div key={d.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-display text-[15px] font-semibold tracking-tight truncate">{d.name}</div>
+                                            <div className="text-[11px] text-white/50 capitalize">{d.category || 'other'} · target {d.defaultServings}</div>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            min="0"
+                                            placeholder="0"
+                                            value={tally[d.id] ?? ''}
+                                            onChange={e => setTally(t => ({ ...t, [d.id]: e.target.value }))}
+                                            className="w-24 h-12 bg-white/5 border border-white/10 rounded-xl text-center font-display text-[20px] font-bold tabular-nums text-white outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <button
+                                onClick={submitTally}
+                                disabled={tallyBusy}
+                                className="mt-5 w-full flex items-center justify-center gap-2 h-14 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-display text-[15px] font-semibold tracking-tight shadow-[0_0_24px_-5px_rgba(16,185,129,0.6)] disabled:opacity-60 transition-colors"
+                            >
+                                <Send className="w-4 h-4" /> {tallyBusy ? 'Submitting…' : 'Submit tally'}
+                            </button>
+                            {tallyMsg && (
+                                <p className="text-center text-[13px] text-emerald-300 mt-3">{tallyMsg}</p>
+                            )}
+                            <p className="text-center text-[11px] text-white/40 mt-4">
+                                Each count fires recipe deductions for that dish — same effect as tapping {' '}<kbd className="px-1 py-0.5 bg-white/10 rounded text-[10px]">+</kbd> N times in Tap mode.
+                            </p>
+                        </div>
                     </div>
                 ) : (
                     <div className="space-y-8">

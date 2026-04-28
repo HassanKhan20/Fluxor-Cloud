@@ -5,6 +5,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { getStoreId } from '../lib/storeContext';
+import { computeStockoutWatch } from '../services/stockoutWatchService';
 
 const requireStore = async (req: Request, res: Response): Promise<string | null> => {
     const storeId = await getStoreId(req);
@@ -378,4 +379,81 @@ export const recordSupplyConsumption = async (req: Request, res: Response) => {
         },
     });
     res.status(201).json({ event: ev });
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// STOCKOUT WATCH — predicts which ingredients will run out before next delivery
+// ────────────────────────────────────────────────────────────────────────────
+
+export const getStockoutWatch = async (req: Request, res: Response) => {
+    const storeId = await requireStore(req, res); if (!storeId) return;
+    const rows = await computeStockoutWatch(storeId);
+    const summary = {
+        critical: rows.filter(r => r.urgency === 'critical').length,
+        warning:  rows.filter(r => r.urgency === 'warning').length,
+        watch:    rows.filter(r => r.urgency === 'watch').length,
+        ok:       rows.filter(r => r.urgency === 'ok').length,
+    };
+    res.json({ rows, summary });
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+// BULK MEAL TALLY — CNA enters end-of-meal counts in one shot
+// e.g. "Lunch served: 28 chicken, 19 meatloaf, 12 fish"
+// ────────────────────────────────────────────────────────────────────────────
+
+interface BulkTallyEntry { menuItemId: string; servings: number; }
+
+export const bulkLogMeal = async (req: Request, res: Response) => {
+    const storeId = await requireStore(req, res); if (!storeId) return;
+    const { date, entries } = req.body as { date?: string; entries: BulkTallyEntry[] };
+    if (!Array.isArray(entries) || entries.length === 0) {
+        return res.status(400).json({ message: 'entries[] required' });
+    }
+    const userId = (req as any).user?.userId ?? null;
+    const day = parseDate(date) ?? parseDate(new Date().toISOString().slice(0, 10))!;
+
+    let totalServings = 0;
+    let totalEvents = 0;
+    const results: { menuItemId: string; menuItemName: string; servings: number }[] = [];
+
+    await prisma.$transaction(async (db) => {
+        for (const entry of entries) {
+            if (!entry.menuItemId || entry.servings == null || entry.servings <= 0) continue;
+            const menuItem = await db.menuItem.findFirst({
+                where: { id: entry.menuItemId, storeId },
+                include: { recipes: true },
+            });
+            if (!menuItem) continue;
+
+            await db.mealPlan.upsert({
+                where: { storeId_date_menuItemId: { storeId, date: day, menuItemId: entry.menuItemId } },
+                update: { actualServings: { increment: entry.servings } },
+                create: {
+                    storeId, date: day, menuItemId: entry.menuItemId,
+                    plannedServings: 0,
+                    actualServings: entry.servings,
+                },
+            });
+
+            for (const r of menuItem.recipes) {
+                await db.consumptionEvent.create({
+                    data: {
+                        storeId,
+                        productId: r.productId,
+                        menuItemId: entry.menuItemId,
+                        qty: r.qtyPerServing * entry.servings,
+                        unit: r.unit,
+                        source: 'bulk_tally',
+                        recordedBy: userId,
+                    },
+                });
+                totalEvents++;
+            }
+            totalServings += entry.servings;
+            results.push({ menuItemId: entry.menuItemId, menuItemName: menuItem.name, servings: entry.servings });
+        }
+    });
+
+    res.json({ message: `Logged ${totalServings} serving(s) across ${results.length} dish(es)`, results, totalEvents });
 };

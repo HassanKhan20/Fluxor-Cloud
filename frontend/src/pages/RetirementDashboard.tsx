@@ -18,12 +18,14 @@ import {
     Coffee,
     Truck,
     Printer,
+    AlertTriangle,
+    Zap,
 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import AlertsDropdown from '@/components/dashboard/AlertsDropdown';
 import GlobalSearch from '@/components/GlobalSearch';
 import WarmthIllustration from '@/components/WarmthIllustration';
-import { retirementApi, type Resident, type DailyCensus, type PrepSheet } from '@/lib/retirementApi';
+import { retirementApi, type Resident, type DailyCensus, type PrepSheet, type StockoutRow, type StockoutSummary } from '@/lib/retirementApi';
 
 interface QuickActionProps {
     icon: React.ReactNode;
@@ -74,6 +76,7 @@ export default function RetirementDashboard() {
     const [residents, setResidents] = useState<Resident[]>([]);
     const [todayCensus, setTodayCensus] = useState<DailyCensus | null>(null);
     const [todayPrep, setTodayPrep] = useState<PrepSheet | null>(null);
+    const [stockout, setStockout] = useState<{ rows: StockoutRow[]; summary: StockoutSummary } | null>(null);
     const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState('');
 
@@ -88,13 +91,15 @@ export default function RetirementDashboard() {
         (async () => {
             try {
                 const today = new Date().toISOString().slice(0, 10);
-                const [r, prep] = await Promise.all([
+                const [r, prep, sw] = await Promise.all([
                     retirementApi.listResidents().catch(() => ({ residents: [] as Resident[] })),
                     retirementApi.getPrepSheet(today).catch(() => null),
+                    retirementApi.getStockoutWatch().catch(() => null),
                 ]);
                 setResidents(r.residents);
                 setTodayPrep(prep);
                 setTodayCensus(prep?.census ?? null);
+                setStockout(sw);
             } finally {
                 setLoading(false);
             }
@@ -252,6 +257,11 @@ export default function RetirementDashboard() {
                         />
                     </div>
 
+                    {/* Stockout watch — only render if there is anything worth flagging */}
+                    {stockout && stockout.rows.filter(r => r.urgency !== 'ok').length > 0 && (
+                        <StockoutWatchCard rows={stockout.rows} summary={stockout.summary} />
+                    )}
+
                     {/* Two side-by-side at-a-glance cards */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {/* Roster preview */}
@@ -353,5 +363,67 @@ export default function RetirementDashboard() {
                 </div>
             </div>
         </DashboardLayout>
+    );
+}
+
+function StockoutWatchCard({ rows, summary }: { rows: StockoutRow[]; summary: StockoutSummary }) {
+    const flagged = rows.filter(r => r.urgency !== 'ok').slice(0, 6);
+    const toneCls: Record<string, string> = {
+        critical: 'bg-rose-50 text-rose-700 border-rose-200',
+        warning:  'bg-amber-50 text-amber-700 border-amber-200',
+        watch:    'bg-blue-50 text-blue-700 border-blue-200',
+    };
+    const dotCls: Record<string, string> = {
+        critical: 'bg-rose-500',
+        warning:  'bg-amber-500',
+        watch:    'bg-blue-500',
+    };
+
+    return (
+        <div className="bg-white border border-emerald-100 rounded-2xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-emerald-50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-emerald-700" />
+                    <span className="font-display text-[14px] font-semibold text-ink-900 tracking-tight">Stockout watch</span>
+                    <span className="font-mono text-[10.5px] text-ink-500 uppercase tracking-[0.12em]">predicted from recent use × upcoming menu</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] tabular-nums">
+                    {summary.critical > 0 && <span className="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-semibold">{summary.critical} critical</span>}
+                    {summary.warning > 0  && <span className="px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-semibold">{summary.warning} warning</span>}
+                    {summary.watch > 0    && <span className="px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-semibold">{summary.watch} watch</span>}
+                </div>
+            </div>
+            <div className="divide-y divide-emerald-50">
+                {flagged.map(r => (
+                    <div key={r.productId} className="flex items-center gap-3 px-5 py-2.5">
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls[r.urgency]}`} />
+                        <div className="flex-1 min-w-0">
+                            <div className="text-[13px] font-semibold text-ink-900 tracking-tight truncate">{r.productName}</div>
+                            <div className="text-[11px] text-ink-500 tabular-nums truncate">
+                                {r.onHand.toFixed(1)} {r.unit ?? ''} on hand · using {r.effectiveDailyDemand}/day
+                                {r.vendorName && ` · ${r.vendorName} (${r.leadTimeDays}d lead)`}
+                            </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                            <div className={`text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded-full border whitespace-nowrap ${toneCls[r.urgency]}`}>
+                                {r.daysUntilStockout < 1
+                                    ? `< 1 day`
+                                    : r.daysUntilStockout >= 999
+                                      ? `—`
+                                      : `${r.daysUntilStockout.toFixed(1)} days`}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            {flagged.length > 0 && summary.critical > 0 && (
+                <div className="bg-rose-50/60 border-t border-rose-100 px-5 py-2.5 flex items-start gap-2 text-[11.5px] text-rose-800">
+                    <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                    <span>
+                        <strong className="font-semibold">{summary.critical}</strong> item{summary.critical === 1 ? ' will' : 's will'} run out before the next vendor delivery. Consider running an unscheduled order.
+                    </span>
+                </div>
+            )}
+        </div>
     );
 }
