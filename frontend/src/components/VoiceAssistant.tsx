@@ -9,11 +9,19 @@ import { API_URL } from '@/lib/api';
 
 type Phase = 'idle' | 'recording' | 'processing' | 'replying' | 'error';
 
+interface Citation {
+    saleId: string;
+    productId?: string;
+    dateTime: string;
+    amount: number;
+}
+
 interface Reply {
     transcript: string;
     speech: string;
     action: string;
     audioBase64: string | null;
+    data?: any;
 }
 
 export default function VoiceAssistant() {
@@ -140,9 +148,10 @@ export default function VoiceAssistant() {
 
     return (
         <>
-            {/* Reply card — shows transcript and reply */}
+            {/* Reply card — shows transcript and reply.
+                On phones, anchor to both edges so it never overflows the viewport. */}
             {(phase === 'replying' || (phase === 'idle' && last)) && last && (
-                <div className="fixed bottom-24 right-6 z-50 max-w-sm animate-fade-in">
+                <div className="fixed bottom-24 left-3 right-3 sm:left-auto sm:right-6 z-50 sm:max-w-sm animate-fade-in">
                     <div className="bg-white border border-emerald-200 rounded-2xl shadow-xl p-4">
                         <div className="flex items-start justify-between gap-3 mb-2">
                             <div className="flex items-center gap-1.5 text-[10.5px] font-mono uppercase tracking-[0.14em] text-emerald-700">
@@ -156,13 +165,38 @@ export default function VoiceAssistant() {
                             <div className="text-[12px] text-ink-500 italic mb-2">"{last.transcript}"</div>
                         )}
                         <div className="text-[14px] text-ink-900 font-medium leading-snug">{last.speech}</div>
+
+                        {/* Citations — every c-store query returns transaction IDs.
+                            Showing them is the trust moat: the answer above is grounded in these rows. */}
+                        {(() => {
+                            const citations = collectCitations(last.data);
+                            if (citations.length === 0) return null;
+                            return (
+                                <div className="mt-3 pt-2.5 border-t border-emerald-100">
+                                    <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-emerald-700 mb-1.5">
+                                        Based on {citations.length} transaction{citations.length === 1 ? '' : 's'}
+                                    </div>
+                                    <div className="max-h-32 overflow-y-auto space-y-1">
+                                        {citations.slice(0, 6).map(c => (
+                                            <div key={c.saleId + (c.productId || '')} className="flex items-center justify-between text-[11px] text-ink-600 font-mono">
+                                                <span>{new Date(c.dateTime).toLocaleDateString()} · {c.saleId.slice(0, 8)}</span>
+                                                <span className="text-ink-900 font-semibold">${c.amount.toFixed(2)}</span>
+                                            </div>
+                                        ))}
+                                        {citations.length > 6 && (
+                                            <div className="text-[10.5px] text-ink-400 italic">+ {citations.length - 6} more</div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             )}
 
             {/* Error toast */}
             {errorText && (
-                <div className="fixed bottom-24 right-6 z-50 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3.5 py-2.5 text-[13px] font-medium shadow-lg">
+                <div className="fixed bottom-24 left-3 right-3 sm:left-auto sm:right-6 z-50 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3.5 py-2.5 text-[13px] font-medium shadow-lg">
                     {errorText}
                 </div>
             )}
@@ -208,4 +242,30 @@ function pickMime(): string {
         if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(c)) return c;
     }
     return 'audio/webm';
+}
+
+// Pull transaction-id citations out of any c-store tool response. Each
+// c-store tool either returns `data.citations` directly (revenue summary)
+// or a `data.results[]` where each result has its own citations[].
+function collectCitations(data: any): Citation[] {
+    if (!data) return [];
+    const out: Citation[] = [];
+    if (Array.isArray(data.citations)) {
+        for (const c of data.citations) if (c?.saleId) out.push(c);
+    }
+    if (Array.isArray(data.results)) {
+        for (const r of data.results) {
+            if (Array.isArray(r?.citations)) {
+                for (const c of r.citations) if (c?.saleId) out.push(c);
+            }
+        }
+    }
+    // Dedupe by saleId+productId (a single sale can be cited twice across results)
+    const seen = new Set<string>();
+    return out.filter(c => {
+        const k = c.saleId + '|' + (c.productId || '');
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+    });
 }

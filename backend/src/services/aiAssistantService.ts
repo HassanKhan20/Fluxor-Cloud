@@ -14,6 +14,93 @@ import fs from 'fs';
 // Tool definitions — the only things the model is allowed to "do"
 // ────────────────────────────────────────────────────────────────────────────
 
+// Convenience-store tools — used when store.facilityType = CONVENIENCE_STORE.
+// Each tool is read-only and returns transaction-id citations alongside the
+// answer, so the UI can show "this number comes from these N rows" — the
+// integrity guarantee that incumbents' AI assistants don't provide.
+const CSTORE_TOOLS = [
+    {
+        type: 'function',
+        function: {
+            name: 'cstore_top_products',
+            description:
+                'Return the top-selling products by revenue for a recent time window. Use for queries like "what are my best sellers", "top items this week", "what made me the most money in the last 30 days".',
+            parameters: {
+                type: 'object',
+                properties: {
+                    days: { type: 'integer', description: 'Lookback window in days (default 7, max 90)' },
+                    limit: { type: 'integer', description: 'How many products to return (default 5, max 20)' }
+                }
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'cstore_low_stock',
+            description:
+                'List products that are running low — high sales velocity + low on-hand. Use for "what is running out", "what should I reorder", "what is low".',
+            parameters: { type: 'object', properties: {} }
+        }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'cstore_margin_compressed',
+            description:
+                'List products whose margin has dropped because cost rose but retail did not. Use for "where am I losing margin", "which items lost profitability", "cost increases".',
+            parameters: {
+                type: 'object',
+                properties: {
+                    minDropPercent: { type: 'number', description: 'Minimum margin-point drop to flag (default 3)' }
+                }
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'cstore_revenue_summary',
+            description:
+                'Return total revenue, transaction count, and average ticket for a window, plus week-over-week change. Use for "how did I do this week", "revenue last 30 days", "how is the store doing".',
+            parameters: {
+                type: 'object',
+                properties: {
+                    days: { type: 'integer', description: 'Lookback window in days (default 7, max 90)' }
+                }
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'cstore_vendor_performance',
+            description:
+                'Revenue and unit volume per vendor/distributor in the last N days. Use for "which vendor is doing well", "Coca-Cola sales", "compare distributors".',
+            parameters: {
+                type: 'object',
+                properties: {
+                    days: { type: 'integer', description: 'Lookback window in days (default 30, max 90)' },
+                    vendor: { type: 'string', description: 'Optional filter — single vendor name' }
+                }
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'unrecognized',
+            description:
+                'Fallback when the user\'s question does not match any other tool. Provide a short clarifying message in the message field.',
+            parameters: {
+                type: 'object',
+                properties: { message: { type: 'string' } },
+                required: ['message']
+            }
+        }
+    }
+];
+
 const TOOLS = [
     {
         type: 'function',
@@ -114,15 +201,24 @@ interface ToolCall {
     args: any;
 }
 
-export async function pickTool(transcript: string): Promise<ToolCall> {
+export async function pickTool(transcript: string, facilityType: string = 'RETIREMENT_HOME'): Promise<ToolCall> {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) throw new Error('GROQ_API_KEY not configured');
 
-    const systemPrompt = `You are the voice assistant for Fluxor Cloud, a retirement-home kitchen-management app.
+    const isCStore = facilityType === 'CONVENIENCE_STORE';
+    const systemPrompt = isCStore
+        ? `You are the voice assistant for Fluxor Cloud, an operations app for an independent convenience store.
+You answer questions about sales, inventory, margins, and vendors using the store's actual transaction data.
+Always pick exactly ONE tool from the provided list — never answer in free-form text.
+If you cannot map the question to a tool, call "unrecognized" with a short clarifying message.
+Be concise.`
+        : `You are the voice assistant for Fluxor Cloud, a retirement-home kitchen-management app.
 You help kitchen staff log meals and check inventory by voice.
 Always pick exactly ONE tool from the provided list — never answer in free-form text.
 If you cannot map the request to a tool, call "unrecognized" with a short clarifying message.
 Be concise. Default servings=1 unless otherwise stated.`;
+
+    const tools = isCStore ? CSTORE_TOOLS : TOOLS;
 
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -136,7 +232,7 @@ Be concise. Default servings=1 unless otherwise stated.`;
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: transcript },
             ],
-            tools: TOOLS,
+            tools,
             tool_choice: 'required',
             temperature: 0.1,
             max_tokens: 256,
@@ -385,5 +481,278 @@ export async function executeTool(storeId: string, userId: string | null, call: 
         return { speech, action: 'stockout_read', data: { rows: flagged } };
     }
 
+    // ── C-store tools — read-only queries with transaction-id citations ──
+    if (call.name.startsWith('cstore_')) {
+        return executeCStoreTool(storeId, call);
+    }
+
     return { speech: 'Sorry, I did not understand that command.', action: 'unrecognized' };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Convenience-store tool execution
+//
+// Every tool returns transaction IDs (sale.id) in its `data.citations` array
+// so the UI can show "this answer comes from these N transactions" — closing
+// the trust gap that incumbent AI assistants leave open. No sale.id is ever
+// invented; every citation maps to a real row.
+// ────────────────────────────────────────────────────────────────────────────
+
+interface CStoreCitation {
+    saleId: string;
+    productId?: string;
+    dateTime: string;
+    amount: number;
+}
+
+function clampInt(value: any, fallback: number, min: number, max: number): number {
+    const n = parseInt(value);
+    if (!isFinite(n)) return fallback;
+    return Math.max(min, Math.min(max, n));
+}
+
+function clampNum(value: any, fallback: number, min: number, max: number): number {
+    const n = Number(value);
+    if (!isFinite(n)) return fallback;
+    return Math.max(min, Math.min(max, n));
+}
+
+async function executeCStoreTool(storeId: string, call: ToolCall): Promise<ExecutionResult> {
+    if (call.name === 'cstore_top_products') {
+        const days = clampInt(call.args?.days, 7, 1, 90);
+        const limit = clampInt(call.args?.limit, 5, 1, 20);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+        const items = await prisma.saleItem.findMany({
+            where: { sale: { storeId, dateTime: { gte: since } } },
+            include: {
+                product: { select: { id: true, name: true } },
+                sale: { select: { id: true, dateTime: true } }
+            }
+        });
+
+        const byProduct = new Map<string, { name: string; revenue: number; units: number; citations: CStoreCitation[] }>();
+        for (const i of items) {
+            const key = i.product.id;
+            const cur = byProduct.get(key) || { name: i.product.name, revenue: 0, units: 0, citations: [] };
+            cur.revenue += i.lineTotal;
+            cur.units += i.quantity;
+            if (cur.citations.length < 25) {
+                cur.citations.push({
+                    saleId: i.sale.id, productId: i.product.id,
+                    dateTime: i.sale.dateTime.toISOString(), amount: i.lineTotal
+                });
+            }
+            byProduct.set(key, cur);
+        }
+        const ranked = Array.from(byProduct.entries())
+            .map(([id, v]) => ({ productId: id, ...v }))
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, limit);
+
+        if (ranked.length === 0) {
+            return {
+                speech: `No sales found in the last ${days} days.`,
+                action: 'cstore_top_products', data: { days, results: [] }
+            };
+        }
+        const top = ranked[0];
+        const speech = ranked.length === 1
+            ? `Your top product the last ${days} days is ${top.name} at $${top.revenue.toFixed(2)}.`
+            : `Top ${ranked.length} the last ${days} days: ` +
+              ranked.slice(0, 3).map((r, i) => `${i + 1}. ${r.name} $${r.revenue.toFixed(0)}`).join(', ') + '.';
+
+        return {
+            speech, action: 'cstore_top_products',
+            data: {
+                days,
+                results: ranked.map(r => ({
+                    productId: r.productId, name: r.name,
+                    revenue: r.revenue, units: r.units, citations: r.citations
+                }))
+            }
+        };
+    }
+
+    if (call.name === 'cstore_low_stock') {
+        const thirty = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const products = await prisma.product.findMany({
+            where: { storeId, isActive: true },
+            include: {
+                inventorySnapshots: { orderBy: { snapshotDate: 'desc' }, take: 1 },
+                saleItems: {
+                    where: { sale: { dateTime: { gte: thirty } } },
+                    include: { sale: { select: { id: true, dateTime: true } } }
+                }
+            }
+        });
+
+        const flagged = [];
+        for (const p of products) {
+            const stock = p.inventorySnapshots[0]?.quantityOnHand ?? p.initialStock ?? 0;
+            const sold = p.saleItems.reduce((s, i) => s + i.quantity, 0);
+            const dailyRate = sold / 30;
+            if (dailyRate < 0.3) continue;
+            const daysLeft = stock / dailyRate;
+            if (daysLeft >= 5 || stock <= 0) continue;
+            flagged.push({
+                productId: p.id, name: p.name, currentStock: stock,
+                dailyRate, daysLeft,
+                citations: p.saleItems.slice(-15).map(i => ({
+                    saleId: i.sale.id, productId: p.id,
+                    dateTime: i.sale.dateTime.toISOString(), amount: i.lineTotal
+                }))
+            });
+        }
+        flagged.sort((a, b) => a.daysLeft - b.daysLeft);
+        const top = flagged.slice(0, 8);
+
+        if (top.length === 0) {
+            return { speech: 'Nothing is running low right now.', action: 'cstore_low_stock', data: { results: [] } };
+        }
+        const speech = top.length === 1
+            ? `${top[0].name} is low — about ${top[0].daysLeft.toFixed(1)} days left.`
+            : `${top.length} items are running low. Most urgent: ${top.slice(0, 3).map(r => `${r.name} (${r.daysLeft.toFixed(1)} days)`).join(', ')}.`;
+        return { speech, action: 'cstore_low_stock', data: { results: top } };
+    }
+
+    if (call.name === 'cstore_margin_compressed') {
+        const minDrop = clampNum(call.args?.minDropPercent, 3, 0.5, 50);
+        const sixty = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+
+        const products = await prisma.product.findMany({
+            where: { storeId, isActive: true, costPrice: { gt: 0 }, sellingPrice: { gt: 0 } },
+            include: {
+                invoiceItems: {
+                    orderBy: { invoice: { createdAt: 'desc' } },
+                    take: 5,
+                    include: { invoice: { select: { id: true, createdAt: true, supplierName: true } } }
+                },
+                saleItems: {
+                    where: { sale: { dateTime: { gte: sixty } } },
+                    take: 10, orderBy: { sale: { dateTime: 'desc' } },
+                    include: { sale: { select: { id: true, dateTime: true } } }
+                }
+            }
+        });
+
+        const flagged = [];
+        for (const p of products) {
+            if (p.invoiceItems.length < 2) continue;
+            const newest = p.invoiceItems[0];
+            const prior = p.invoiceItems.find(it => it.unitCost !== newest.unitCost);
+            if (!prior) continue;
+            if (newest.unitCost <= prior.unitCost) continue;
+            const oldMargin = ((p.sellingPrice - prior.unitCost) / p.sellingPrice) * 100;
+            const newMargin = ((p.sellingPrice - newest.unitCost) / p.sellingPrice) * 100;
+            const drop = oldMargin - newMargin;
+            if (drop < minDrop) continue;
+            flagged.push({
+                productId: p.id, name: p.name,
+                priorCost: prior.unitCost, newCost: newest.unitCost,
+                sellingPrice: p.sellingPrice,
+                priorMarginPct: oldMargin, newMarginPct: newMargin, marginDropPct: drop,
+                citations: [
+                    { saleId: newest.invoice.id, productId: p.id, dateTime: newest.invoice.createdAt.toISOString(), amount: newest.unitCost },
+                    ...p.saleItems.map(i => ({ saleId: i.sale.id, productId: p.id, dateTime: i.sale.dateTime.toISOString(), amount: i.lineTotal }))
+                ]
+            });
+        }
+        flagged.sort((a, b) => b.marginDropPct - a.marginDropPct);
+        const top = flagged.slice(0, 10);
+
+        if (top.length === 0) {
+            return { speech: `No margin compression detected above ${minDrop}%.`, action: 'cstore_margin_compressed', data: { results: [] } };
+        }
+        const worst = top[0];
+        const speech = `${top.length} item${top.length === 1 ? '' : 's'} lost margin. Worst: ${worst.name}, margin down ${worst.marginDropPct.toFixed(1)} points (cost $${worst.priorCost.toFixed(2)} to $${worst.newCost.toFixed(2)}, retail still $${worst.sellingPrice.toFixed(2)}).`;
+        return { speech, action: 'cstore_margin_compressed', data: { results: top } };
+    }
+
+    if (call.name === 'cstore_revenue_summary') {
+        const days = clampInt(call.args?.days, 7, 1, 90);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        const priorSince = new Date(Date.now() - 2 * days * 24 * 60 * 60 * 1000);
+
+        const [thisPeriod, priorPeriod] = await Promise.all([
+            prisma.sale.findMany({
+                where: { storeId, dateTime: { gte: since } },
+                select: { id: true, dateTime: true, totalAmount: true },
+                orderBy: { dateTime: 'desc' }
+            }),
+            prisma.sale.aggregate({
+                where: { storeId, dateTime: { gte: priorSince, lt: since } },
+                _sum: { totalAmount: true }, _count: { _all: true }
+            })
+        ]);
+
+        const revenue = thisPeriod.reduce((s, x) => s + x.totalAmount, 0);
+        const txCount = thisPeriod.length;
+        const avgTicket = txCount > 0 ? revenue / txCount : 0;
+        const priorRevenue = priorPeriod._sum.totalAmount || 0;
+        const change = priorRevenue > 0 ? ((revenue - priorRevenue) / priorRevenue) * 100 : 0;
+
+        const speech = txCount === 0
+            ? `No sales in the last ${days} days.`
+            : `Last ${days} days: $${revenue.toFixed(0)} on ${txCount} transactions, average ticket $${avgTicket.toFixed(2)}. ${change >= 0 ? 'Up' : 'Down'} ${Math.abs(change).toFixed(1)}% vs the prior period.`;
+
+        return {
+            speech, action: 'cstore_revenue_summary',
+            data: {
+                days, revenue, transactionCount: txCount, averageTicket: avgTicket,
+                priorRevenue, changePct: change,
+                citations: thisPeriod.slice(0, 50).map(s => ({
+                    saleId: s.id, dateTime: s.dateTime.toISOString(), amount: s.totalAmount
+                }))
+            }
+        };
+    }
+
+    if (call.name === 'cstore_vendor_performance') {
+        const days = clampInt(call.args?.days, 30, 1, 90);
+        const vendorFilter = call.args?.vendor ? String(call.args.vendor).toLowerCase() : null;
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+        const items = await prisma.saleItem.findMany({
+            where: { sale: { storeId, dateTime: { gte: since } } },
+            include: {
+                product: { select: { id: true, name: true, vendor: true } },
+                sale: { select: { id: true, dateTime: true } }
+            }
+        });
+
+        const byVendor = new Map<string, { revenue: number; units: number; productCount: Set<string>; citations: CStoreCitation[] }>();
+        for (const i of items) {
+            const v = i.product.vendor;
+            if (!v) continue;
+            if (vendorFilter && !v.toLowerCase().includes(vendorFilter)) continue;
+            const cur = byVendor.get(v) || { revenue: 0, units: 0, productCount: new Set(), citations: [] };
+            cur.revenue += i.lineTotal;
+            cur.units += i.quantity;
+            cur.productCount.add(i.product.id);
+            if (cur.citations.length < 20) {
+                cur.citations.push({
+                    saleId: i.sale.id, productId: i.product.id,
+                    dateTime: i.sale.dateTime.toISOString(), amount: i.lineTotal
+                });
+            }
+            byVendor.set(v, cur);
+        }
+        const ranked = Array.from(byVendor.entries())
+            .map(([name, v]) => ({ vendor: name, revenue: v.revenue, units: v.units, distinctProducts: v.productCount.size, citations: v.citations }))
+            .sort((a, b) => b.revenue - a.revenue);
+
+        if (ranked.length === 0) {
+            const what = vendorFilter ? `vendor matching "${vendorFilter}"` : 'vendor sales';
+            return { speech: `No ${what} found in the last ${days} days.`, action: 'cstore_vendor_performance', data: { results: [] } };
+        }
+        const top = ranked[0];
+        const speech = vendorFilter
+            ? `${top.vendor}: $${top.revenue.toFixed(0)} on ${top.units} units across ${top.distinctProducts} SKUs the last ${days} days.`
+            : `Top vendor the last ${days} days: ${top.vendor} at $${top.revenue.toFixed(0)}. ${ranked.length > 1 ? `${ranked.length - 1} others with sales.` : ''}`;
+
+        return { speech, action: 'cstore_vendor_performance', data: { days, results: ranked.slice(0, 10) } };
+    }
+
+    return { speech: 'I did not understand that c-store query.', action: 'unrecognized' };
 }

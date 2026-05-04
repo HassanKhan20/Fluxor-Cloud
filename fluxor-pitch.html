@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Fluxor Cloud — Competitive Pitch</title>
+<style>
+  :root {
+    --ink-900: #0B0B0B;
+    --ink-700: #1f2937;
+    --ink-600: #4b5563;
+    --ink-500: #6b7280;
+    --ink-400: #9ca3af;
+    --ink-300: #d1d5db;
+    --ink-200: #e5e7eb;
+    --ink-100: #f3f4f6;
+    --ink-50:  #f9fafb;
+    --primary: #005CFF;
+    --gold:    #FECF33;
+    --emerald: #059669;
+    --rose:    #e11d48;
+    --amber:   #d97706;
+  }
+
+  @page { size: Letter; margin: 0.5in; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink-900);
+    background: white;
+    font-size: 10.5pt;
+    line-height: 1.4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 7.5in;
+    min-height: 10in;
+    margin: 0 auto;
+    padding: 0;
+    page-break-after: always;
+    position: relative;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* Screen-only background to feel like print preview */
+  @media screen {
+    body { background: #e7e9ef; padding: 24px 0; }
+    .page {
+      background: white;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+      padding: 0.55in 0.55in 0.45in;
+      margin-bottom: 24px;
+      border-radius: 4px;
+    }
+    .download-bar {
+      position: fixed; top: 12px; right: 16px; z-index: 100;
+      background: var(--ink-900); color: white;
+      padding: 9px 14px; border-radius: 8px;
+      font-size: 11.5pt; font-weight: 600; letter-spacing: 0.01em;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    }
+    .download-bar small { font-weight: 400; opacity: 0.78; display: block; font-size: 9pt; margin-top: 2px; }
+  }
+  @media print {
+    .download-bar { display: none; }
+    .page { padding: 0; box-shadow: none; }
+  }
+
+  h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+  h1 { font-size: 24pt; line-height: 1.1; letter-spacing: -0.025em; }
+  h2 { font-size: 13pt; margin-top: 18px; margin-bottom: 6px; }
+  h3 { font-size: 10.5pt; margin-bottom: 3px; }
+  p { margin: 0 0 8px; }
+
+  .eyebrow {
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 8.5pt; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--primary);
+    font-weight: 600;
+  }
+
+  .header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    border-bottom: 1px solid var(--ink-200);
+    padding-bottom: 14px; margin-bottom: 16px;
+  }
+  .header .brand { display: flex; align-items: center; gap: 10px; }
+  .logo {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #1E3A5F 0%, #3B82F6 100%);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 13pt; letter-spacing: -0.02em;
+  }
+  .brand-text { line-height: 1.05; }
+  .brand-text .name { font-size: 12pt; font-weight: 700; letter-spacing: -0.015em; }
+  .brand-text .sub { font-family: "SF Mono", ui-monospace, monospace; font-size: 7.5pt; letter-spacing: 0.18em; color: var(--ink-400); text-transform: uppercase; }
+  .doc-meta { text-align: right; font-size: 8.5pt; color: var(--ink-500); line-height: 1.45; }
+
+  .lede {
+    font-size: 12pt; color: var(--ink-700);
+    line-height: 1.45; margin: 8px 0 14px;
+    max-width: 6.4in;
+  }
+
+  .stat-row { display: flex; gap: 12px; margin: 14px 0; }
+  .stat {
+    flex: 1; border: 1px solid var(--ink-200); border-radius: 8px;
+    padding: 10px 12px; background: var(--ink-50);
+  }
+  .stat .num { font-size: 18pt; font-weight: 700; letter-spacing: -0.02em; line-height: 1; color: var(--ink-900); }
+  .stat .lbl { font-size: 8.5pt; color: var(--ink-500); margin-top: 4px; line-height: 1.3; }
+
+  .pos-box {
+    border-left: 3px solid var(--primary);
+    background: linear-gradient(90deg, rgba(0,92,255,0.06), rgba(0,92,255,0));
+    padding: 11px 14px; border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+  }
+  .pos-box .label {
+    font-family: "SF Mono", ui-monospace, monospace; font-size: 8pt;
+    text-transform: uppercase; letter-spacing: 0.16em; color: var(--primary);
+    font-weight: 600; margin-bottom: 4px;
+  }
+  .pos-box .quote { font-size: 11.5pt; line-height: 1.4; font-weight: 500; color: var(--ink-900); }
+
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 8px; }
+  .col-card {
+    border: 1px solid var(--ink-200); border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .col-card .tag {
+    font-family: "SF Mono", ui-monospace, monospace; font-size: 7.5pt;
+    text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-500);
+    font-weight: 600; margin-bottom: 4px;
+  }
+  .col-card h3 { font-size: 11pt; margin-bottom: 4px; line-height: 1.2; }
+  .col-card p { font-size: 9.5pt; color: var(--ink-600); margin: 0; line-height: 1.4; }
+
+  table.gaps {
+    width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 9pt;
+  }
+  table.gaps thead th {
+    text-align: left; padding: 7px 8px;
+    background: var(--ink-900); color: white;
+    font-size: 8pt; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  table.gaps tbody td {
+    padding: 7px 8px; border-bottom: 1px solid var(--ink-200);
+    vertical-align: top;
+  }
+  table.gaps tbody tr:nth-child(even) td { background: var(--ink-50); }
+  table.gaps .cap { color: var(--ink-700); font-weight: 500; }
+  table.gaps .yes { color: var(--emerald); font-weight: 700; }
+  table.gaps .no  { color: var(--rose); font-weight: 600; }
+  table.gaps .par { color: var(--amber); font-weight: 600; }
+  table.gaps .head-fluxor { background: var(--primary) !important; }
+
+  .quote-strip {
+    border-top: 1px dashed var(--ink-300);
+    border-bottom: 1px dashed var(--ink-300);
+    padding: 10px 0; margin: 14px 0 8px;
+  }
+  .quote-strip .label {
+    font-family: "SF Mono", ui-monospace, monospace; font-size: 8pt;
+    text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-500);
+    font-weight: 600; margin-bottom: 6px;
+  }
+  .quote-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+  .q { font-size: 9pt; line-height: 1.45; }
+  .q .body { color: var(--ink-700); font-style: italic; }
+  .q .src  { color: var(--ink-500); font-family: "SF Mono", ui-monospace, monospace; font-size: 7.5pt; }
+
+  .feat-list { list-style: none; padding: 0; margin: 0; }
+  .feat-list li {
+    display: grid; grid-template-columns: 22px 1fr;
+    column-gap: 10px; padding: 7px 0;
+    border-bottom: 1px solid var(--ink-100);
+  }
+  .feat-list li:last-child { border-bottom: none; }
+  .feat-num {
+    font-family: "SF Mono", ui-monospace, monospace; font-size: 9pt;
+    color: var(--primary); font-weight: 700;
+  }
+  .feat-body .name { font-weight: 600; font-size: 10pt; color: var(--ink-900); }
+  .feat-body .why  { font-size: 9pt; color: var(--ink-600); margin-top: 1px; }
+
+  .roadmap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 8px 0; }
+  .road-step {
+    border: 1px solid var(--ink-200); border-radius: 8px; padding: 9px 10px;
+    background: white;
+  }
+  .road-step .when {
+    font-family: "SF Mono", ui-monospace, monospace; font-size: 7.5pt;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--primary); font-weight: 700; margin-bottom: 3px;
+  }
+  .road-step .what { font-size: 9pt; color: var(--ink-700); line-height: 1.35; }
+
+  .ask-box {
+    border: 2px solid var(--ink-900); border-radius: 10px;
+    padding: 14px 16px; margin-top: 14px;
+    background: var(--ink-50);
+  }
+  .ask-box h2 { margin-top: 0; }
+  .ask-box ul { margin: 6px 0 0 0; padding-left: 18px; font-size: 10pt; color: var(--ink-700); }
+  .ask-box li { margin-bottom: 3px; line-height: 1.4; }
+
+  .footer-line {
+    margin-top: 16px; padding-top: 8px;
+    border-top: 1px solid var(--ink-200);
+    display: flex; justify-content: space-between;
+    font-size: 7.5pt; color: var(--ink-400);
+    font-family: "SF Mono", ui-monospace, monospace;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* Highlights */
+  .hl { background: rgba(254,207,51,0.35); padding: 0 2px; }
+
+  /* ──────────────── Mobile (≤ 760px wide) ────────────────
+     Linearize multi-column blocks, allow horizontal scroll on the gap
+     matrix, and shrink the off-screen download bar to a fixed footer
+     so it doesn't cover the cover headline. */
+  @media screen and (max-width: 760px) {
+    body { padding: 12px 8px 88px; font-size: 12pt; line-height: 1.45; }
+    .page {
+      width: 100%; min-height: 0;
+      padding: 18px 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 22pt; }
+    h2 { font-size: 14pt; margin-top: 22px; }
+    .lede { font-size: 12pt; max-width: 100%; }
+
+    .header { flex-direction: column; gap: 10px; align-items: flex-start; padding-bottom: 12px; margin-bottom: 14px; }
+    .doc-meta { text-align: left; }
+
+    .stat-row { flex-direction: column; gap: 8px; }
+    .stat .num { font-size: 22pt; }
+
+    .three-col { grid-template-columns: 1fr; gap: 10px; }
+    .roadmap   { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .quote-grid { grid-template-columns: 1fr; gap: 14px; }
+    .q { font-size: 11pt; }
+
+    .feat-list li { grid-template-columns: 24px 1fr; }
+    .feat-body .name { font-size: 12pt; }
+    .feat-body .why  { font-size: 11pt; }
+
+    /* Capability table — wrap in a horizontal-scroll viewport with a hint */
+    table.gaps {
+      display: block; overflow-x: auto; white-space: nowrap;
+      font-size: 10pt; -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--ink-200); border-radius: 8px;
+    }
+    table.gaps thead, table.gaps tbody, table.gaps tr { display: table; width: max-content; min-width: 100%; table-layout: auto; }
+    table.gaps th, table.gaps td { white-space: normal; }
+    table.gaps .cap { min-width: 180px; }
+
+    .pos-box { padding: 12px 14px; }
+    .pos-box .quote { font-size: 12pt; }
+
+    .ask-box { padding: 14px; }
+    .ask-box ul { font-size: 11pt; }
+
+    .download-bar {
+      position: fixed; left: 8px; right: 8px; top: auto; bottom: 8px;
+      text-align: center; font-size: 12pt;
+      padding: 11px 14px; border-radius: 10px;
+    }
+    .download-bar small { font-size: 10pt; }
+
+    .footer-line { font-size: 8.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<div class="download-bar">
+  Press Ctrl/Cmd + P → Save as PDF
+  <small>3-page Letter format. Backgrounds enabled.</small>
+</div>
+
+<!-- ========================== PAGE 1 ========================== -->
+<section class="page">
+  <div class="header">
+    <div class="brand">
+      <div class="logo">F</div>
+      <div class="brand-text">
+        <div class="name">Fluxor Cloud</div>
+        <div class="sub">AI Operations · Convenience Stores</div>
+      </div>
+    </div>
+    <div class="doc-meta">
+      Competitive Brief &amp; Pitch · v1.0<br/>
+      May 2026
+    </div>
+  </div>
+
+  <div class="eyebrow">The lane PDI is too big for and Square doesn't understand</div>
+  <h1 style="margin-top:6px;">The AI back-office for the<br/>independent c-store.</h1>
+
+  <p class="lede">
+    151,975 US convenience stores. <span class="hl">63% are run by operators with 10 stores or fewer; ~60% are single-store</span>. They drown in supplier invoices, leave tobacco rebates on the table, and run on POS software with a "late-90s feel." Fluxor is the first AI-native back-office built specifically for them.
+  </p>
+
+  <div class="stat-row">
+    <div class="stat">
+      <div class="num">151,975</div>
+      <div class="lbl">US c-stores (NACS, Dec 2025)</div>
+    </div>
+    <div class="stat">
+      <div class="num">~95K</div>
+      <div class="lbl">Operators with ≤10 stores — our target tier</div>
+    </div>
+    <div class="stat">
+      <div class="num">$837B</div>
+      <div class="lbl">Industry sales 2024 · 22 yrs of in-store growth</div>
+    </div>
+  </div>
+
+  <div class="pos-box">
+    <div class="label">Positioning</div>
+    <div class="quote">
+      Sit beside the Verifone forecourt — don't replace it. Read every supplier invoice in seconds. Claim every tobacco rebate. Reconcile the cigarette count in 5 minutes. Month-to-month, no contract. <strong>The anti-PDI on pricing, the anti-Square on c-store features.</strong>
+    </div>
+  </div>
+
+  <h2>Why now</h2>
+  <div class="three-col">
+    <div class="col-card">
+      <div class="tag">01 · Incumbents are slow</div>
+      <h3>PDI just shipped AI</h3>
+      <p>MyPDI / PDIQ launched Aug-Oct 2025. Trade press: "operators want practical performance and clear governance." Built for chains, priced for chains.</p>
+    </div>
+    <div class="col-card">
+      <div class="tag">02 · Square doesn't fit</div>
+      <h3>POS gap is structural</h3>
+      <p>Square / Shopify / Clover / Lightspeed read zero supplier invoices, file zero scan-data, do zero lottery. The lane is wide open at the c-store layer.</p>
+    </div>
+    <div class="col-card">
+      <div class="tag">03 · YC hasn't entered</div>
+      <h3>No AI-first c-store entrant</h3>
+      <p>YC W23-S25 batches: zero new c-store back-office startups. SwiftSku &amp; Attain (W21/W22) predate the GenAI wave and aren't AI-positioned.</p>
+    </div>
+  </div>
+
+  <h2 style="margin-top:18px;">What owners actually say</h2>
+  <div class="quote-strip" style="margin-top:6px;">
+    <div class="quote-grid">
+      <div class="q">
+        <span class="body">"Worst customer service I have seen. Tried working with them for 2 months — always had to beg them to answer my queries."</span><br/>
+        <span class="src">— PDI CStore Essentials · Capterra</span>
+      </div>
+      <div class="q">
+        <span class="body">"What should have taken 2-3 months took 11 months… extremely poor customer service, lack of timely follow-up."</span><br/>
+        <span class="src">— Petrosoft CStoreOffice · Capterra</span>
+      </div>
+      <div class="q">
+        <span class="body">"The most frustrating piece of technology any of us have ever dealt with… the software is a joke with how outdated it is."</span><br/>
+        <span class="src">— Gilbarco Passport · Capterra</span>
+      </div>
+      <div class="q">
+        <span class="body">"Modisoft's back-office services have been a constant source of frustration. The dashboard often freezes."</span><br/>
+        <span class="src">— Modisoft · Trustpilot, Nov 2025</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-line">
+    <span>Fluxor Cloud · Competitive Brief</span>
+    <span>Page 1 / 3</span>
+  </div>
+</section>
+
+<!-- ========================== PAGE 2 ========================== -->
+<section class="page">
+  <div class="eyebrow">The capability gap — what we do that they don't</div>
+  <h1 style="font-size:18pt; margin-top:4px;">Where Fluxor wins, line by line.</h1>
+
+  <p class="lede" style="font-size:10.5pt; margin-bottom:10px;">
+    Each row is a verified weakness in incumbent products mapped to a Fluxor capability already shipped or in active build. <strong class="hl">Yes</strong> = built &amp; live. <span style="color:var(--amber); font-weight:600;">Partial</span> = roadmap. <span style="color:var(--rose); font-weight:600;">No</span> = not in the product.
+  </p>
+
+  <table class="gaps">
+    <thead>
+      <tr>
+        <th style="width:30%;">Capability</th>
+        <th class="head-fluxor" style="width:11%; text-align:center;">Fluxor</th>
+        <th style="width:11%; text-align:center;">PDI</th>
+        <th style="width:11%; text-align:center;">Petrosoft</th>
+        <th style="width:11%; text-align:center;">Modisoft</th>
+        <th style="width:13%; text-align:center;">Square / Shopify / Clover</th>
+        <th style="width:13%; text-align:center;">Ottimate / Lightyear</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="cap"><strong>Vision-LLM invoice OCR</strong><br/><span style="font-size:8pt; color:var(--ink-500);">Image → structured line-items in one pass, no Tesseract</span></td>
+        <td style="text-align:center;" class="yes">YES</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="par">Partial</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>SKU auto-match to price book</strong><br/><span style="font-size:8pt; color:var(--ink-500);">Invoice line ↔ inventory record without rekey</span></td>
+        <td style="text-align:center;" class="yes">YES</td>
+        <td style="text-align:center;" class="yes">Yes</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>Tobacco scan-data export</strong><br/><span style="font-size:8pt; color:var(--ink-500);">Altria DTP CSV + RJR RMSC pipe-delimited</span></td>
+        <td style="text-align:center;" class="yes">YES</td>
+        <td style="text-align:center;" class="yes">Yes</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>AI assistant grounded in store data</strong><br/><span style="font-size:8pt; color:var(--ink-500);">Plain-English questions, real numbers, transaction citations</span></td>
+        <td style="text-align:center;" class="yes">YES</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>Cost-up / retail-flat alert</strong><br/><span style="font-size:8pt; color:var(--ink-500);">Auto-fires on invoice confirm — no margin bleed</span></td>
+        <td style="text-align:center;" class="yes">YES</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>High-shrink cycle-count flow</strong><br/><span style="font-size:8pt; color:var(--ink-500);">Tobacco / lottery / energy in 5 min on a phone</span></td>
+        <td style="text-align:center;" class="yes">YES</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>Voice assistant for store ops</strong><br/><span style="font-size:8pt; color:var(--ink-500);">"Top products this week?" answered with spoken citations</span></td>
+        <td style="text-align:center;" class="yes">YES</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>McLane / Core-Mark EDI 810/856</strong><br/><span style="font-size:8pt; color:var(--ink-500);">Native ingestion via Orderful/SPS partnership</span></td>
+        <td style="text-align:center;" class="par">Build</td>
+        <td style="text-align:center;" class="yes">Yes ($$)</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>Read-only Verifone / Gilbarco import</strong><br/><span style="font-size:8pt; color:var(--ink-500);">Make unreadable forecourt reports humane</span></td>
+        <td style="text-align:center;" class="par">Build</td>
+        <td style="text-align:center;" class="yes">Yes</td>
+        <td style="text-align:center;" class="yes">Yes</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>Public, month-to-month pricing</strong><br/><span style="font-size:8pt; color:var(--ink-500);">No 36-month contract, no early-termination fee</span></td>
+        <td style="text-align:center;" class="yes">YES</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="no">No</td>
+      </tr>
+      <tr>
+        <td class="cap"><strong>Modern UI · 1-week onboarding</strong><br/><span style="font-size:8pt; color:var(--ink-500);">Vs. Petrosoft's documented 11-month implementation</span></td>
+        <td style="text-align:center;" class="yes">YES</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="no">No</td>
+        <td style="text-align:center;" class="par">Partial</td>
+        <td style="text-align:center;" class="yes">Yes</td>
+        <td style="text-align:center;" class="par">Partial</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="quote-strip" style="margin-top:14px;">
+    <div class="label">Why these gaps are hard for incumbents to close</div>
+    <div class="quote-grid">
+      <div class="q">
+        <span class="body"><strong>PDI</strong> can't compete on transparent pricing — their entire enterprise sales motion is opaque per-site, per-module, per-API quoting. Changing it breaks the model.</span>
+      </div>
+      <div class="q">
+        <span class="body"><strong>Square / Shopify / Clover</strong> can't add scan-data or vendor EDI without forking the product into a c-store SKU they don't want to maintain.</span>
+      </div>
+      <div class="q">
+        <span class="body"><strong>Petrosoft / Modisoft</strong> sit on legacy stacks where AI is bolted on top of a frozen back-office. Reviewers note dashboards "freeze" and AI sits on broken plumbing.</span>
+      </div>
+      <div class="q">
+        <span class="body"><strong>Ottimate / Lightyear</strong> charge per-invoice and split documents in ways that hurt customers economically. Not a c-store fit; never will be.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-line">
+    <span>Fluxor Cloud · Capability Gap Map</span>
+    <span>Page 2 / 3</span>
+  </div>
+</section>
+
+<!-- ========================== PAGE 3 ========================== -->
+<section class="page">
+  <div class="eyebrow">Shipped, building, and the ask</div>
+  <h1 style="font-size:18pt; margin-top:4px;">From thesis to live software in 30 days.</h1>
+
+  <p class="lede" style="font-size:10.5pt; margin-bottom:10px;">
+    Five wedge features verified, built, and merged. Each maps to a verified Reddit/G2/Capterra owner-pain quote, not a designed-from-scratch idea.
+  </p>
+
+  <h2 style="margin-top:8px;">Built &amp; live</h2>
+  <ul class="feat-list">
+    <li>
+      <span class="feat-num">01</span>
+      <div class="feat-body">
+        <div class="name">Vision-LLM invoice OCR (Groq Llama 4 Scout)</div>
+        <div class="why">Replaces Tesseract. One round-trip from photo → structured line items. Falls back gracefully when API is unreachable. Kills the dominant Lightyear / Ottimate complaint pattern.</div>
+      </div>
+    </li>
+    <li>
+      <span class="feat-num">02</span>
+      <div class="feat-body">
+        <div class="name">Tobacco scan-data export — Altria DTP &amp; RJR RMSC</div>
+        <div class="why">Weekly file in each program's documented format, with a missing-UPC blocker list. Real rebate dollars Square / Shopify / Clover users leave on the table every week.</div>
+      </div>
+    </li>
+    <li>
+      <span class="feat-num">03</span>
+      <div class="feat-body">
+        <div class="name">Grounded AI assistant — voice + transaction citations</div>
+        <div class="why">Five tool-called queries (top products, low stock, margin compression, revenue, vendor performance). Every answer renders the underlying sale-IDs as proof. Incumbents return help-doc links.</div>
+      </div>
+    </li>
+    <li>
+      <span class="feat-num">04</span>
+      <div class="feat-body">
+        <div class="name">Cost-up / retail-flat margin-compression alert</div>
+        <div class="why">Auto-fires the moment an invoice is confirmed. Tells the owner the exact retail bump needed to restore margin. Stops the silent margin bleed nobody else catches.</div>
+      </div>
+    </li>
+    <li>
+      <span class="feat-num">05</span>
+      <div class="feat-body">
+        <div class="name">High-shrink cycle-count assistant</div>
+        <div class="why">Auto-filters tobacco / lottery / energy SKUs. 5-minute mobile flow saves a snapshot and exposes variance. Replaces the Sunday-night carton count that every operator does by hand.</div>
+      </div>
+    </li>
+  </ul>
+
+  <h2 style="margin-top:14px;">Roadmap — next 90 days</h2>
+  <div class="roadmap">
+    <div class="road-step">
+      <div class="when">M1 · 2 wk</div>
+      <div class="what"><strong>Owner-interview cohort.</strong> 8–10 phone calls. Validate ranking of EDI vs. fuel-import vs. age-verify before building.</div>
+    </div>
+    <div class="road-step">
+      <div class="when">M1 · 4 wk</div>
+      <div class="what"><strong>Age-verification.</strong> Driver-license PDF417 scan. Disqualifier if missing — table-stakes ship.</div>
+    </div>
+    <div class="road-step">
+      <div class="when">M2 · 6 wk</div>
+      <div class="what"><strong>Verifone / Gilbarco read-only import.</strong> Make daily forecourt PDFs humane without touching the pump.</div>
+    </div>
+    <div class="road-step">
+      <div class="when">M3 · 12 wk</div>
+      <div class="what"><strong>McLane + Core-Mark EDI 810/856</strong> via Orderful or SPS partnership. The credibility unlock past Square.</div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:14px;">The wedge customer profile</h2>
+  <div class="three-col">
+    <div class="col-card">
+      <div class="tag">Who</div>
+      <h3>Independent c-store, 1–4 sites</h3>
+      <p>Sells gas through a Verifone or Gilbarco they keep. Drowns in McLane invoices.</p>
+    </div>
+    <div class="col-card">
+      <div class="tag">Pain</div>
+      <h3>$300/mo Ottimate band-aid</h3>
+      <p>Or worse: rekeys invoices manually. Loses scan-data rebate dollars. Hates Petrosoft support.</p>
+    </div>
+    <div class="col-card">
+      <div class="tag">Why we win</div>
+      <h3>One product, one price</h3>
+      <p>Modern UI. Live human support. Month-to-month. Pre-built for the things they actually do every week.</p>
+    </div>
+  </div>
+
+  <div class="ask-box">
+    <h2 style="font-size:13pt;">The ask</h2>
+    <ul>
+      <li><strong>10 pilot stores</strong> for 60 days at no cost — operator interview + integration + 2 follow-ups.</li>
+      <li><strong>One distributor partnership</strong> (Orderful or SPS) to certify McLane / Core-Mark EDI by week 12.</li>
+      <li><strong>Intros to NACS independent-operator network</strong> — 95K addressable stores, fragmented, underserved.</li>
+    </ul>
+  </div>
+
+  <div class="footer-line">
+    <span>Fluxor Cloud · The Wedge &amp; The Ask</span>
+    <span>Page 3 / 3</span>
+  </div>
+</section>
+
+</body>
+</html>

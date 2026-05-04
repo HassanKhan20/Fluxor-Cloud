@@ -17,6 +17,8 @@ import reorderRoutes from './routes/reorderRoutes';
 import kitchenRoutes from './routes/kitchenRoutes';
 import retirementRoutes from './routes/retirementRoutes';
 import aiAssistantRoutes from './routes/aiAssistantRoutes';
+import scanDataRoutes from './routes/scanDataRoutes';
+import cycleCountRoutes from './routes/cycleCountRoutes';
 import { runWeeklyForecastForAllStores } from './services/kitchenForecastService';
 import { sendPurchaseOrderEmail } from './services/kitchenEmailService';
 import { prisma } from './lib/prisma';
@@ -135,6 +137,8 @@ app.use('/api/reorder', reorderRoutes);
 app.use('/api/kitchen', kitchenRoutes);
 app.use('/api/retirement', retirementRoutes);
 app.use('/api/ai-assistant', aiLimiter, aiAssistantRoutes);
+app.use('/api/scan-data', scanDataRoutes);
+app.use('/api/cycle-count', cycleCountRoutes);
 
 // ── Public: Demo request (no auth — landing page form) ───────────────────────
 app.post('/api/demo-request', authLimiter, async (req, res) => {

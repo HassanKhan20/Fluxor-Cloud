@@ -173,6 +173,49 @@ export async function generateAlertsForStore(storeId: string): Promise<number> {
         }
     }
 
+    // --- COST-UP / RETAIL-FLAT MARGIN COMPRESSION ---
+    // The most-quoted owner pain on Reddit/r-conveniencestore: "supplier raised
+    // cost, I forgot to bump retail, lost margin for weeks before I noticed."
+    // Compare each product's two most recent invoice unit costs; if cost rose
+    // and retail is unchanged, drop margin points = priorMargin - newMargin.
+    // Fire an alert when the drop is >= 3 points and the SKU has any sales.
+    const productsForMargin = await prisma.product.findMany({
+        where: { storeId, isActive: true, sellingPrice: { gt: 0 } },
+        include: {
+            invoiceItems: {
+                orderBy: { invoice: { createdAt: 'desc' } },
+                take: 5,
+                select: { unitCost: true, invoice: { select: { createdAt: true, supplierName: true } } }
+            },
+            saleItems: {
+                where: { sale: { dateTime: { gte: thirtyDaysAgo } } },
+                take: 1, select: { id: true }
+            }
+        }
+    });
+
+    for (const p of productsForMargin) {
+        if (p.invoiceItems.length < 2) continue;
+        if (p.saleItems.length === 0) continue; // No recent sales, not worth alerting
+        const newest = p.invoiceItems[0];
+        const prior = p.invoiceItems.find(it => it.unitCost !== newest.unitCost);
+        if (!prior) continue;
+        if (newest.unitCost <= prior.unitCost) continue;
+        const oldMargin = ((p.sellingPrice - prior.unitCost) / p.sellingPrice) * 100;
+        const newMargin = ((p.sellingPrice - newest.unitCost) / p.sellingPrice) * 100;
+        const drop = oldMargin - newMargin;
+        if (drop < 3) continue;
+        if (await createAlertIfNew({
+            storeId,
+            type: 'margin_compression',
+            priority: drop >= 8 ? 'critical' : 'warning',
+            title: `Margin Compression: ${p.name}`,
+            message: `Cost rose $${prior.unitCost.toFixed(2)} → $${newest.unitCost.toFixed(2)} but retail is still $${p.sellingPrice.toFixed(2)}. Margin dropped ${drop.toFixed(1)} points (${oldMargin.toFixed(1)}% → ${newMargin.toFixed(1)}%).`,
+            action: `Raise retail by ~$${(newest.unitCost - prior.unitCost).toFixed(2)} on ${p.name} to restore your margin, or renegotiate with ${newest.invoice.supplierName || 'the supplier'}.`,
+            productId: p.id
+        })) created++;
+    }
+
     // --- VENDOR DROP ALERTS ---
     // Compare vendor revenue this week vs last week, flag drops > 30%
     const vendorRevenueThis = new Map<string, number>();

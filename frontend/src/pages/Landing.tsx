@@ -83,7 +83,7 @@ const Landing: React.FC = () => {
             <main className="relative z-10 w-full overflow-hidden">
 
                 {/* HERO SECTION */}
-                <section className="relative min-h-screen flex items-center justify-center px-4 pt-20">
+                <section className="relative min-h-[88vh] md:min-h-screen flex items-center justify-center px-4 pt-24 md:pt-20 pb-16 md:pb-0">
                     <motion.div
                         style={{ opacity: heroOpacity, scale: heroScale }}
                         className="max-w-4xl mx-auto text-center space-y-6"
@@ -191,8 +191,8 @@ const Landing: React.FC = () => {
                 </section>
 
                 {/* VISUAL SHOWCASE SECTION */}
-                <section id="features" className="py-32 relative">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-40">
+                <section id="features" className="py-16 md:py-32 relative">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 md:space-y-40">
 
                         {/* Feature 1 — Command Center */}
                         <AnimatedSection className="grid lg:grid-cols-12 items-center gap-12 lg:gap-16">
@@ -243,7 +243,7 @@ const Landing: React.FC = () => {
 
                             <div className="lg:col-span-7 relative">
                                 <div className="absolute -inset-8 bg-gradient-to-tr from-indigo-400/15 via-indigo-300/10 to-transparent blur-3xl rounded-full pointer-events-none" />
-                                <div className="relative h-[480px]">
+                                <div className="relative h-[300px] sm:h-[380px] md:h-[480px]">
                                     <DashboardMockup />
                                 </div>
                             </div>
@@ -253,7 +253,7 @@ const Landing: React.FC = () => {
                         <AnimatedSection direction="left" className="grid lg:grid-cols-12 items-center gap-12 lg:gap-16">
                             <div className="lg:col-span-7 relative order-2 lg:order-1">
                                 <div className="absolute -inset-8 bg-gradient-to-tl from-violet-400/15 via-indigo-300/10 to-transparent blur-3xl rounded-full pointer-events-none" />
-                                <div className="relative h-[480px]">
+                                <div className="relative h-[300px] sm:h-[380px] md:h-[480px]">
                                     <AIAssistantMockup />
                                 </div>
                             </div>
@@ -297,9 +297,9 @@ const Landing: React.FC = () => {
                 </section >
 
                 {/* FEATURE GRID */}
-                < section className="py-24 relative" >
+                < section className="py-16 md:py-24 relative" >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16 space-y-4">
+                        <div className="text-center mb-10 md:mb-16 space-y-4">
                             <h2 className="font-display text-3xl md:text-5xl font-semibold text-ink-900 tracking-tight leading-[1.05]">Everything You Need</h2>
                             <p className="text-lg text-gray-600">Complete toolkit for modern retail</p>
                         </div>
@@ -319,16 +319,16 @@ const Landing: React.FC = () => {
                 </section >
 
                 {/* DEMO CTA */}
-                < section id="demo" className="py-32 relative" >
+                < section id="demo" className="py-16 md:py-32 relative" >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <AnimatedSection className="text-center mb-12">
+                        <AnimatedSection className="text-center mb-10 md:mb-12">
                             <h2 className="font-display text-3xl md:text-5xl font-semibold mb-6 text-ink-900 tracking-tight leading-[1.05]">See it in action</h2>
                             <p className="text-gray-600 max-w-2xl mx-auto">An interactive walkthrough of the entire platform — dashboard, analytics, AI insights, inventory, vendors, and more.</p>
                         </AnimatedSection>
 
                         <div className="max-w-3xl mx-auto">
                             <AnimatedSection>
-                                <GlassCard className="relative p-12 border-indigo-200 bg-indigo-50/40 text-center">
+                                <GlassCard className="relative p-6 sm:p-10 md:p-12 border-indigo-200 bg-indigo-50/40 text-center">
                                     <div className="flex flex-col items-center gap-6">
                                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 border border-indigo-200">
                                             <Zap size={13} className="text-indigo-600" strokeWidth={2.25} />
@@ -353,13 +353,13 @@ const Landing: React.FC = () => {
                 </section >
 
                 {/* ABOUT SECTION */}
-                <section id="about" className="py-32 relative">
+                <section id="about" className="py-16 md:py-32 relative">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         {/* Story */}
-                        <AnimatedSection className="mb-32">
-                            <div className="grid lg:grid-cols-2 gap-16 items-center">
+                        <AnimatedSection className="mb-16 md:mb-32">
+                            <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
                                 <div>
-                                    <h2 className="font-display text-3xl md:text-5xl font-semibold text-ink-900 mb-8 tracking-tight leading-[1.05]">Built for Real Stores</h2>
+                                    <h2 className="font-display text-3xl md:text-5xl font-semibold text-ink-900 mb-6 md:mb-8 tracking-tight leading-[1.05]">Built for Real Stores</h2>
                                     <div className="space-y-6 text-lg text-gray-700 leading-relaxed">
                                         <p className="text-gray-700">
                                             In 2023, we spent months working in convenience stores to understand the real challenges owners face.
@@ -403,7 +403,7 @@ const Landing: React.FC = () => {
                 </section>
 
                 {/* FINAL CTA */}
-                <section className="py-32 relative overflow-hidden">
+                <section className="py-16 md:py-32 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-t from-indigo-50/50 to-transparent pointer-events-none" />
                     <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
                         <AnimatedSection>

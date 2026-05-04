@@ -3,6 +3,13 @@ import { prisma } from '../lib/prisma';
 import fs from 'fs';
 import path from 'path';
 
+// Vision-LLM is the primary path. Tesseract + text-LLM is fallback only when
+// no vision-capable API key is set, or when the vision call fails.
+// Why: OEM Tesseract on phone-shot, wrinkled supplier invoices is unreliable
+// (the dominant Lightyear/Ottimate complaint pattern on G2). A modern vision
+// model reads cost lines, totals, and supplier headers directly from the image
+// and returns structured JSON in one round-trip — no OCR-text intermediate.
+
 // Types for structured invoice data
 export interface InvoiceMetadata {
     supplier_name: string | null;
@@ -61,26 +68,45 @@ export interface InvoiceParseResult {
     needs_review: boolean;
 }
 
-// LLM API call — supports OpenAI-compatible endpoints.
-// Set OPENAI_API_KEY (and optionally OPENAI_BASE_URL) in .env to enable.
-// Falls back to OCR-only mode when no key is configured.
-async function callLLM(prompt: string): Promise<string> {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-        throw new Error('LLM_NOT_CONFIGURED');
+// Resolves which LLM provider/key/base/model to use.
+// Priority: GROQ_API_KEY (free tier, OpenAI-compatible) > OPENAI_API_KEY.
+// This keeps the project on a free key by default while staying compatible
+// with paid OpenAI for anyone who explicitly opts in.
+function resolveLLMProvider(): { apiKey: string; baseUrl: string; textModel: string; visionModel: string } | null {
+    const groqKey = process.env.GROQ_API_KEY;
+    if (groqKey) {
+        return {
+            apiKey: groqKey,
+            baseUrl: process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1',
+            textModel: process.env.GROQ_TEXT_MODEL || 'llama-3.3-70b-versatile',
+            visionModel: process.env.GROQ_VISION_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct'
+        };
     }
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (openaiKey) {
+        return {
+            apiKey: openaiKey,
+            baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+            textModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+            visionModel: process.env.OPENAI_VISION_MODEL || 'gpt-4o'
+        };
+    }
+    return null;
+}
 
-    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
-    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+// LLM API call — OpenAI-compatible. Uses Groq's free endpoint by default.
+async function callLLM(prompt: string): Promise<string> {
+    const provider = resolveLLMProvider();
+    if (!provider) throw new Error('LLM_NOT_CONFIGURED');
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const response = await fetch(`${provider.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
+            'Authorization': `Bearer ${provider.apiKey}`
         },
         body: JSON.stringify({
-            model,
+            model: provider.textModel,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.1,
             max_tokens: 2000
@@ -90,6 +116,55 @@ async function callLLM(prompt: string): Promise<string> {
     if (!response.ok) {
         const err = await response.text();
         throw new Error(`LLM API error ${response.status}: ${err}`);
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || '';
+}
+
+// Vision LLM call — sends the image directly to a vision-capable model.
+// Default is Groq's free Llama 4 Scout (17B) which accepts image inputs via
+// the OpenAI-compatible chat-completions endpoint. Note: Groq's vision models
+// do not currently accept response_format=json_object, so we ask for JSON in
+// the prompt and parse it ourselves.
+async function callVisionLLM(imagePath: string, mimeType: string, prompt: string): Promise<string> {
+    const provider = resolveLLMProvider();
+    if (!provider) throw new Error('VISION_NOT_CONFIGURED');
+
+    const buffer = fs.readFileSync(imagePath);
+    const base64 = buffer.toString('base64');
+    const dataUrl = `data:${mimeType || 'image/jpeg'};base64,${base64}`;
+
+    const isGroq = provider.baseUrl.includes('groq.com');
+
+    const body: any = {
+        model: provider.visionModel,
+        messages: [{
+            role: 'user',
+            content: [
+                { type: 'text', text: prompt },
+                // Groq accepts image_url with a string URL (not the OpenAI {url, detail} object)
+                { type: 'image_url', image_url: isGroq ? { url: dataUrl } : { url: dataUrl, detail: 'high' } }
+            ]
+        }],
+        temperature: 0.1,
+        max_tokens: 4000
+    };
+    // OpenAI-only: structured JSON response. Groq returns 400 for this header.
+    if (!isGroq) body.response_format = { type: 'json_object' };
+
+    const response = await fetch(`${provider.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${provider.apiKey}`
+        },
+        body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Vision LLM error ${response.status}: ${err}`);
     }
 
     const data = await response.json();
@@ -119,6 +194,87 @@ export async function extractTextFromImage(imagePath: string): Promise<{ text: s
         console.error('[OCR] Text extraction failed:', error);
         throw error;
     }
+}
+
+// Vision-LLM parse — reads the invoice image directly and returns structured JSON.
+// Returns the model's self-reported confidence so downstream logic can decide
+// whether to flag the invoice for human review.
+export async function parseInvoiceWithVisionLLM(imagePath: string, mimeType: string): Promise<{
+    metadata: InvoiceMetadata;
+    items: Omit<LineItem, 'matched_product_id' | 'matched_product_name' | 'confidence'>[];
+    rawText: string;
+    confidence: number;
+    notes: string | null;
+}> {
+    const prompt = `You are extracting structured data from a supplier invoice image (a c-store / convenience-store distributor invoice — likely McLane, Core-Mark, Eby-Brown, a beverage distributor, or a tobacco wholesaler).
+
+Return ONLY a single valid JSON object with this exact shape:
+{
+  "metadata": {
+    "supplier_name": string|null,
+    "invoice_number": string|null,
+    "invoice_date": "YYYY-MM-DD"|null,
+    "due_date": "YYYY-MM-DD"|null,
+    "subtotal": number|null,
+    "taxes": number|null,
+    "discounts": number|null,
+    "total": number|null
+  },
+  "items": [
+    { "description": string, "sku": string|null, "upc": string|null, "quantity": number, "unit_cost": number, "line_total": number }
+  ],
+  "raw_text": string,
+  "confidence": number,
+  "notes": string|null
+}
+
+Rules:
+- Extract every line item visible — pack/case quantities, individual SKUs, all of them.
+- Prices are numbers without currency symbols. If you see "$12.99" return 12.99.
+- If a UPC/barcode is printed alongside the item, capture it. Otherwise null.
+- "raw_text" should be a faithful plain-text dump of what is on the invoice (so downstream code that expects OCR text still works).
+- "confidence" is your own self-assessment from 0.0 to 1.0 of how legible the image was and how sure you are about the line items. Be honest — a wrinkled phone shot with cut-off totals is 0.5, a clean PDF is 0.95.
+- "notes" should call out anything unclear (cropped totals, smudged SKUs, illegible quantities, multi-page invoice). null when nothing was unclear.
+- Never invent values. Use null when missing.
+- Return ONLY the JSON object — no markdown, no commentary.`;
+
+    const response = await callVisionLLM(imagePath, mimeType, prompt);
+
+    // Groq's vision models don't enforce JSON output, so the response may have
+    // prose or markdown fences around the JSON. Strip fences first, then fall
+    // back to extracting the first top-level {...} object.
+    let jsonStr = response.trim();
+    if (jsonStr.startsWith('```json')) jsonStr = jsonStr.slice(7);
+    if (jsonStr.startsWith('```')) jsonStr = jsonStr.slice(3);
+    if (jsonStr.endsWith('```')) jsonStr = jsonStr.slice(0, -3);
+    jsonStr = jsonStr.trim();
+
+    let parsed: any;
+    try {
+        parsed = JSON.parse(jsonStr);
+    } catch {
+        const first = jsonStr.indexOf('{');
+        const last = jsonStr.lastIndexOf('}');
+        if (first >= 0 && last > first) {
+            parsed = JSON.parse(jsonStr.slice(first, last + 1));
+        } else {
+            throw new Error('Vision-LLM returned non-JSON response');
+        }
+    }
+    const confidence = typeof parsed.confidence === 'number'
+        ? Math.max(0, Math.min(1, parsed.confidence))
+        : 0.7;
+
+    return {
+        metadata: parsed.metadata || {
+            supplier_name: null, invoice_number: null, invoice_date: null, due_date: null,
+            subtotal: null, taxes: null, discounts: null, total: null
+        },
+        items: parsed.items || [],
+        rawText: parsed.raw_text || '',
+        confidence,
+        notes: parsed.notes ?? null
+    };
 }
 
 // Parse invoice text using Ollama LLM
@@ -409,60 +565,88 @@ export function validateInvoiceTotals(
     return anomalies;
 }
 
-// Main processing function
+// Main processing function. Vision-LLM is the primary path; Tesseract+text-LLM
+// is used only when vision fails or no API key is configured.
 export async function processInvoice(
     filePath: string,
-    storeId: string
+    storeId: string,
+    mimeType?: string
 ): Promise<InvoiceParseResult> {
     console.log(`[Invoice AI] Processing invoice: ${filePath}`);
 
-    // Step 1: OCR
-    const { text: rawText, confidence: ocrConfidence } = await extractTextFromImage(filePath);
+    let rawText = '';
+    let extractionConfidence = 0;
+    let metadata: InvoiceMetadata = {
+        supplier_name: null, invoice_number: null, invoice_date: null, due_date: null,
+        subtotal: null, taxes: null, discounts: null, total: null
+    };
+    let items: Omit<LineItem, 'matched_product_id' | 'matched_product_name' | 'confidence'>[] = [];
+    let mode: 'vision' | 'ocr+llm' | 'ocr-only' = 'vision';
+    let extractionNotes: string | null = null;
 
-    // Step 2: LLM Parsing (skipped when OPENAI_API_KEY is not set — OCR-only mode)
-    let metadata: InvoiceMetadata;
-    let items: Omit<LineItem, 'matched_product_id' | 'matched_product_name' | 'confidence'>[];
-    let llmAvailable = true;
+    const inferredMime = mimeType || inferMimeFromPath(filePath);
+
+    // Path A: Vision-LLM (preferred)
     try {
-        const parsed = await parseInvoiceWithLLM(rawText);
-        metadata = parsed.metadata;
-        items = parsed.items;
+        const vision = await parseInvoiceWithVisionLLM(filePath, inferredMime);
+        metadata = vision.metadata;
+        items = vision.items;
+        rawText = vision.rawText;
+        extractionConfidence = vision.confidence;
+        extractionNotes = vision.notes;
+        console.log(`[Invoice AI] Vision-LLM parsed ${items.length} item(s) at ${(vision.confidence * 100).toFixed(0)}% self-confidence`);
     } catch (err: any) {
-        if (err?.message === 'LLM_NOT_CONFIGURED') {
-            console.log('[Invoice AI] No LLM API key set — running in OCR-only mode');
-            llmAvailable = false;
-            metadata = { supplier_name: null, invoice_number: null, invoice_date: null, due_date: null, subtotal: null, taxes: null, discounts: null, total: null };
-            items = [];
+        if (err?.message === 'VISION_NOT_CONFIGURED') {
+            console.log('[Invoice AI] No vision LLM configured — falling back to Tesseract+text-LLM');
         } else {
-            throw err;
+            console.error('[Invoice AI] Vision-LLM failed, falling back to Tesseract:', err?.message || err);
+        }
+
+        // Path B: Tesseract OCR → text-LLM
+        const ocr = await extractTextFromImage(filePath);
+        rawText = ocr.text;
+        extractionConfidence = ocr.confidence;
+        try {
+            const parsed = await parseInvoiceWithLLM(rawText);
+            metadata = parsed.metadata;
+            items = parsed.items;
+            mode = 'ocr+llm';
+        } catch (innerErr: any) {
+            if (innerErr?.message === 'LLM_NOT_CONFIGURED') {
+                console.log('[Invoice AI] No LLM key — OCR-only mode (no structured parsing)');
+                mode = 'ocr-only';
+            } else {
+                throw innerErr;
+            }
         }
     }
 
-    // Step 3: Product Matching
     const matchedItems = await matchProductsToInventory(items, storeId);
-
-    // Step 4: Pricing Alerts
     const pricingAlerts = await detectPricingAlerts(matchedItems, storeId);
-
-    // Step 5: Validation
     const anomalies = validateInvoiceTotals(metadata, matchedItems);
-
-    // Step 6: Business Insights
     const businessInsights = generateBusinessInsights(matchedItems, pricingAlerts);
 
-    // Calculate overall confidence
     const avgMatchConfidence = matchedItems.length > 0
         ? matchedItems.reduce((sum, i) => sum + i.confidence, 0) / matchedItems.length
         : 0;
-    const overallConfidence = (ocrConfidence * 0.4 + avgMatchConfidence * 0.6);
-    const needsReview = !llmAvailable || overallConfidence < 0.9 || anomalies.length > 0;
 
-    console.log(`[Invoice AI] Processing complete. Confidence: ${(overallConfidence * 100).toFixed(1)}% | LLM: ${llmAvailable ? 'enabled' : 'disabled (OCR-only)'}`);
+    // Vision mode trusts the model's self-reported confidence more heavily;
+    // OCR fallback weights Tesseract's confidence less because it's noisier.
+    const overallConfidence = mode === 'vision'
+        ? extractionConfidence * 0.6 + avgMatchConfidence * 0.4
+        : extractionConfidence * 0.3 + avgMatchConfidence * 0.7;
+
+    const needsReview = mode === 'ocr-only'
+        || overallConfidence < 0.85
+        || anomalies.length > 0
+        || extractionNotes !== null;
+
+    console.log(`[Invoice AI] Done. Mode: ${mode} | Confidence: ${(overallConfidence * 100).toFixed(1)}% | NeedsReview: ${needsReview}`);
 
     return {
         invoice_metadata: metadata,
         line_items: matchedItems,
-        inventory_updates: [], // Populated on confirmation
+        inventory_updates: [],
         pricing_alerts: pricingAlerts,
         anomalies,
         business_insights: businessInsights,
@@ -470,6 +654,17 @@ export async function processInvoice(
         confidence: overallConfidence,
         needs_review: needsReview
     };
+}
+
+function inferMimeFromPath(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase();
+    const map: Record<string, string> = {
+        '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.png': 'image/png', '.webp': 'image/webp',
+        '.gif': 'image/gif', '.bmp': 'image/bmp',
+        '.pdf': 'application/pdf'
+    };
+    return map[ext] || 'image/jpeg';
 }
 
 // Update inventory based on confirmed invoice

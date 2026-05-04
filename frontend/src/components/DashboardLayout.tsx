@@ -17,6 +17,8 @@ import {
     HeartHandshake,
     ClipboardList,
     Printer,
+    FileText,
+    ClipboardCheck,
 } from 'lucide-react';
 import StreamlineAnimation from './StreamlineAnimation';
 import { useFacility } from './FacilityTypeGate';
@@ -103,6 +105,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 items: [
                     { id: 5, icon: <Truck size={17} />, label: 'Vendors', path: '/vendors' },
                     { id: 6, icon: <UserCheck size={17} />, label: 'Staff', path: '/staff' },
+                ],
+            },
+            {
+                label: 'Compliance',
+                items: [
+                    { id: 13, icon: <FileText size={17} />, label: 'Scan-Data', path: '/scan-data' },
+                    { id: 14, icon: <ClipboardCheck size={17} />, label: 'Cycle Count', path: '/cycle-count' },
                 ],
             },
         ];
@@ -294,8 +303,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
             <main className="flex-1 lg:ml-60 pt-14 lg:pt-0">{children}</main>
 
-            {/* Voice assistant — only render on retirement-mode pages */}
-            {isRetirement && <VoiceAssistant />}
+            {/* Voice assistant — facility-aware on the backend, so it works for
+                both retirement (meal logging) and c-store (grounded queries). */}
+            <VoiceAssistant />
         </div>
     );
 };

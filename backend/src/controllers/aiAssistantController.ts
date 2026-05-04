@@ -5,6 +5,7 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
 import { getStoreId } from '../lib/storeContext';
+import { prisma } from '../lib/prisma';
 import {
     transcribeAudio,
     pickTool,
@@ -32,8 +33,13 @@ export const handleVoiceCommand = async (req: Request, res: Response) => {
             return res.json({ transcript: '', speech: 'I did not catch that. Could you try again?', action: 'no_speech' });
         }
 
-        // 2. Pick a tool with Groq Llama 3.3
-        const call = await pickTool(transcript);
+        // 2. Pick a tool with Groq Llama 3.3 — facility-aware so the model
+        //    sees the right tool list (c-store queries vs kitchen logging)
+        const store = await prisma.store.findUnique({
+            where: { id: storeId },
+            select: { facilityType: true }
+        });
+        const call = await pickTool(transcript, store?.facilityType ?? 'RETIREMENT_HOME');
 
         // 3. Execute against the database
         const result = await executeTool(storeId, userId, call);

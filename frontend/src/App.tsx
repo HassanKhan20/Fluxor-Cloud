@@ -24,6 +24,8 @@ import KitchenLogger from './pages/KitchenLogger';
 import Residents from './pages/Residents';
 import PrepSheet from './pages/PrepSheet';
 import TrayTickets from './pages/TrayTickets';
+import ScanData from './pages/ScanData';
+import CycleCount from './pages/CycleCount';
 
 import ScrollToTop from './components/ScrollToTop';
 import PrivateRoute from './components/PrivateRoute';
@@ -63,6 +65,8 @@ function App() {
           <Route path="/residents" element={<PrivateRoute><Residents /></PrivateRoute>} />
           <Route path="/kitchen/prep" element={<PrivateRoute><PrepSheet /></PrivateRoute>} />
           <Route path="/kitchen/tray-tickets" element={<PrivateRoute><TrayTickets /></PrivateRoute>} />
+          <Route path="/scan-data" element={<PrivateRoute><ScanData /></PrivateRoute>} />
+          <Route path="/cycle-count" element={<PrivateRoute><CycleCount /></PrivateRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -8,6 +8,7 @@ import {
 } from '../services/invoiceAIService';
 
 import { getStoreId } from '../lib/storeContext';
+import { generateAlertsForStore } from './alertsController';
 
 function cleanupFile(filePath?: string) {
     if (!filePath) return;
@@ -42,7 +43,7 @@ export const uploadInvoice = async (req: Request, res: Response) => {
         // 2. Process with AI
         let parseResult: InvoiceParseResult;
         try {
-            parseResult = await processInvoice(req.file.path, storeId);
+            parseResult = await processInvoice(req.file.path, storeId, req.file.mimetype);
         } catch (error) {
             console.error('[Invoice] AI processing failed:', error);
             cleanupFile(req.file.path);
@@ -201,6 +202,13 @@ export const confirmInvoice = async (req: Request, res: Response) => {
             data: { status: 'CONFIRMED' }
         });
 
+        // Fire margin/stockout alerts immediately so owners see "cost up,
+        // retail flat" the moment they confirm — don't wait for the hourly cron.
+        // Non-blocking: failures here must not poison the success response.
+        generateAlertsForStore(storeId).catch(err =>
+            console.error('[Invoice] Post-confirm alert generation failed:', err)
+        );
+
         res.json({
             message: 'Invoice confirmed and inventory updated',
             inventory_updates: updates
@@ -237,7 +245,7 @@ export const reprocessInvoice = async (req: Request, res: Response) => {
             data: { status: 'PROCESSING' }
         });
 
-        // Reprocess
+        // Reprocess (mimetype not stored on Invoice — let processInvoice infer from extension)
         const parseResult = await processInvoice(invoice.fileUrl, storeId);
 
         // Update with new results
